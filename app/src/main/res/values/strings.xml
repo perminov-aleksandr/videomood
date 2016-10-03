@@ -30,6 +30,10 @@
     <string name="next">Next</string>
     <string name="done">Done</string>
     <string name="userDataHeader">Enter user info</string>
+    <string name="museConnectHeader">Connect</string>
     <string name="back">Back</string>
+
+    <string name="noDevicesFound">Not found</string>
+    <string name="device">Device</string>
 
 </resources>

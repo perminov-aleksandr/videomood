@@ -33,6 +33,10 @@ import com.choosemuse.libmuse.MuseManagerAndroid;
 import com.choosemuse.libmuse.MuseVersion;
 import com.choosemuse.libmuse.Result;
 import com.choosemuse.libmuse.ResultLevel;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import android.Manifest;
 import android.app.Activity;
@@ -41,6 +45,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
@@ -60,24 +65,30 @@ import android.support.v4.content.ContextCompat;
  * This example will illustrate how to connect to a Muse headband,
  * register for and receive EEG data and disconnect from the headband.
  * Saving EEG data to a .muse file is also covered.
- *
+ * <p>
  * For instructions on how to pair your headband with your Android device
  * please see:
  * http://developer.choosemuse.com/hardware-firmware/bluetooth-connectivity/developer-sdk-bluetooth-connectivity-2
- *
+ * <p>
  * Usage instructions:
  * 1. Pair your headband if necessary.
  * 2. Run this project.
  * 3. Turn on the Muse headband.
  * 4. Press "Refresh". It should display all paired Muses in the Spinner drop down at the
- *    top of the screen.  It may take a few seconds for the headband to be detected.
+ * top of the screen.  It may take a few seconds for the headband to be detected.
  * 5. Select the headband you want to connect to and press "Connect".
  * 6. You should see EEG and accelerometer data as well as connection status,
- *    version information and relative alpha values appear on the screen.
+ * version information and relative alpha values appear on the screen.
  * 7. You can pause/resume data transmission with the button at the bottom of the screen.
  * 8. To disconnect from the headband, press "Disconnect"
  */
 public class MainActivity extends Activity implements OnClickListener {
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     public void goToUserData(View view) {
         Intent intent = new Intent(this, UserActivity.class);
@@ -106,7 +117,7 @@ public class MainActivity extends Activity implements OnClickListener {
      * The ConnectionListener will be notified whenever there is a change in
      * the connection state of a headband, for example when the headband connects
      * or disconnects.
-     *
+     * <p>
      * Note that ConnectionListener is an inner class at the bottom of this file
      * that extends MuseConnectionListener.
      */
@@ -115,7 +126,7 @@ public class MainActivity extends Activity implements OnClickListener {
     /**
      * The DataListener is how you will receive EEG (and other) data from the
      * headband.
-     *
+     * <p>
      * Note that DataListener is an inner class at the bottom of this file
      * that extends MuseDataListener.
      */
@@ -125,11 +136,11 @@ public class MainActivity extends Activity implements OnClickListener {
      * Data comes in from the headband at a very fast rate; 220Hz, 256Hz or 500Hz,
      * depending on the type of headband and the preset configuration.  We buffer the
      * data that is read until we can update the UI.
-     *
+     * <p>
      * The stale flags indicate whether or not new data has been received and the buffers
      * hold the values of the last data packet received.  We are displaying the EEG, ALPHA_RELATIVE
      * and ACCELEROMETER values in this example.
-     *
+     * <p>
      * Note: the array lengths of the buffers are taken from the comments in
      * MuseDataPacketType, which specify 3 values for accelerometer and 6
      * values for EEG and EEG-derived packets.
@@ -215,6 +226,9 @@ public class MainActivity extends Activity implements OnClickListener {
 
         // Start our asynchronous updates of the UI.
         handler.post(tickUi);
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     protected void onPause() {
@@ -301,21 +315,20 @@ public class MainActivity extends Activity implements OnClickListener {
      * one to provide context and the second to request the permission.
      * On an Android device running an earlier version, nothing is displayed
      * as the permission is granted from the manifest.
-     *
+     * <p>
      * If the permission is not granted, then Muse 2016 (MU-02) headbands will
      * not be discovered and a SecurityException will be thrown.
      */
     private void ensurePermissions() {
 
         if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-        {
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // We don't have the ACCESS_COARSE_LOCATION permission so create the dialogs asking
             // the user to grant us the permission.
 
             DialogInterface.OnClickListener buttonListener =
                     new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which){
+                        public void onClick(DialogInterface dialog, int which) {
                             dialog.dismiss();
                             ActivityCompat.requestPermissions(MainActivity.this,
                                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
@@ -347,16 +360,22 @@ public class MainActivity extends Activity implements OnClickListener {
     public void museListChanged() {
         final List<Muse> list = manager.getMuses();
         spinnerAdapter.clear();
-        for (Muse m : list) {
-            spinnerAdapter.add(m.getName() + " - " + m.getMacAddress());
-        }
+        boolean isAnyDevices = list.size() > 0;
+        musesSpinner.setEnabled(isAnyDevices);
+        if (isAnyDevices)
+            for (Muse m : list) {
+                spinnerAdapter.add(m.getName() + " - " + m.getMacAddress());
+            }
+        else
+            spinnerAdapter.add(getResources().getString(R.string.noDevicesFound));
     }
 
     /**
      * You will receive a callback to this method each time there is a change to the
      * connection state of one of the headbands.
-     * @param p     A packet containing the current and prior connection states
-     * @param muse  The headband whose state changed.
+     *
+     * @param p    A packet containing the current and prior connection states
+     * @param muse The headband whose state changed.
      */
     public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
 
@@ -403,8 +422,9 @@ public class MainActivity extends Activity implements OnClickListener {
      * You will receive a callback to this method each time the headband sends a MuseDataPacket
      * that you have registered.  You can use different listeners for different packet types or
      * a single listener for all packet types as we have done here.
-     * @param p     The data packet containing the data from the headband (eg. EEG data)
-     * @param muse  The headband that sent the information.
+     *
+     * @param p    The data packet containing the data from the headband (eg. EEG data)
+     * @param muse The headband that sent the information.
      */
     public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
         writeDataPacketToFile(p);
@@ -413,18 +433,18 @@ public class MainActivity extends Activity implements OnClickListener {
         final long n = p.valuesSize();
         switch (p.packetType()) {
             case EEG:
-                assert(eegBuffer.length >= n);
-                getEegChannelValues(eegBuffer,p);
+                assert (eegBuffer.length >= n);
+                getEegChannelValues(eegBuffer, p);
                 eegStale = true;
                 break;
             case ACCELEROMETER:
-                assert(accelBuffer.length >= n);
+                assert (accelBuffer.length >= n);
                 getAccelValues(p);
                 accelStale = true;
                 break;
             case ALPHA_RELATIVE:
-                assert(alphaBuffer.length >= n);
-                getEegChannelValues(alphaBuffer,p);
+                assert (alphaBuffer.length >= n);
+                getEegChannelValues(alphaBuffer, p);
                 alphaStale = true;
                 break;
             case BATTERY:
@@ -439,8 +459,9 @@ public class MainActivity extends Activity implements OnClickListener {
      * You will receive a callback to this method each time an artifact packet is generated if you
      * have registered for the ARTIFACTS data type.  MuseArtifactPackets are generated when
      * eye blinks are detected, the jaw is clenched and when the headband is put on or removed.
-     * @param p     The artifact packet with the data from the headband.
-     * @param muse  The headband that sent the information.
+     *
+     * @param p    The artifact packet with the data from the headband.
+     * @param muse The headband that sent the information.
      */
     public void receiveMuseArtifactPacket(final MuseArtifactPacket p, final Muse muse) {
     }
@@ -448,7 +469,7 @@ public class MainActivity extends Activity implements OnClickListener {
     /**
      * Helper methods to get different packet values.  These methods simply store the
      * data in the buffers for later display in the UI.
-     *
+     * <p>
      * getEegChannelValue can be used for any EEG or EEG derived data packet type
      * such as EEG, ALPHA_ABSOLUTE, ALPHA_RELATIVE or HSI_PRECISION.  See the documentation
      * of MuseDataPacketType for all of the available values.
@@ -470,6 +491,7 @@ public class MainActivity extends Activity implements OnClickListener {
         accelBuffer[2] = p.getAccelerometerValue(Accelerometer.Z);
     }
 
+    private Spinner musesSpinner;
 
     //--------------------------------------
     // UI Specific methods
@@ -489,13 +511,15 @@ public class MainActivity extends Activity implements OnClickListener {
         pauseButton.setOnClickListener(this);
 
         spinnerAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
-        Spinner musesSpinner = (Spinner) findViewById(R.id.muses_spinner);
+        musesSpinner = (Spinner) findViewById(R.id.muses_spinner);
         musesSpinner.setAdapter(spinnerAdapter);
+
+        museListChanged();
     }
 
     /**
      * The runnable that is used to update the UI at 60Hz.
-     *
+     * <p>
      * We update the UI from this Runnable instead of in packet handlers
      * because packets come in at high frequency -- 220Hz or more for raw EEG
      * -- and it only makes sense to update the UI at about 60fps. The update
@@ -523,19 +547,19 @@ public class MainActivity extends Activity implements OnClickListener {
      * from the buffers.
      */
     private void updateAccel() {
-        TextView acc_x = (TextView)findViewById(R.id.acc_x);
-        TextView acc_y = (TextView)findViewById(R.id.acc_y);
-        TextView acc_z = (TextView)findViewById(R.id.acc_z);
+        TextView acc_x = (TextView) findViewById(R.id.acc_x);
+        TextView acc_y = (TextView) findViewById(R.id.acc_y);
+        TextView acc_z = (TextView) findViewById(R.id.acc_z);
         acc_x.setText(String.format("%6.2f", accelBuffer[0]));
         acc_y.setText(String.format("%6.2f", accelBuffer[1]));
         acc_z.setText(String.format("%6.2f", accelBuffer[2]));
     }
 
     private void updateEeg() {
-        TextView tp9 = (TextView)findViewById(R.id.eeg_tp9);
-        TextView fp1 = (TextView)findViewById(R.id.eeg_af7);
-        TextView fp2 = (TextView)findViewById(R.id.eeg_af8);
-        TextView tp10 = (TextView)findViewById(R.id.eeg_tp10);
+        TextView tp9 = (TextView) findViewById(R.id.eeg_tp9);
+        TextView fp1 = (TextView) findViewById(R.id.eeg_af7);
+        TextView fp2 = (TextView) findViewById(R.id.eeg_af8);
+        TextView tp10 = (TextView) findViewById(R.id.eeg_tp10);
         tp9.setText(String.format("%6.2f", eegBuffer[0]));
         fp1.setText(String.format("%6.2f", eegBuffer[1]));
         fp2.setText(String.format("%6.2f", eegBuffer[2]));
@@ -543,13 +567,13 @@ public class MainActivity extends Activity implements OnClickListener {
     }
 
     private void updateAlpha() {
-        TextView elem1 = (TextView)findViewById(R.id.elem1);
+        TextView elem1 = (TextView) findViewById(R.id.elem1);
         elem1.setText(String.format("%6.2f", alphaBuffer[0]));
-        TextView elem2 = (TextView)findViewById(R.id.elem2);
+        TextView elem2 = (TextView) findViewById(R.id.elem2);
         elem2.setText(String.format("%6.2f", alphaBuffer[1]));
-        TextView elem3 = (TextView)findViewById(R.id.elem3);
+        TextView elem3 = (TextView) findViewById(R.id.elem3);
         elem3.setText(String.format("%6.2f", alphaBuffer[2]));
-        TextView elem4 = (TextView)findViewById(R.id.elem4);
+        TextView elem4 = (TextView) findViewById(R.id.elem4);
         elem4.setText(String.format("%6.2f", alphaBuffer[3]));
     }
 
@@ -567,7 +591,7 @@ public class MainActivity extends Activity implements OnClickListener {
             Looper.prepare();
             fileHandler.set(new Handler());
             final File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            final File file = new File(dir, "new_muse_file.muse" );
+            final File file = new File(dir, "new_muse_file.muse");
             // MuseFileWriter will append to an existing file.
             // In this case, we want to start fresh so the file
             // if it exists.
@@ -583,7 +607,8 @@ public class MainActivity extends Activity implements OnClickListener {
     /**
      * Writes the provided MuseDataPacket to the file.  MuseFileWriter knows
      * how to write all packet types generated from LibMuse.
-     * @param p     The data packet to write.
+     *
+     * @param p The data packet to write.
      */
     private void writeDataPacketToFile(final MuseDataPacket p) {
         Handler h = fileHandler.get();
@@ -604,7 +629,8 @@ public class MainActivity extends Activity implements OnClickListener {
         Handler h = fileHandler.get();
         if (h != null) {
             h.post(new Runnable() {
-                @Override public void run() {
+                @Override
+                public void run() {
                     MuseFileWriter w = fileWriter.get();
                     // Annotation strings can be added to the file to
                     // give context as to what is happening at that point in
@@ -620,9 +646,10 @@ public class MainActivity extends Activity implements OnClickListener {
 
     /**
      * Reads the provided .muse file and prints the data to the logcat.
-     * @param name  The name of the file to read.  The file in this example
-     *              is assumed to be in the Environment.DIRECTORY_DOWNLOADS
-     *              directory.
+     *
+     * @param name The name of the file to read.  The file in this example
+     *             is assumed to be in the Environment.DIRECTORY_DOWNLOADS
+     *             directory.
      */
     private void playMuseFile(String name) {
 
@@ -648,10 +675,10 @@ public class MainActivity extends Activity implements OnClickListener {
             long timestamp = fileReader.getMessageTimestamp();
 
             Log.i(tag, "type: " + type.toString() +
-                  " id: " + Integer.toString(id) +
-                  " timestamp: " + String.valueOf(timestamp));
+                    " id: " + Integer.toString(id) +
+                    " timestamp: " + String.valueOf(timestamp));
 
-            switch(type) {
+            switch (type) {
                 // EEG messages contain raw EEG data or DRL/REF data.
                 // EEG derived packets like ALPHA_RELATIVE and artifact packets
                 // are stored as MUSE_ELEMENTS messages.
@@ -683,6 +710,42 @@ public class MainActivity extends Activity implements OnClickListener {
             // Read the next message.
             res = fileReader.gotoNextMessage();
         }
+    }
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+                .setName("Main Page") // TODO: Define a title for the content shown.
+                // TODO: Make sure this auto-generated URL is correct.
+                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+                .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+                .setObject(object)
+                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+                .build();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        AppIndex.AppIndexApi.start(client, getIndexApiAction());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(client, getIndexApiAction());
+        client.disconnect();
     }
 
     //--------------------------------------

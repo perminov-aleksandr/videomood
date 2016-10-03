@@ -5,8 +5,8 @@
     android:versionName="1.0">
 
     <uses-sdk
-        android:minSdkVersion="15"
-        android:targetSdkVersion="23" />
+        android:minSdkVersion="21"
+        android:targetSdkVersion="21" />
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -36,8 +36,11 @@
             android:label="@string/title_activity_user"/>
         <activity
             android:name=".VideoActivity"
-            android:screenOrientation="sensorLandscape"
-            android:label="@string/title_activity_video"></activity>
+            android:label="@string/title_activity_video"
+            android:configChanges="orientation|screenSize"></activity>
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 
 </manifest>

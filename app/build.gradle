@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 21
+    compileSdkVersion 23
     buildToolsVersion "23.0.3"
 
     defaultConfig {
         applicationId "com.choosemuse.example.libmuse"
-        minSdkVersion 15
+        minSdkVersion 21
         targetSdkVersion 23
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_1_7
@@ -25,4 +25,5 @@ android {
 dependencies {
     compile files('libs/libmuse_android.jar')
     compile 'com.android.support:support-v4:23.4.0'
+    compile 'com.google.android.gms:play-services-appindexing:8.4.0'
 }
