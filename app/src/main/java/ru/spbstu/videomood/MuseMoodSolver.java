@@ -3,6 +3,8 @@ package ru.spbstu.videomood;
 import java.util.HashMap;
 import java.util.Map;
 
+import android.annotation.TargetApi;
+import android.os.Build;
 import android.util.Range;
 
 import com.choosemuse.libmuse.MuseManagerAndroid;
@@ -11,16 +13,19 @@ public class MuseMoodSolver {
 
     private User user;
 
+    public User getUser() {
+        return user;
+    }
+
     private final int alphaIndex = 0;
     private final int betaIndex = 1;
     private final int gammaIndex = 2;
     private final int deltaIndex = 3;
     private final int thetaIndex = 4;
 
-    private final double[] sessionScores = new double[5];
-
     private final Map<Range<Double>[], Mood> moodTable;
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public MuseMoodSolver(MuseManagerAndroid museManager, User user) {
         this.user = user;
 
@@ -43,7 +48,8 @@ public class MuseMoodSolver {
         }, Mood.GREAT);
     }
 
-    public Mood solve() {
+    public void solve(double[] sessionScores) {
+        Mood mood = null;
         for (Range<Double>[] rangeArr : moodTable.keySet()) {
             boolean isInAllRanges = true;
             for (int i = 0; i < rangeArr.length; i++) {
@@ -54,10 +60,13 @@ public class MuseMoodSolver {
                     break;
                 }
             }
-            if (isInAllRanges)
-                return moodTable.get(rangeArr);
+            if (isInAllRanges) {
+                mood = moodTable.get(rangeArr);
+                break;
+            }
         }
 
-        return user.getCurrentMood();
+        if (mood != null)
+            user.setCurrentMood(mood);
     }
 }

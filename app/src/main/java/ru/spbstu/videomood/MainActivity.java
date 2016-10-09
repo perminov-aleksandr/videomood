@@ -93,7 +93,7 @@ public class MainActivity extends Activity implements OnClickListener {
     private int selectedMuseIndex;
 
     public void goToUserData(View view) {
-        //manager.stopListening();
+        manager.stopListening();
 
         selectedMuseIndex = musesSpinner.getSelectedItemPosition();
 
@@ -118,7 +118,7 @@ public class MainActivity extends Activity implements OnClickListener {
      * headband, register listeners to receive EEG data and get headband
      * configuration and version information.
      */
-    //private Muse muse;
+    private Muse muse;
 
     /**
      * The ConnectionListener will be notified whenever there is a change in
@@ -128,7 +128,7 @@ public class MainActivity extends Activity implements OnClickListener {
      * Note that ConnectionListener is an inner class at the bottom of this file
      * that extends MuseConnectionListener.
      */
-    //private ConnectionListener connectionListener;
+    private ConnectionListener connectionListener;
 
     /**
      * Data comes in from the headband at a very fast rate; 220Hz, 256Hz or 500Hz,
@@ -194,17 +194,17 @@ public class MainActivity extends Activity implements OnClickListener {
 
         // We need to set the context on MuseManagerAndroid before we can do anything.
         // This must come before other LibMuse API calls as it also loads the library.
-        //manager = MuseManagerAndroid.getInstance();
-        //manager.setContext(this);
+        manager = MuseManagerAndroid.getInstance();
+        manager.setContext(this);
 
-        //Log.i(TAG, "LibMuse version=" + LibmuseVersion.instance().getString());
+        Log.i(TAG, "LibMuse version=" + LibmuseVersion.instance().getString());
 
         WeakReference<MainActivity> weakActivity = new WeakReference<>(this);
         // Register a listener to receive connection state changes.
-        //connectionListener = new ConnectionListener(weakActivity);
+        connectionListener = new ConnectionListener(weakActivity);
         // Register a listener to receive notifications of what Muse headbands
         // we can connect to.
-        //manager.setMuseListener(new MuseL(weakActivity));
+        manager.setMuseListener(new MuseL(weakActivity));
 
         // Muse 2016 (MU-02) headbands use Bluetooth Low Energy technology to
         // simplify the connection process.  This requires access to the COARSE_LOCATION
@@ -217,7 +217,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
         // Start up a thread for asynchronous file operations.
         // This is only needed if you want to do File I/O.
-        //fileThread.start();
+        fileThread.start();
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -228,7 +228,7 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onPause();
         // It is important to call stopListening when the Activity is paused
         // to avoid a resource leak from the LibMuse library.
-        //manager.stopListening();
+        manager.stopListening();
     }
 
     @Override
@@ -238,8 +238,8 @@ public class MainActivity extends Activity implements OnClickListener {
             // The user has pressed the "Refresh" button.
             // Start listening for nearby or paired Muse headbands. We call stopListening
             // first to make sure startListening will clear the list of headbands and start fresh.
-            //manager.stopListening();
-            //manager.startListening();
+            manager.stopListening();
+            manager.startListening();
 
         } /*else if (v.getId() == R.id.connect) {
 

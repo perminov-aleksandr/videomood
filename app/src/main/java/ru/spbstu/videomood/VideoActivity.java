@@ -1,25 +1,17 @@
 package ru.spbstu.videomood;
 
-import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.AttributeSet;
 import android.util.Range;
-import android.view.MotionEvent;
-import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.VideoView;
 
-import com.choosemuse.libmuse.Accelerometer;
 import com.choosemuse.libmuse.ConnectionState;
 import com.choosemuse.libmuse.Eeg;
 import com.choosemuse.libmuse.Muse;
@@ -40,7 +32,7 @@ public class VideoActivity extends Activity {
 
     private MuseMoodSolver moodSolver;
 
-    private final double[] eegBuffer = new double[6];
+    private final double[] eegBuffer = new double[5];
     private boolean eegStale;
 
     private void updateEeg() {
@@ -114,7 +106,7 @@ public class VideoActivity extends Activity {
         public void run() {
             if (eegStale) {
                 updateEeg();
-                Mood mood = moodSolver.solve();
+                moodSolver.solve(eegBuffer);
             }
             handler.postDelayed(tickUi, 1000 / 60);
         }
@@ -139,45 +131,49 @@ public class VideoActivity extends Activity {
 
         WeakReference<VideoActivity> weakActivity = new WeakReference<VideoActivity>(this);
         // Register a listener to handle connection state changes
-        //connectionListener = new ConnectionListener(weakActivity);
+        connectionListener = new ConnectionListener(weakActivity);
         // Register a listener to receive data from a Muse.
-        //dataListener = new DataListener(weakActivity);
+        dataListener = new DataListener(weakActivity);
 
         // We need to set the context on MuseManagerAndroid before we can do anything.
         // This must come before other LibMuse API calls as it also loads the library.
-        //manager = MuseManagerAndroid.getInstance();
-        //manager.setContext(this);
-
-        //List<Muse> availableMuses = manager.getMuses();
-
-        Intent intent = getIntent();
-        int selectedMuseIndex = intent.getIntExtra("selectedMuseIndex", 0);
-        // Cache the Muse that the user has selected.
-        //muse = availableMuses.get(selectedMuseIndex);
-        //todo: check for null, process it
-        //registerMuseListeners(availableMuses);
-
-        //todo: get User from Intent
-        //todo: initialize moodSolver with user
-        int ageRangeIndex = intent.getIntExtra(Const.ageRangeIndexStr, 0);
-        Range<Integer> ageRange = Const.ageRanges[ageRangeIndex];
-        User user = new User(ageRange);
-
-        int moodIndex = intent.getIntExtra(Const.moodStr, 0);
-        user.setCurrentMood(Const.moods[moodIndex]);
-
-        moodSolver = new MuseMoodSolver(manager, user);
+        manager = MuseManagerAndroid.getInstance();
+        manager.setContext(this);
 
         //initUI
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_video);
         initVideoView();
 
-        //start receiving muse packets
-        //muse.runAsynchronously();
+        Intent intent = getIntent();
+        initMoodSolver(intent);
 
-        // Start our asynchronous updates of the UI.
-        //handler.post(tickUi);
+        List<Muse> availableMuses = manager.getMuses();
+        // Cache the Muse that the user has selected.
+        if (availableMuses.size() != 0) {
+            int selectedMuseIndex = intent.getIntExtra(Const.selectedMuseIndexStr, -1);
+            //todo: check for null, process it - go to start activity
+            muse = availableMuses.get(selectedMuseIndex);
+
+            registerMuseListeners(availableMuses);
+
+            //start receiving muse packets
+            muse.runAsynchronously();
+
+            // Start our asynchronous updates of the UI.
+            handler.post(tickUi);
+        }
+    }
+
+    private void initMoodSolver(Intent intent) {
+        int ageRangeIndex = intent.getIntExtra(Const.ageRangeIndexStr, -1);
+        Range<Integer> ageRange = Const.ageRanges[ageRangeIndex];
+        User user = new User(ageRange);
+
+        int moodIndex = intent.getIntExtra(Const.moodStr, -1);
+        user.setCurrentMood(Const.moods[moodIndex]);
+
+        moodSolver = new MuseMoodSolver(manager, user);
     }
 
     /**

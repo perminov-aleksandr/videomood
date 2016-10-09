@@ -82,7 +82,7 @@ public class UserActivity extends Activity {
         }
 
         Intent prevIntent = getIntent();
-        int selectedMuseIndex = prevIntent.getIntExtra(Const.selectedMuseIndexStr, 0);
+        int selectedMuseIndex = prevIntent.getIntExtra(Const.selectedMuseIndexStr, -1);
 
         Intent intent = new Intent(this, VideoActivity.class);
         intent.putExtra(Const.ageRangeIndexStr, ageIndex);

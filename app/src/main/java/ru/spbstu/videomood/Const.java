@@ -1,7 +1,10 @@
 package ru.spbstu.videomood;
 
+import android.annotation.TargetApi;
+import android.os.Build;
 import android.util.Range;
 
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class Const {
     public static final String selectedMuseIndexStr = "selectedMuseIndex";
     public static final String ageRangeIndexStr = "ageRangeIndex";
