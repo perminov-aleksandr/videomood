@@ -1,7 +1,9 @@
 package ru.spbstu.videomood;
 
+import android.util.Range;
+
 public class User {
-    public User(AgeRange ageRange) {
+    public User(Range<Integer> ageRange) {
         this.ageRange = ageRange;
     }
 
@@ -11,9 +13,13 @@ public class User {
         return currentMood;
     }
 
-    private AgeRange ageRange;
+    public void setCurrentMood(Mood mood) {
+        currentMood = mood;
+    }
 
-    public AgeRange getAgeRange() {
+    private Range<Integer> ageRange;
+
+    public Range<Integer> getAgeRange() {
         return ageRange;
     }
 }

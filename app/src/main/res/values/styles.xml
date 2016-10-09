@@ -29,4 +29,8 @@
         <item name="android:background">@color/black_overlay</item>
     </style>
 
+    <style name="ValidationMessageStyle" parent="@android:style/TextAppearance.DeviceDefault.Medium">
+        <item name="android:textColor">#d50000</item>
+    </style>
+
 </resources>

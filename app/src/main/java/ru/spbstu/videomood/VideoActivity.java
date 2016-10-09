@@ -4,17 +4,33 @@ import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Range;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.MediaController;
+import android.widget.TextView;
 import android.widget.VideoView;
+
+import com.choosemuse.libmuse.Accelerometer;
+import com.choosemuse.libmuse.ConnectionState;
+import com.choosemuse.libmuse.Eeg;
+import com.choosemuse.libmuse.Muse;
+import com.choosemuse.libmuse.MuseConnectionListener;
+import com.choosemuse.libmuse.MuseConnectionPacket;
+import com.choosemuse.libmuse.MuseDataPacket;
+import com.choosemuse.libmuse.MuseDataPacketType;
+import com.choosemuse.libmuse.MuseManagerAndroid;
+
+import java.lang.ref.WeakReference;
+import java.util.List;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -22,28 +38,219 @@ import android.widget.VideoView;
  */
 public class VideoActivity extends Activity {
 
-    private VideoView videoView;
+    private MuseMoodSolver moodSolver;
+
+    private final double[] eegBuffer = new double[6];
+    private boolean eegStale;
+
+    private void updateEeg() {
+        TextView tp9 = (TextView) findViewById(R.id.eeg_tp9);
+        TextView fp1 = (TextView) findViewById(R.id.eeg_af7);
+        TextView fp2 = (TextView) findViewById(R.id.eeg_af8);
+        TextView tp10 = (TextView) findViewById(R.id.eeg_tp10);
+        tp9.setText(String.format("%6.2f", eegBuffer[0]));
+        fp1.setText(String.format("%6.2f", eegBuffer[1]));
+        fp2.setText(String.format("%6.2f", eegBuffer[2]));
+        tp10.setText(String.format("%6.2f", eegBuffer[3]));
+    }
+
+    public void processMuseDataPacket(final MuseDataPacket p, final Muse muse) {
+        // valuesSize returns the number of data values contained in the packet.
+        final long n = p.valuesSize();
+        switch (p.packetType()) {
+            case EEG:
+                assert (eegBuffer.length >= n);
+                getEegChannelValues(eegBuffer, p);
+                eegStale = true;
+                break;
+            case ACCELEROMETER:
+            case ALPHA_RELATIVE:
+            case BATTERY:
+            case DRL_REF:
+            case QUANTIZATION:
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Helper methods to get different packet values.  These methods simply store the
+     * data in the buffers for later display in the UI.
+     * <p>
+     * getEegChannelValue can be used for any EEG or EEG derived data packet type
+     * such as EEG, ALPHA_ABSOLUTE, ALPHA_RELATIVE or HSI_PRECISION.  See the documentation
+     * of MuseDataPacketType for all of the available values.
+     * Specific packet types like ACCELEROMETER, GYRO, BATTERY and DRL_REF have their own
+     * getValue methods.
+     */
+    private void getEegChannelValues(double[] buffer, MuseDataPacket p) {
+        buffer[0] = p.getEegChannelValue(Eeg.EEG1);
+        buffer[1] = p.getEegChannelValue(Eeg.EEG2);
+        buffer[2] = p.getEegChannelValue(Eeg.EEG3);
+        buffer[3] = p.getEegChannelValue(Eeg.EEG4);
+        buffer[4] = p.getEegChannelValue(Eeg.AUX_LEFT);
+        buffer[5] = p.getEegChannelValue(Eeg.AUX_RIGHT);
+    }
+
+    /**
+     * We will be updating the UI using a handler instead of in packet handlers because
+     * packets come in at a very high frequency and it only makes sense to update the UI
+     * at about 60fps. The update functions do some string allocation, so this reduces our memory
+     * footprint and makes GC pauses less frequent/noticeable.
+     */
+    private final Handler handler = new Handler();
+
+    /**
+     * The runnable that is used to update the UI at 60Hz.
+     * <p>
+     * We update the UI from this Runnable instead of in packet handlers
+     * because packets come in at high frequency -- 220Hz or more for raw EEG
+     * -- and it only makes sense to update the UI at about 60fps. The update
+     * functions do some string allocation, so this reduces our memory
+     * footprint and makes GC pauses less frequent/noticeable.
+     */
+    private final Runnable tickUi = new Runnable() {
+        @Override
+        public void run() {
+            if (eegStale) {
+                updateEeg();
+                Mood mood = moodSolver.solve();
+            }
+            handler.postDelayed(tickUi, 1000 / 60);
+        }
+    };
+
+    /**
+     * The MuseManager is how you detect Muse headbands and receive notifications
+     * when the list of available headbands changes.
+     */
+    private MuseManagerAndroid manager;
+
+    /**
+     * A Muse refers to a Muse headband.  Use this to connect/disconnect from the
+     * headband, register listeners to receive EEG data and get headband
+     * configuration and version information.
+     */
+    private Muse muse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        WeakReference<VideoActivity> weakActivity = new WeakReference<VideoActivity>(this);
+        // Register a listener to handle connection state changes
+        //connectionListener = new ConnectionListener(weakActivity);
+        // Register a listener to receive data from a Muse.
+        //dataListener = new DataListener(weakActivity);
+
+        // We need to set the context on MuseManagerAndroid before we can do anything.
+        // This must come before other LibMuse API calls as it also loads the library.
+        //manager = MuseManagerAndroid.getInstance();
+        //manager.setContext(this);
+
+        //List<Muse> availableMuses = manager.getMuses();
+
+        Intent intent = getIntent();
+        int selectedMuseIndex = intent.getIntExtra("selectedMuseIndex", 0);
+        // Cache the Muse that the user has selected.
+        //muse = availableMuses.get(selectedMuseIndex);
+        //todo: check for null, process it
+        //registerMuseListeners(availableMuses);
+
+        //todo: get User from Intent
+        //todo: initialize moodSolver with user
+        int ageRangeIndex = intent.getIntExtra(Const.ageRangeIndexStr, 0);
+        Range<Integer> ageRange = Const.ageRanges[ageRangeIndex];
+        User user = new User(ageRange);
+
+        int moodIndex = intent.getIntExtra(Const.moodStr, 0);
+        user.setCurrentMood(Const.moods[moodIndex]);
+
+        moodSolver = new MuseMoodSolver(manager, user);
+
+        //initUI
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_video);
+        initVideoView();
 
+        //start receiving muse packets
+        //muse.runAsynchronously();
+
+        // Start our asynchronous updates of the UI.
+        //handler.post(tickUi);
+    }
+
+    /**
+     * The DataListener is how you will receive EEG (and other) data from the
+     * headband.
+     * <p>
+     * Note that DataListener is an inner class at the bottom of this file
+     * that extends MuseDataListener.
+     */
+    private DataListener dataListener;
+
+    /**
+     * The ConnectionListener will be notified whenever there is a change in
+     * the connection state of a headband, for example when the headband connects
+     * or disconnects.
+     * <p>
+     * Note that ConnectionListener is an inner class at the bottom of this file
+     * that extends MuseConnectionListener.
+     */
+    private ConnectionListener connectionListener;
+
+    // Unregister all prior listeners and register our data listener to
+    // receive the MuseDataPacketTypes we are interested in.  If you do
+    // not register a listener for a particular data type, you will not
+    // receive data packets of that type.
+    private void registerMuseListeners(List<Muse> availableMuses) {
+        muse.unregisterAllListeners();
+        muse.registerConnectionListener(connectionListener);
+        muse.registerDataListener(dataListener, MuseDataPacketType.EEG);
+        muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
+        muse.registerDataListener(dataListener, MuseDataPacketType.ACCELEROMETER);
+        muse.registerDataListener(dataListener, MuseDataPacketType.BATTERY);
+        muse.registerDataListener(dataListener, MuseDataPacketType.DRL_REF);
+        muse.registerDataListener(dataListener, MuseDataPacketType.QUANTIZATION);
+    }
+
+    private void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
+        final ConnectionState current = p.getCurrentConnectionState();
+
+        //todo: handle connection and disconnection
+
+        if (current == ConnectionState.DISCONNECTED) {
+            this.muse = null;
+        }
+    }
+
+    private VideoView videoView;
+
+    private void initVideoView() {
         videoView = (VideoView) findViewById(R.id.videoView);
-        videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" +R.raw.sample_video));
+        videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.sample_video));
         MediaController mediaController = new MediaController(this);
         videoView.setMediaController(mediaController);
         videoView.requestFocus();
         videoView.start();
-
-        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+    }
+
+    class ConnectionListener extends MuseConnectionListener {
+        final WeakReference<VideoActivity> activityRef;
+
+        ConnectionListener(final WeakReference<VideoActivity> activityRef) {
+            this.activityRef = activityRef;
+        }
+
+        @Override
+        public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
+            activityRef.get().receiveMuseConnectionPacket(p, muse);
+        }
     }
 }
 
