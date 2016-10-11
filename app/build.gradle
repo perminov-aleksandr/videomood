@@ -5,8 +5,8 @@ android {
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "com.choosemuse.example.libmuse"
-        minSdkVersion 15
+        applicationId "ru.spbstu.videomood"
+        minSdkVersion 21
         targetSdkVersion 23
         compileOptions {
             sourceCompatibility JavaVersion.VERSION_1_7

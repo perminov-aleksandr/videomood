@@ -7,8 +7,6 @@ import android.annotation.TargetApi;
 import android.os.Build;
 import android.util.Range;
 
-import com.choosemuse.libmuse.MuseManagerAndroid;
-
 public class MuseMoodSolver {
 
     private User user;
@@ -26,7 +24,7 @@ public class MuseMoodSolver {
     private final Map<Range<Double>[], Mood> moodTable;
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public MuseMoodSolver(MuseManagerAndroid museManager, User user) {
+    public MuseMoodSolver( User user) {
         this.user = user;
 
         moodTable = new HashMap<>();

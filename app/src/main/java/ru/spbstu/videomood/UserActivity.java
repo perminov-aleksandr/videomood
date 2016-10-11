@@ -3,6 +3,7 @@ package ru.spbstu.videomood;
 import android.content.Intent;
 import android.os.Bundle;
 import android.app.Activity;
+import android.util.Log;
 import android.view.View;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -13,6 +14,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static android.R.attr.id;
 
 public class UserActivity extends Activity {
+
+    private static final String TAG = "UserActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,10 +87,14 @@ public class UserActivity extends Activity {
         Intent prevIntent = getIntent();
         int selectedMuseIndex = prevIntent.getIntExtra(Const.selectedMuseIndexStr, -1);
 
+        Log.i(TAG, "received selected muse index from MainActivity is " + selectedMuseIndex);
+
         Intent intent = new Intent(this, VideoActivity.class);
         intent.putExtra(Const.ageRangeIndexStr, ageIndex);
         intent.putExtra(Const.moodStr, moodIndex);
         intent.putExtra(Const.selectedMuseIndexStr, selectedMuseIndex);
+
+        Log.i(TAG, "put selected ageRange index is " + ageIndex + ", moodIndex is " + moodIndex + ", museIndex is " + selectedMuseIndex);
 
         startActivity(intent);
     }

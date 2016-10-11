@@ -1,15 +1,21 @@
 package ru.spbstu.videomood;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.util.Range;
 import android.view.Window;
 import android.widget.MediaController;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.choosemuse.libmuse.ConnectionState;
@@ -21,6 +27,7 @@ import com.choosemuse.libmuse.MuseDataPacket;
 import com.choosemuse.libmuse.MuseDataPacketType;
 import com.choosemuse.libmuse.MuseManagerAndroid;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
@@ -30,20 +37,21 @@ import java.util.List;
  */
 public class VideoActivity extends Activity {
 
+    private static final String TAG = "VideoMood:VideoActivity";
     private MuseMoodSolver moodSolver;
 
-    private final double[] eegBuffer = new double[5];
-    private boolean eegStale;
+    private final double[] eegBuffer = new double[6];
+    private boolean eegStale = false;
 
     private void updateEeg() {
-        TextView tp9 = (TextView) findViewById(R.id.eeg_tp9);
-        TextView fp1 = (TextView) findViewById(R.id.eeg_af7);
-        TextView fp2 = (TextView) findViewById(R.id.eeg_af8);
-        TextView tp10 = (TextView) findViewById(R.id.eeg_tp10);
-        tp9.setText(String.format("%6.2f", eegBuffer[0]));
-        fp1.setText(String.format("%6.2f", eegBuffer[1]));
-        fp2.setText(String.format("%6.2f", eegBuffer[2]));
-        tp10.setText(String.format("%6.2f", eegBuffer[3]));
+        TextView alpha = (TextView) findViewById(R.id.alpha);
+        TextView beta = (TextView) findViewById(R.id.beta);
+        TextView gamma = (TextView) findViewById(R.id.gamma);
+        TextView delta = (TextView) findViewById(R.id.delta);
+        alpha.setText(String.format("%6.2f", eegBuffer[0]));
+        beta.setText(String.format("%6.2f", eegBuffer[1]));
+        gamma.setText(String.format("%6.2f", eegBuffer[2]));
+        delta.setText(String.format("%6.2f", eegBuffer[3]));
     }
 
     public void processMuseDataPacket(final MuseDataPacket p, final Muse muse) {
@@ -106,7 +114,7 @@ public class VideoActivity extends Activity {
         public void run() {
             if (eegStale) {
                 updateEeg();
-                moodSolver.solve(eegBuffer);
+                //moodSolver.solve(eegBuffer);
             }
             handler.postDelayed(tickUi, 1000 / 60);
         }
@@ -125,55 +133,98 @@ public class VideoActivity extends Activity {
      */
     private Muse muse;
 
+    private ContentProvider contentProvider;
+
+    private int selectedMuseIndex;
+    private int ageRangeIndex;
+    private int moodIndex;
+
+    private void fillIndexes(Intent intent) {
+        //todo: check for null, process it - go to start activity
+        ageRangeIndex = intent.getIntExtra(Const.ageRangeIndexStr, -1);
+        assert(ageRangeIndex != -1);
+        moodIndex = intent.getIntExtra(Const.moodStr, -1);
+        assert(moodIndex != -1);
+        selectedMuseIndex = intent.getIntExtra(Const.selectedMuseIndexStr, -1);
+        assert(selectedMuseIndex != -1);
+        //Log.i(TAG, "received selected muse index from UserActivity is " + selectedMuseIndex);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        WeakReference<VideoActivity> weakActivity = new WeakReference<VideoActivity>(this);
-        // Register a listener to handle connection state changes
-        connectionListener = new ConnectionListener(weakActivity);
-        // Register a listener to receive data from a Muse.
-        dataListener = new DataListener(weakActivity);
 
         // We need to set the context on MuseManagerAndroid before we can do anything.
         // This must come before other LibMuse API calls as it also loads the library.
         manager = MuseManagerAndroid.getInstance();
         manager.setContext(this);
 
-        //initUI
+        WeakReference<VideoActivity> weakActivity = new WeakReference<>(this);
+        // Register a listener to handle connection state changes
+        connectionListener = new ConnectionListener(weakActivity);
+        // Register a listener to receive data from a Muse.
+        dataListener = new DataListener(weakActivity);
+
+        fillIndexes(getIntent());
+        initMoodSolver();
+
+        initUI();
+
+        try {
+            contentProvider = new ContentProvider(ageRangeIndex);
+            videoView.setVideoURI(Uri.fromFile(contentProvider.getNext()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            displayErrorDialog();
+            return;
+        }
+
+        List<Muse> availableMuses = manager.getMuses();
+
+        if (availableMuses.size() == 0)  {
+            Log.w(TAG, "There is nothing to connect to");
+            return;
+        }
+
+        // Cache the Muse that the user has selected.
+        muse = availableMuses.get(selectedMuseIndex);
+        registerMuseListeners(muse);
+        //start receiving muse packets
+        muse.runAsynchronously();
+        // Start our asynchronous updates of the UI.
+        handler.post(tickUi);
+    }
+
+    private void initUI() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_video);
         initVideoView();
-
-        Intent intent = getIntent();
-        initMoodSolver(intent);
-
-        List<Muse> availableMuses = manager.getMuses();
-        // Cache the Muse that the user has selected.
-        if (availableMuses.size() != 0) {
-            int selectedMuseIndex = intent.getIntExtra(Const.selectedMuseIndexStr, -1);
-            //todo: check for null, process it - go to start activity
-            muse = availableMuses.get(selectedMuseIndex);
-
-            registerMuseListeners(availableMuses);
-
-            //start receiving muse packets
-            muse.runAsynchronously();
-
-            // Start our asynchronous updates of the UI.
-            handler.post(tickUi);
-        }
+        museState = (TextView) findViewById(R.id.museState);
     }
 
-    private void initMoodSolver(Intent intent) {
-        int ageRangeIndex = intent.getIntExtra(Const.ageRangeIndexStr, -1);
+    private void displayErrorDialog() {
+        final Activity activity = this;
+        new AlertDialog.Builder(this)
+                .setTitle("Error")
+                .setMessage("No suitable video files found. Application will quit")
+                .setPositiveButton("Okay", new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                        activity.finishAffinity();
+                    }
+                })
+                .show();
+    }
+
+    private void initMoodSolver() {
         Range<Integer> ageRange = Const.ageRanges[ageRangeIndex];
         User user = new User(ageRange);
 
-        int moodIndex = intent.getIntExtra(Const.moodStr, -1);
         user.setCurrentMood(Const.moods[moodIndex]);
 
-        moodSolver = new MuseMoodSolver(manager, user);
+        moodSolver = new MuseMoodSolver(user);
     }
 
     /**
@@ -199,24 +250,32 @@ public class VideoActivity extends Activity {
     // receive the MuseDataPacketTypes we are interested in.  If you do
     // not register a listener for a particular data type, you will not
     // receive data packets of that type.
-    private void registerMuseListeners(List<Muse> availableMuses) {
+    private void registerMuseListeners(Muse muse) {
         muse.unregisterAllListeners();
         muse.registerConnectionListener(connectionListener);
         muse.registerDataListener(dataListener, MuseDataPacketType.EEG);
-        muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
+        /*muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
         muse.registerDataListener(dataListener, MuseDataPacketType.ACCELEROMETER);
         muse.registerDataListener(dataListener, MuseDataPacketType.BATTERY);
         muse.registerDataListener(dataListener, MuseDataPacketType.DRL_REF);
-        muse.registerDataListener(dataListener, MuseDataPacketType.QUANTIZATION);
+        muse.registerDataListener(dataListener, MuseDataPacketType.QUANTIZATION);*/
     }
+
+    private TextView museState;
 
     private void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
         final ConnectionState current = p.getCurrentConnectionState();
 
         //todo: handle connection and disconnection
+        if (current == ConnectionState.CONNECTED) {
+            videoView.start();
+        }
+
+        museState.setText(current.toString());
 
         if (current == ConnectionState.DISCONNECTED) {
             this.muse = null;
+            videoView.pause();
         }
     }
 
@@ -224,16 +283,37 @@ public class VideoActivity extends Activity {
 
     private void initVideoView() {
         videoView = (VideoView) findViewById(R.id.videoView);
-        videoView.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.sample_video));
         MediaController mediaController = new MediaController(this);
         videoView.setMediaController(mediaController);
         videoView.requestFocus();
-        videoView.start();
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (muse != null)
+            muse.enableDataTransmission(false);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onPause();
+
+        if (muse != null)
+            muse.enableDataTransmission(true);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        muse.disconnect(true);
     }
 
     class ConnectionListener extends MuseConnectionListener {
