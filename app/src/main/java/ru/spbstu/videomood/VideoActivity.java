@@ -54,6 +54,11 @@ public class VideoActivity extends Activity {
         delta.setText(String.format("%6.2f", eegBuffer[3]));
     }
 
+    private void updateMood() {
+        TextView moodTextView = (TextView) findViewById(R.id.mood);
+        moodTextView.setText(moodSolver.getUser().getCurrentMood().toString());
+    }
+
     public void processMuseDataPacket(final MuseDataPacket p, final Muse muse) {
         // valuesSize returns the number of data values contained in the packet.
         final long n = p.valuesSize();
@@ -114,7 +119,8 @@ public class VideoActivity extends Activity {
         public void run() {
             if (eegStale) {
                 updateEeg();
-                //moodSolver.solve(eegBuffer);
+                moodSolver.solve(eegBuffer);
+                updateMood();
             }
             handler.postDelayed(tickUi, 1000 / 60);
         }
@@ -286,6 +292,14 @@ public class VideoActivity extends Activity {
         MediaController mediaController = new MediaController(this);
         videoView.setMediaController(mediaController);
         videoView.requestFocus();
+        videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                videoView.setVideoURI(Uri.fromFile(contentProvider.getNext()));
+                videoView.start();
+                }
+            }
+        );
     }
 
     @Override
@@ -313,7 +327,8 @@ public class VideoActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
 
-        muse.disconnect(true);
+        if (muse != null)
+            muse.disconnect(true);
     }
 
     class ConnectionListener extends MuseConnectionListener {

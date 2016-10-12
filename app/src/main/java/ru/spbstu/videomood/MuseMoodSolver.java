@@ -15,11 +15,11 @@ public class MuseMoodSolver {
         return user;
     }
 
-    private final int alphaIndex = 0;
-    private final int betaIndex = 1;
-    private final int gammaIndex = 2;
-    private final int deltaIndex = 3;
-    private final int thetaIndex = 4;
+    public final int alphaIndex = 0;
+    public final int betaIndex = 1;
+    public final int gammaIndex = 2;
+    public final int deltaIndex = 3;
+    public final int thetaIndex = 4;
 
     private final Map<Range<Double>[], Mood> moodTable;
 
@@ -28,21 +28,21 @@ public class MuseMoodSolver {
         this.user = user;
 
         moodTable = new HashMap<>();
-        Range<Double>[] key = new Range[]{
-                new Range<>(0, 100), new Range<>(50, 60), new Range<>(15, 30), new Range<>(180, 200), new Range<>(50, 100)
-        };
-        moodTable.put(key, Mood.AWFUL);
+
         moodTable.put(new Range[]{
-                new Range(0,100), new Range(60, 70), new Range(15,30), new Range(120,160), new Range(50,100)
+                new Range<>(0.0, 100.0), new Range<>(50.0, 60.0), new Range<>(15.0, 30.0), new Range<>(180.0, 200.0), new Range<>(50.0, 100.0)
+        }, Mood.AWFUL);
+        moodTable.put(new Range[]{
+                new Range(0.0,100.0), new Range(60.0, 70.0), new Range(15.0,30.0), new Range(120.0,160.0), new Range(50.0,100.0)
         }, Mood.BAD);
         moodTable.put(new Range[]{
-                new Range(100,200), new Range(70, 100), new Range(15,30), new Range(80, 120), new Range(50,100)
+                new Range(100.0,200.0), new Range(70.0, 100.0), new Range(15.0,30.0), new Range(80.0, 120.0), new Range(50.0,100.0)
         }, Mood.NORMAL);
         moodTable.put(new Range[]{
-                new Range(0,100), new Range(100, 110), new Range(30,45), new Range(40, 80), new Range(50,100)
+                new Range(0.0,100.0), new Range(100.0, 110.0), new Range(30.0,45.0), new Range(40.0, 80.0), new Range(50.0,100.0)
         }, Mood.GOOD);
         moodTable.put(new Range[]{
-                new Range(0,100), new Range(110, 120), new Range(30,45), new Range(20, 40), new Range(50,100)
+                new Range(0.0,100.0), new Range(110.0, 120.0), new Range(30.0,45.0), new Range(20.0, 40.0), new Range(50.0,100.0)
         }, Mood.GREAT);
     }
 
