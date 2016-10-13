@@ -2,7 +2,6 @@ package ru.spbstu.videomood;
 
 import android.annotation.TargetApi;
 import android.os.Build;
-import android.util.Range;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class Const {
@@ -24,4 +23,16 @@ public class Const {
             Mood.AWFUL
     };
 
+    //electrodes
+    public static final int FIRST = 0;
+    public static final int SECOND = 1;
+    public static final int THIRD = 2;
+    public static final int FOURTH = 3;
+
+    //rhythms
+    public static final int ALPHA = 0;
+    public static final int BETA = 1;
+    public static final int GAMMA = 2;
+    public static final int DELTA = 3;
+    public static final int THETA = 4;
 }

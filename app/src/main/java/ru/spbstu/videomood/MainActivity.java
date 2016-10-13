@@ -5,61 +5,36 @@
 
 package ru.spbstu.videomood;
 
-import java.io.File;
-import java.lang.ref.WeakReference;
-import java.util.List;
-
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.choosemuse.libmuse.Accelerometer;
-import com.choosemuse.libmuse.AnnotationData;
-import com.choosemuse.libmuse.ConnectionState;
-import com.choosemuse.libmuse.Eeg;
-import com.choosemuse.libmuse.LibmuseVersion;
-import com.choosemuse.libmuse.MessageType;
-import com.choosemuse.libmuse.Muse;
-import com.choosemuse.libmuse.MuseArtifactPacket;
-import com.choosemuse.libmuse.MuseConfiguration;
-import com.choosemuse.libmuse.MuseConnectionListener;
-import com.choosemuse.libmuse.MuseConnectionPacket;
-import com.choosemuse.libmuse.MuseDataListener;
-import com.choosemuse.libmuse.MuseDataPacket;
-import com.choosemuse.libmuse.MuseDataPacketType;
-import com.choosemuse.libmuse.MuseFileFactory;
-import com.choosemuse.libmuse.MuseFileReader;
-import com.choosemuse.libmuse.MuseFileWriter;
-import com.choosemuse.libmuse.MuseListener;
-import com.choosemuse.libmuse.MuseManagerAndroid;
-import com.choosemuse.libmuse.MuseVersion;
-import com.choosemuse.libmuse.Result;
-import com.choosemuse.libmuse.ResultLevel;
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
-import com.google.android.gms.common.api.GoogleApiClient;
-
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Looper;
 import android.os.Handler;
+import android.os.Looper;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
-import android.widget.TextView;
 
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import com.choosemuse.libmuse.LibmuseVersion;
+import com.choosemuse.libmuse.Muse;
+import com.choosemuse.libmuse.MuseFileFactory;
+import com.choosemuse.libmuse.MuseFileWriter;
+import com.choosemuse.libmuse.MuseListener;
+import com.choosemuse.libmuse.MuseManagerAndroid;
+
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MainActivity extends Activity implements OnClickListener {
 

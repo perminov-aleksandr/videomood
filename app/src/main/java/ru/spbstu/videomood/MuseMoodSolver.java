@@ -5,7 +5,6 @@ import java.util.Map;
 
 import android.annotation.TargetApi;
 import android.os.Build;
-import android.util.Range;
 
 public class MuseMoodSolver {
 
@@ -30,19 +29,19 @@ public class MuseMoodSolver {
         moodTable = new HashMap<>();
 
         moodTable.put(new Range[]{
-                new Range<>(0.0, 100.0), new Range<>(50.0, 60.0), new Range<>(15.0, 30.0), new Range<>(180.0, 200.0), new Range<>(50.0, 100.0)
+                new Range<Double>(0.0, 100.0), new Range<Double>(50.0, 60.0), new Range<Double>(15.0, 30.0), new Range<Double>(180.0, 200.0), new Range<Double>(50.0, 100.0)
         }, Mood.AWFUL);
         moodTable.put(new Range[]{
-                new Range(0.0,100.0), new Range(60.0, 70.0), new Range(15.0,30.0), new Range(120.0,160.0), new Range(50.0,100.0)
+                new Range<Double>(0.0,100.0), new Range<Double>(60.0, 70.0), new Range<Double>(15.0,30.0), new Range<Double>(120.0,160.0), new Range<Double>(50.0,100.0)
         }, Mood.BAD);
         moodTable.put(new Range[]{
-                new Range(100.0,200.0), new Range(70.0, 100.0), new Range(15.0,30.0), new Range(80.0, 120.0), new Range(50.0,100.0)
+                new Range<Double>(100.0,200.0), new Range<Double>(70.0, 100.0), new Range<Double>(15.0,30.0), new Range<Double>(80.0, 120.0), new Range<Double>(50.0,100.0)
         }, Mood.NORMAL);
         moodTable.put(new Range[]{
-                new Range(0.0,100.0), new Range(100.0, 110.0), new Range(30.0,45.0), new Range(40.0, 80.0), new Range(50.0,100.0)
+                new Range<Double>(0.0,100.0), new Range<Double>(100.0, 110.0), new Range<Double>(30.0,45.0), new Range<Double>(40.0, 80.0), new Range<Double>(50.0,100.0)
         }, Mood.GOOD);
         moodTable.put(new Range[]{
-                new Range(0.0,100.0), new Range(110.0, 120.0), new Range(30.0,45.0), new Range(20.0, 40.0), new Range(50.0,100.0)
+                new Range<Double>(0.0,100.0), new Range<Double>(110.0, 120.0), new Range<Double>(30.0,45.0), new Range<Double>(20.0, 40.0), new Range<Double>(50.0,100.0)
         }, Mood.GREAT);
     }
 

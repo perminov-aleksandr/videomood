@@ -2,7 +2,6 @@ package ru.spbstu.videomood;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -11,13 +10,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.util.Range;
+import android.view.View;
 import android.view.Window;
 import android.widget.MediaController;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.choosemuse.libmuse.Battery;
 import com.choosemuse.libmuse.ConnectionState;
 import com.choosemuse.libmuse.Eeg;
 import com.choosemuse.libmuse.Muse;
@@ -27,31 +26,63 @@ import com.choosemuse.libmuse.MuseDataPacket;
 import com.choosemuse.libmuse.MuseDataPacketType;
 import com.choosemuse.libmuse.MuseManagerAndroid;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- */
 public class VideoActivity extends Activity {
 
     private static final String TAG = "VideoMood:VideoActivity";
     private MuseMoodSolver moodSolver;
 
-    private final double[] eegBuffer = new double[6];
-    private boolean eegStale = false;
+    private final double[][] scoresBuffer = new double[5][4];
+    private final double[] meanScores = new double[5];
+    private boolean scoresStale = false;
 
-    private void updateEeg() {
+    private final boolean isForeheadTouch = false;
+    private final boolean[] isGoodBuffer = new boolean[4];
+    private boolean isGoodStale = false;
+
+    private double batteryValue;
+    private boolean batteryStale = false;
+
+    private void updateIsGood() {
+        TextView good1 = (TextView) findViewById(R.id.good1);
+        TextView good2 = (TextView) findViewById(R.id.good2);
+        TextView good3 = (TextView) findViewById(R.id.good3);
+        TextView good4 = (TextView) findViewById(R.id.good4);
+        TextView foreheadTouch = (TextView) findViewById(R.id.forehead);
+        good1.setVisibility(isGoodBuffer[Const.FIRST] ? View.VISIBLE : View.INVISIBLE);
+        good2.setVisibility(isGoodBuffer[Const.SECOND] ? View.VISIBLE : View.INVISIBLE);
+        good3.setVisibility(isGoodBuffer[Const.THIRD] ? View.VISIBLE : View.INVISIBLE);
+        good4.setVisibility(isGoodBuffer[Const.FOURTH] ? View.VISIBLE : View.INVISIBLE);
+        foreheadTouch.setVisibility(isForeheadTouch ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    private void updateBattery() {
+        TextView batteryTextView = (TextView) findViewById(R.id.battery);
+        batteryTextView.setText(String.format("%s%%", batteryValue));
+        batteryStale = false;
+    }
+
+    private double getMean(double[] values) {
+        double res = 0;
+        for (int i = 0; i < values.length; i++)
+            res += values[i];
+        return res / values.length;
+    }
+
+    private void updateScores() {
         TextView alpha = (TextView) findViewById(R.id.alpha);
         TextView beta = (TextView) findViewById(R.id.beta);
         TextView gamma = (TextView) findViewById(R.id.gamma);
         TextView delta = (TextView) findViewById(R.id.delta);
-        alpha.setText(String.format("%6.2f", eegBuffer[0]));
-        beta.setText(String.format("%6.2f", eegBuffer[1]));
-        gamma.setText(String.format("%6.2f", eegBuffer[2]));
-        delta.setText(String.format("%6.2f", eegBuffer[3]));
+        TextView theta = (TextView) findViewById(R.id.theta);
+        alpha.setText(String.format("%1.2f", getMean(scoresBuffer[Const.ALPHA])));
+        beta.setText(String.format("%1.2f", getMean(scoresBuffer[Const.BETA])));
+        gamma.setText(String.format("%1.2f", getMean(scoresBuffer[Const.GAMMA])));
+        delta.setText(String.format("%1.2f", getMean(scoresBuffer[Const.DELTA])));
+        theta.setText(String.format("%1.2f", getMean(scoresBuffer[Const.THETA])));
     }
 
     private void updateMood() {
@@ -60,41 +91,40 @@ public class VideoActivity extends Activity {
     }
 
     public void processMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-        // valuesSize returns the number of data values contained in the packet.
-        final long n = p.valuesSize();
+        ArrayList<Double> packetValues = p.values();
         switch (p.packetType()) {
-            case EEG:
-                assert (eegBuffer.length >= n);
-                getEegChannelValues(eegBuffer, p);
-                eegStale = true;
+            case ALPHA_SCORE:
+                for (int i = 0; i < packetValues.size(); i++)
+                    scoresBuffer[Const.ALPHA][i] = packetValues.get(i);
                 break;
-            case ACCELEROMETER:
-            case ALPHA_RELATIVE:
+            case BETA_SCORE:
+                for (int i = 0; i < packetValues.size(); i++)
+                    scoresBuffer[Const.BETA][i] = packetValues.get(i);
+                break;
+            case GAMMA_SCORE:
+                for (int i = 0; i < packetValues.size(); i++)
+                    scoresBuffer[Const.GAMMA][i] = packetValues.get(i);
+                break;
+            case DELTA_SCORE:
+                for (int i = 0; i < packetValues.size(); i++)
+                    scoresBuffer[Const.DELTA][i] = packetValues.get(i);
+                break;
+            case THETA_SCORE:
+                for (int i = 0; i < packetValues.size(); i++)
+                    scoresBuffer[Const.THETA][i] = packetValues.get(i);
+                break;
             case BATTERY:
-            case DRL_REF:
-            case QUANTIZATION:
+                batteryValue = p.getBatteryValue(Battery.CHARGE_PERCENTAGE_REMAINING);
+                batteryStale = true;
+                break;
+            case IS_GOOD:
+                for (int i = 0; i < 4; i++)
+                    isGoodBuffer[i] = packetValues.get(i) > 0.5;
+                isGoodStale = true;
+                break;
             default:
                 break;
         }
-    }
-
-    /**
-     * Helper methods to get different packet values.  These methods simply store the
-     * data in the buffers for later display in the UI.
-     * <p>
-     * getEegChannelValue can be used for any EEG or EEG derived data packet type
-     * such as EEG, ALPHA_ABSOLUTE, ALPHA_RELATIVE or HSI_PRECISION.  See the documentation
-     * of MuseDataPacketType for all of the available values.
-     * Specific packet types like ACCELEROMETER, GYRO, BATTERY and DRL_REF have their own
-     * getValue methods.
-     */
-    private void getEegChannelValues(double[] buffer, MuseDataPacket p) {
-        buffer[0] = p.getEegChannelValue(Eeg.EEG1);
-        buffer[1] = p.getEegChannelValue(Eeg.EEG2);
-        buffer[2] = p.getEegChannelValue(Eeg.EEG3);
-        buffer[3] = p.getEegChannelValue(Eeg.EEG4);
-        buffer[4] = p.getEegChannelValue(Eeg.AUX_LEFT);
-        buffer[5] = p.getEegChannelValue(Eeg.AUX_RIGHT);
     }
 
     /**
@@ -117,10 +147,19 @@ public class VideoActivity extends Activity {
     private final Runnable tickUi = new Runnable() {
         @Override
         public void run() {
-            if (eegStale) {
-                updateEeg();
-                moodSolver.solve(eegBuffer);
+            if (scoresStale) {
+                updateScores();
+                moodSolver.solve(meanScores);
                 updateMood();
+                scoresStale = false;
+            }
+            if (isGoodStale) {
+                updateIsGood();
+                isGoodStale = false;
+            }
+            if (batteryStale) {
+                updateBattery();
+                batteryStale = false;
             }
             handler.postDelayed(tickUi, 1000 / 60);
         }
@@ -259,12 +298,13 @@ public class VideoActivity extends Activity {
     private void registerMuseListeners(Muse muse) {
         muse.unregisterAllListeners();
         muse.registerConnectionListener(connectionListener);
-        muse.registerDataListener(dataListener, MuseDataPacketType.EEG);
-        /*muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
-        muse.registerDataListener(dataListener, MuseDataPacketType.ACCELEROMETER);
+        muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_SCORE);
+        muse.registerDataListener(dataListener, MuseDataPacketType.BETA_SCORE);
+        muse.registerDataListener(dataListener, MuseDataPacketType.GAMMA_SCORE);
+        muse.registerDataListener(dataListener, MuseDataPacketType.DELTA_SCORE);
+        muse.registerDataListener(dataListener, MuseDataPacketType.THETA_SCORE);
+        muse.registerDataListener(dataListener, MuseDataPacketType.IS_GOOD);
         muse.registerDataListener(dataListener, MuseDataPacketType.BATTERY);
-        muse.registerDataListener(dataListener, MuseDataPacketType.DRL_REF);
-        muse.registerDataListener(dataListener, MuseDataPacketType.QUANTIZATION);*/
     }
 
     private TextView museState;

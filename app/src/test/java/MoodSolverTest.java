@@ -1,26 +1,15 @@
-import android.util.Range;
-
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import ru.spbstu.videomood.Mood;
 import ru.spbstu.videomood.MuseMoodSolver;
 import ru.spbstu.videomood.User;
+import ru.spbstu.videomood.Range;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
 public class MoodSolverTest {
 
-    @Mock
-    Range<Integer> ageRange;
-
-    private User user = new User(ageRange);
+    private User user = new User(new Range<>(0, 6));
 
     private MuseMoodSolver moodSolver = new MuseMoodSolver(user);
 

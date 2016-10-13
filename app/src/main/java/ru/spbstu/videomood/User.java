@@ -1,7 +1,5 @@
 package ru.spbstu.videomood;
 
-import android.util.Range;
-
 public class User {
     public User(Range<Integer> ageRange) {
         this.ageRange = ageRange;
