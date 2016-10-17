@@ -38,5 +38,6 @@ public class DataListener extends MuseDataListener {
      */
     @Override
     public void receiveMuseArtifactPacket(final MuseArtifactPacket p, final Muse muse) {
+        activityRef.get().processMuseArtifactPacket(p, muse);
     }
 }

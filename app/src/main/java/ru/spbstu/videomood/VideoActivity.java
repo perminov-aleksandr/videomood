@@ -11,15 +11,17 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+
 import android.view.Window;
+import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.VideoView;
 
 import com.choosemuse.libmuse.Battery;
 import com.choosemuse.libmuse.ConnectionState;
-import com.choosemuse.libmuse.Eeg;
 import com.choosemuse.libmuse.Muse;
+import com.choosemuse.libmuse.MuseArtifactPacket;
 import com.choosemuse.libmuse.MuseConnectionListener;
 import com.choosemuse.libmuse.MuseConnectionPacket;
 import com.choosemuse.libmuse.MuseDataPacket;
@@ -35,23 +37,25 @@ public class VideoActivity extends Activity {
     private static final String TAG = "VideoMood:VideoActivity";
     private MuseMoodSolver moodSolver;
 
-    private final double[][] scoresBuffer = new double[5][4];
+    private final double[][] relativeBuffer = new double[5][4];
     private final double[] meanScores = new double[5];
-    private boolean scoresStale = false;
+    private boolean relativeStale = false;
 
-    private final boolean isForeheadTouch = false;
+    private TextView foreheadTouch;
+    private boolean isForeheadTouch = false;
+
+    private TextView good1;
+    private TextView good2;
+    private TextView good3;
+    private TextView good4;
     private final boolean[] isGoodBuffer = new boolean[4];
     private boolean isGoodStale = false;
 
+    private TextView batteryTextView;
     private double batteryValue;
     private boolean batteryStale = false;
 
     private void updateIsGood() {
-        TextView good1 = (TextView) findViewById(R.id.good1);
-        TextView good2 = (TextView) findViewById(R.id.good2);
-        TextView good3 = (TextView) findViewById(R.id.good3);
-        TextView good4 = (TextView) findViewById(R.id.good4);
-        TextView foreheadTouch = (TextView) findViewById(R.id.forehead);
         good1.setVisibility(isGoodBuffer[Const.FIRST] ? View.VISIBLE : View.INVISIBLE);
         good2.setVisibility(isGoodBuffer[Const.SECOND] ? View.VISIBLE : View.INVISIBLE);
         good3.setVisibility(isGoodBuffer[Const.THIRD] ? View.VISIBLE : View.INVISIBLE);
@@ -60,58 +64,72 @@ public class VideoActivity extends Activity {
     }
 
     private void updateBattery() {
-        TextView batteryTextView = (TextView) findViewById(R.id.battery);
         batteryTextView.setText(String.format("%s%%", batteryValue));
         batteryStale = false;
     }
 
     private double getMean(double[] values) {
-        double res = 0;
-        for (int i = 0; i < values.length; i++)
-            res += values[i];
-        return res / values.length;
+        double res = 0.0;
+        int count = 0;
+        for (int i = 0; i < values.length; i++) {
+            double value = values[i];
+            if (Double.isNaN(value)) continue;
+            res += value;
+            count++;
+        }
+        return res / count;
     }
 
+    private TextView alphaBar;
+    private TextView betaBar;
+
     private void updateScores() {
-        TextView alpha = (TextView) findViewById(R.id.alpha);
-        TextView beta = (TextView) findViewById(R.id.beta);
-        TextView gamma = (TextView) findViewById(R.id.gamma);
-        TextView delta = (TextView) findViewById(R.id.delta);
-        TextView theta = (TextView) findViewById(R.id.theta);
-        alpha.setText(String.format("%1.2f", getMean(scoresBuffer[Const.ALPHA])));
-        beta.setText(String.format("%1.2f", getMean(scoresBuffer[Const.BETA])));
-        gamma.setText(String.format("%1.2f", getMean(scoresBuffer[Const.GAMMA])));
-        delta.setText(String.format("%1.2f", getMean(scoresBuffer[Const.DELTA])));
-        theta.setText(String.format("%1.2f", getMean(scoresBuffer[Const.THETA])));
+        double alphaMean = getMean(relativeBuffer[Const.ALPHA]);
+        double betaMean = getMean(relativeBuffer[Const.BETA]);
+
+        double t = 100.0 / (alphaMean + betaMean);
+
+        double alphaWeighted = alphaMean * t;
+        double betaWeighted = betaMean * t;
+
+        long alphaPercent = Math.round(alphaWeighted);
+        long betaPercent = Math.round(betaWeighted);
+
+        alphaBar.setText(String.format("%d", alphaPercent));
+        betaBar.setText(String.format("%d", betaPercent));
+
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
+        params.weight = (float)alphaPercent;
+        alphaBar.setLayoutParams(params);
+
+        params = (LinearLayout.LayoutParams) betaBar.getLayoutParams();
+        params.weight = (float)betaPercent;
+        betaBar.setLayoutParams(params);
     }
 
     private void updateMood() {
-        TextView moodTextView = (TextView) findViewById(R.id.mood);
-        moodTextView.setText(moodSolver.getUser().getCurrentMood().toString());
+        //TextView moodTextView = (TextView) findViewById(R.id.mood);
+        //moodTextView.setText(moodSolver.getUser().getCurrentMood().toString());
     }
 
     public void processMuseDataPacket(final MuseDataPacket p, final Muse muse) {
         ArrayList<Double> packetValues = p.values();
         switch (p.packetType()) {
-            case ALPHA_SCORE:
-                for (int i = 0; i < packetValues.size(); i++)
-                    scoresBuffer[Const.ALPHA][i] = packetValues.get(i);
+            case ALPHA_RELATIVE:
+                for (int i = 0; i < packetValues.size(); i++) {
+                    Double v = packetValues.get(i);
+                    relativeBuffer[Const.ALPHA][i] = v;
+                    Log.i(TAG, String.format("ALPHA: %2.6f", v) );
+                }
+                relativeStale = true;
                 break;
-            case BETA_SCORE:
-                for (int i = 0; i < packetValues.size(); i++)
-                    scoresBuffer[Const.BETA][i] = packetValues.get(i);
-                break;
-            case GAMMA_SCORE:
-                for (int i = 0; i < packetValues.size(); i++)
-                    scoresBuffer[Const.GAMMA][i] = packetValues.get(i);
-                break;
-            case DELTA_SCORE:
-                for (int i = 0; i < packetValues.size(); i++)
-                    scoresBuffer[Const.DELTA][i] = packetValues.get(i);
-                break;
-            case THETA_SCORE:
-                for (int i = 0; i < packetValues.size(); i++)
-                    scoresBuffer[Const.THETA][i] = packetValues.get(i);
+            case BETA_RELATIVE:
+                for (int i = 0; i < packetValues.size(); i++) {
+                    Double v = packetValues.get(i);
+                    relativeBuffer[Const.BETA][i] = v;
+                    Log.i(TAG, String.format("BETA: %2.6f", v) );
+                }
+                relativeStale = true;
                 break;
             case BATTERY:
                 batteryValue = p.getBatteryValue(Battery.CHARGE_PERCENTAGE_REMAINING);
@@ -125,6 +143,11 @@ public class VideoActivity extends Activity {
             default:
                 break;
         }
+    }
+
+    public void processMuseArtifactPacket(MuseArtifactPacket p, Muse muse) {
+        isForeheadTouch = p.getHeadbandOn();
+        isGoodStale = true;
     }
 
     /**
@@ -147,11 +170,11 @@ public class VideoActivity extends Activity {
     private final Runnable tickUi = new Runnable() {
         @Override
         public void run() {
-            if (scoresStale) {
+            if (relativeStale) {
                 updateScores();
-                moodSolver.solve(meanScores);
-                updateMood();
-                scoresStale = false;
+                //moodSolver.solve(meanScores);
+                //updateMood();
+                relativeStale = false;
             }
             if (isGoodStale) {
                 updateIsGood();
@@ -192,7 +215,6 @@ public class VideoActivity extends Activity {
         assert(moodIndex != -1);
         selectedMuseIndex = intent.getIntExtra(Const.selectedMuseIndexStr, -1);
         assert(selectedMuseIndex != -1);
-        //Log.i(TAG, "received selected muse index from UserActivity is " + selectedMuseIndex);
     }
 
     @Override
@@ -243,8 +265,20 @@ public class VideoActivity extends Activity {
     private void initUI() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_video);
+        initTextViews();
         initVideoView();
+    }
+
+    private void initTextViews(){
+        alphaBar = (TextView) findViewById(R.id.alpha);
+        betaBar = (TextView) findViewById(R.id.beta);
+        batteryTextView = (TextView) findViewById(R.id.battery);
         museState = (TextView) findViewById(R.id.museState);
+        good1 = (TextView) findViewById(R.id.good1);
+        good2 = (TextView) findViewById(R.id.good2);
+        good3 = (TextView) findViewById(R.id.good3);
+        good4 = (TextView) findViewById(R.id.good4);
+        foreheadTouch = (TextView) findViewById(R.id.forehead);
     }
 
     private void displayErrorDialog() {
@@ -298,12 +332,10 @@ public class VideoActivity extends Activity {
     private void registerMuseListeners(Muse muse) {
         muse.unregisterAllListeners();
         muse.registerConnectionListener(connectionListener);
-        muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_SCORE);
-        muse.registerDataListener(dataListener, MuseDataPacketType.BETA_SCORE);
-        muse.registerDataListener(dataListener, MuseDataPacketType.GAMMA_SCORE);
-        muse.registerDataListener(dataListener, MuseDataPacketType.DELTA_SCORE);
-        muse.registerDataListener(dataListener, MuseDataPacketType.THETA_SCORE);
+        muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
+        muse.registerDataListener(dataListener, MuseDataPacketType.BETA_RELATIVE);
         muse.registerDataListener(dataListener, MuseDataPacketType.IS_GOOD);
+        muse.registerDataListener(dataListener, MuseDataPacketType.ARTIFACTS);
         muse.registerDataListener(dataListener, MuseDataPacketType.BATTERY);
     }
 
