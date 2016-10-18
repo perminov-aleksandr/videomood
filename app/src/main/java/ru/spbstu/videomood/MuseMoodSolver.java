@@ -8,24 +8,10 @@ import android.os.Build;
 
 public class MuseMoodSolver {
 
-    private User user;
-
-    public User getUser() {
-        return user;
-    }
-
-    public final int alphaIndex = 0;
-    public final int betaIndex = 1;
-    public final int gammaIndex = 2;
-    public final int deltaIndex = 3;
-    public final int thetaIndex = 4;
-
     private final Map<Range<Double>[], Mood> moodTable;
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public MuseMoodSolver( User user) {
-        this.user = user;
-
+    public MuseMoodSolver() {
         moodTable = new HashMap<>();
 
         moodTable.put(new Range[]{
@@ -64,6 +50,6 @@ public class MuseMoodSolver {
         }
 
         if (mood != null)
-            user.setCurrentMood(mood);
+            User.setCurrentMood(mood);
     }
 }

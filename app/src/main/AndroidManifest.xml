@@ -23,7 +23,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".ru.spbstu.videomood.activities.MainActivity"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,10 +32,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".UserActivity"
+            android:name=".ru.spbstu.videomood.activities.UserActivity"
             android:label="@string/title_activity_user"/>
         <activity
-            android:name=".VideoActivity"
+            android:name=".ru.spbstu.videomood.activities.VideoActivity"
             android:label="@string/title_activity_video"
             android:configChanges="orientation|screenSize"></activity>
         <meta-data

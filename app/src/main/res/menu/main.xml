@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="ru.spbstu.videomood.MainActivity" >
+    tools:context="ru.spbstu.videomood.ru.spbstu.videomood.activities.MainActivity" >
 
     <item
         android:id="@+id/action_settings"

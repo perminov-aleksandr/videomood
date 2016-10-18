@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="ru.spbstu.videomood.UserActivity">
+    tools:context="ru.spbstu.videomood.ru.spbstu.videomood.activities.UserActivity">
 
 <LinearLayout
     android:layout_width="match_parent"

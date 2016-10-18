@@ -1,23 +1,26 @@
 package ru.spbstu.videomood;
 
-public class User {
-    public User(Range<Integer> ageRange) {
-        this.ageRange = ageRange;
+public final class User {
+    private User() {
     }
 
-    private Mood currentMood;
+    private static Mood currentMood;
 
-    public Mood getCurrentMood() {
+    public static Mood getCurrentMood() {
         return currentMood;
     }
 
-    public void setCurrentMood(Mood mood) {
+    public static void setCurrentMood(Mood mood) {
         currentMood = mood;
     }
 
-    private Range<Integer> ageRange;
+    private static Range<Integer> ageRange;
 
-    public Range<Integer> getAgeRange() {
+    public static void setRange(Range<Integer> range){
+        ageRange = range;
+    }
+
+    public static Range<Integer> getAgeRange() {
         return ageRange;
     }
 }

@@ -9,26 +9,24 @@ import static org.junit.Assert.assertTrue;
 
 public class MoodSolverTest {
 
-    private User user = new User(new Range<>(0, 6));
-
-    private MuseMoodSolver moodSolver = new MuseMoodSolver(user);
+    private MuseMoodSolver moodSolver = new MuseMoodSolver();
 
     @Test
     public void setGetUserMood() {
-        user.setCurrentMood(Mood.AWFUL);
+        User.setCurrentMood(Mood.AWFUL);
 
-        assertTrue(user.getCurrentMood() == Mood.AWFUL);
+        assertTrue(User.getCurrentMood() == Mood.AWFUL);
     }
 
     @Test
     public void solveMood() {
-        user.setCurrentMood(Mood.NORMAL);
+        User.setCurrentMood(Mood.NORMAL);
         double[] scores = new double[]{
             50, 55, 20, 190, 75
         };
 
         moodSolver.solve(scores);
-        Mood changedMood = user.getCurrentMood();
+        Mood changedMood = User.getCurrentMood();
         assertTrue(changedMood == Mood.AWFUL);
     }
 }

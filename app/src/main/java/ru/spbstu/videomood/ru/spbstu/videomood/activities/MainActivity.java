@@ -3,7 +3,7 @@
  * Interaxon, Inc. 2016
  */
 
-package ru.spbstu.videomood;
+package ru.spbstu.videomood.ru.spbstu.videomood.activities;
 
 import android.Manifest;
 import android.app.Activity;
@@ -19,9 +19,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.Spinner;
 
 import com.choosemuse.libmuse.LibmuseVersion;
@@ -33,35 +31,25 @@ import com.choosemuse.libmuse.MuseManagerAndroid;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MainActivity extends Activity implements OnClickListener {
+import ru.spbstu.videomood.MuseManager;
+import ru.spbstu.videomood.R;
 
-    private int selectedMuseIndex;
-
-    public void goToUserData(View view) {
-        manager.stopListening();
-
-        selectedMuseIndex = musesSpinner.getSelectedItemPosition();
-
-        Log.i(TAG, "selected muse index is " + selectedMuseIndex);
-
-        Intent intent = new Intent(this, UserActivity.class);
-        intent.putExtra(Const.selectedMuseIndexStr, selectedMuseIndex);
-        startActivity(intent);
-    }
+public class MainActivity extends Activity {
 
     /**
      * Tag used for logging purposes.
      */
-    private final String TAG = "VideoMood";
+    private final String TAG = "VideoMood:MainActivity";
 
     /**
      * The MuseManager is how you detect Muse headbands and receive notifications
      * when the list of available headbands changes.
      */
-    private MuseManagerAndroid manager;
+    //private MuseManagerAndroid manager;
 
     /**
      * In the UI, the list of Muses you can connect to is displayed in a Spinner object for this example.
@@ -83,25 +71,20 @@ public class MainActivity extends Activity implements OnClickListener {
     private final AtomicReference<Handler> fileHandler = new AtomicReference<>();
 
 
-    //--------------------------------------
-    // Lifecycle / Connection code
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // We need to set the context on MuseManagerAndroid before we can do anything.
         // This must come before other LibMuse API calls as it also loads the library.
-        manager = MuseManagerAndroid.getInstance();
-        manager.setContext(this);
+        MuseManager.setContext(this);
 
         Log.i(TAG, "LibMuse version=" + LibmuseVersion.instance().getString());
 
         WeakReference<MainActivity> weakActivity = new WeakReference<>(this);
         // Register a listener to receive notifications of what Muse headbands
         // we can connect to.
-        manager.setMuseListener(new MuseL(weakActivity));
+        MuseManager.getManager().setMuseListener(new MuseL(weakActivity));
 
         // Muse 2016 (MU-02) headbands use Bluetooth Low Energy technology to
         // simplify the connection process.  This requires access to the COARSE_LOCATION
@@ -121,18 +104,30 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onPause();
         // It is important to call stopListening when the Activity is paused
         // to avoid a resource leak from the LibMuse library.
-        manager.stopListening();
+        MuseManager.stopListening();
     }
 
-    @Override
-    public void onClick(View v) {
-        if (v.getId() == R.id.refresh) {
-            // The user has pressed the "Refresh" button.
-            // Start listening for nearby or paired Muse headbands. We call stopListening
-            // first to make sure startListening will clear the list of headbands and start fresh.
-            manager.stopListening();
-            manager.startListening();
+    public void goToUserData(View v) {
+        MuseManager.stopListening();
+
+        int selectedMuseIndex = musesSpinner.getSelectedItemPosition();
+        ArrayList<Muse> availableMuses = MuseManager.getMuses();
+        if (availableMuses.size() == 0) {
+            Log.i(TAG, "There is nothing to connect to");
+            return;
         }
+        Muse muse = availableMuses.get(selectedMuseIndex);
+        MuseManager.setMuse(muse);
+
+        Log.i(TAG, "selected muse is " + muse.getMacAddress());
+
+        Intent intent = new Intent(this, UserActivity.class);
+        startActivity(intent);
+    }
+
+    public void refreshMusesList(View v) {
+        MuseManager.stopListening();
+        MuseManager.startListening();
     }
 
     //--------------------------------------
@@ -187,8 +182,8 @@ public class MainActivity extends Activity implements OnClickListener {
      * You will receive a callback to this method each time a headband is discovered.
      * In this example, we update the spinner with the MAC address of the headband.
      */
-    public void museListChanged() {
-        final List<Muse> list = manager.getMuses();
+    private void museListChanged() {
+        final List<Muse> list = MuseManager.getMuses();
         spinnerAdapter.clear();
         boolean isAnyDevices = list != null && list.size() > 0;
         musesSpinner.setEnabled(isAnyDevices);
@@ -212,8 +207,6 @@ public class MainActivity extends Activity implements OnClickListener {
      */
     private void initUI() {
         setContentView(R.layout.activity_main);
-        Button refreshButton = (Button) findViewById(R.id.refresh);
-        refreshButton.setOnClickListener(this);
 
         spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
         musesSpinner = (Spinner) findViewById(R.id.muses_spinner);

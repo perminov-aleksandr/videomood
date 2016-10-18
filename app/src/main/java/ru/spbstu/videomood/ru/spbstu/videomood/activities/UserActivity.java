@@ -1,21 +1,20 @@
-package ru.spbstu.videomood;
+package ru.spbstu.videomood.ru.spbstu.videomood.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.app.Activity;
-import android.util.Log;
 import android.view.View;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import static android.R.attr.id;
+import ru.spbstu.videomood.Const;
+import ru.spbstu.videomood.R;
+import ru.spbstu.videomood.User;
 
 public class UserActivity extends Activity {
 
-    private static final String TAG = "UserActivity";
+    private static final String TAG = "VideoMood:UserActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +37,10 @@ public class UserActivity extends Activity {
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        //todo: read selected values if they are exists
+        //todo: read selected values if they do exist
     }
 
     private RadioGroup moodRadioGroup;
-
     private RadioGroup ageRadioGroup;
 
     private RadioGroup initRadioGroup(int viewId, Object[] items) {
@@ -67,36 +65,35 @@ public class UserActivity extends Activity {
     }
 
     /**
-     * Try to go to VideoActivity with form validatation
+     * Try to go to VideoActivity with validation
      * @param view
      */
 
     public void goToVideo(View view) {
         int ageIndex = getSelectedIndex(ageRadioGroup);
         int moodIndex = getSelectedIndex(moodRadioGroup);
+
+        if (!isUserDataValid(ageIndex, moodIndex))
+            return;
+
+        User.setCurrentMood(Const.moods[moodIndex]);
+        User.setRange(Const.ageRanges[ageIndex]);
+
+        Intent intent = new Intent(this, VideoActivity.class);
+        startActivity(intent);
+    }
+
+    private boolean isUserDataValid(int ageIndex, int moodIndex) {
         if (ageIndex == -1) {
             displayValidationMessage(getResources().getString(R.string.noAgeRangeSelected));
-            return;
+            return false;
         }
         else if (moodIndex == -1)
         {
             displayValidationMessage(getResources().getString(R.string.noMoodSelected));
-            return;
+            return false;
         }
-
-        Intent prevIntent = getIntent();
-        int selectedMuseIndex = prevIntent.getIntExtra(Const.selectedMuseIndexStr, -1);
-
-        Log.i(TAG, "received selected muse index from MainActivity is " + selectedMuseIndex);
-
-        Intent intent = new Intent(this, VideoActivity.class);
-        intent.putExtra(Const.ageRangeIndexStr, ageIndex);
-        intent.putExtra(Const.moodStr, moodIndex);
-        intent.putExtra(Const.selectedMuseIndexStr, selectedMuseIndex);
-
-        Log.i(TAG, "put selected ageRange index is " + ageIndex + ", moodIndex is " + moodIndex + ", museIndex is " + selectedMuseIndex);
-
-        startActivity(intent);
+        return true;
     }
 
     private void displayValidationMessage(String s) {

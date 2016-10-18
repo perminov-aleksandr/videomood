@@ -7,10 +7,12 @@ import com.choosemuse.libmuse.MuseDataPacket;
 
 import java.lang.ref.WeakReference;
 
+import ru.spbstu.videomood.ru.spbstu.videomood.activities.VideoActivity;
+
 public class DataListener extends MuseDataListener {
     final WeakReference<VideoActivity> activityRef;
 
-    DataListener(final WeakReference<VideoActivity> activityRef) {
+    public DataListener(final WeakReference<VideoActivity> activityRef) {
         this.activityRef = activityRef;
     }
 

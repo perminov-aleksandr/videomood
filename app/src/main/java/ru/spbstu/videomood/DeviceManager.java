@@ -1,5 +1,5 @@
 package ru.spbstu.videomood;
 
-abstract public class DeviceManager {
-    abstract DeviceType getDeviceType();
+public interface DeviceManager {
+    DeviceType getDeviceType();
 }

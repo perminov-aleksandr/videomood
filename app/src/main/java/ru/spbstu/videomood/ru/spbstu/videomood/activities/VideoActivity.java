@@ -1,15 +1,13 @@
-package ru.spbstu.videomood;
+package ru.spbstu.videomood.ru.spbstu.videomood.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 
 import android.view.Window;
@@ -22,15 +20,22 @@ import com.choosemuse.libmuse.Battery;
 import com.choosemuse.libmuse.ConnectionState;
 import com.choosemuse.libmuse.Muse;
 import com.choosemuse.libmuse.MuseArtifactPacket;
-import com.choosemuse.libmuse.MuseConnectionListener;
 import com.choosemuse.libmuse.MuseConnectionPacket;
 import com.choosemuse.libmuse.MuseDataPacket;
-import com.choosemuse.libmuse.MuseDataPacketType;
-import com.choosemuse.libmuse.MuseManagerAndroid;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.List;
+
+import ru.spbstu.videomood.ConnectionListener;
+import ru.spbstu.videomood.Const;
+import ru.spbstu.videomood.ContentProvider;
+import ru.spbstu.videomood.DataListener;
+import ru.spbstu.videomood.MuseManager;
+import ru.spbstu.videomood.MuseMoodSolver;
+import ru.spbstu.videomood.R;
+import ru.spbstu.videomood.Range;
+import ru.spbstu.videomood.User;
+import ru.spbstu.videomood.Utils;
 
 public class VideoActivity extends Activity {
 
@@ -44,10 +49,7 @@ public class VideoActivity extends Activity {
     private TextView foreheadTouch;
     private boolean isForeheadTouch = false;
 
-    private TextView good1;
-    private TextView good2;
-    private TextView good3;
-    private TextView good4;
+    private TextView[] isGoodIndicators;
     private final boolean[] isGoodBuffer = new boolean[4];
     private boolean isGoodStale = false;
 
@@ -56,10 +58,9 @@ public class VideoActivity extends Activity {
     private boolean batteryStale = false;
 
     private void updateIsGood() {
-        good1.setVisibility(isGoodBuffer[Const.FIRST] ? View.VISIBLE : View.INVISIBLE);
-        good2.setVisibility(isGoodBuffer[Const.SECOND] ? View.VISIBLE : View.INVISIBLE);
-        good3.setVisibility(isGoodBuffer[Const.THIRD] ? View.VISIBLE : View.INVISIBLE);
-        good4.setVisibility(isGoodBuffer[Const.FOURTH] ? View.VISIBLE : View.INVISIBLE);
+        for (int i = 0; i < isGoodBuffer.length; i++)
+            isGoodIndicators[i].setVisibility(isGoodBuffer[i] ? View.VISIBLE : View.INVISIBLE);
+
         foreheadTouch.setVisibility(isForeheadTouch ? View.VISIBLE : View.INVISIBLE);
     }
 
@@ -68,32 +69,14 @@ public class VideoActivity extends Activity {
         batteryStale = false;
     }
 
-    private double getMean(double[] values) {
-        double res = 0.0;
-        int count = 0;
-        for (int i = 0; i < values.length; i++) {
-            double value = values[i];
-            if (Double.isNaN(value)) continue;
-            res += value;
-            count++;
-        }
-        return res / count;
-    }
-
     private TextView alphaBar;
     private TextView betaBar;
 
     private void updateScores() {
-        double alphaMean = getMean(relativeBuffer[Const.ALPHA]);
-        double betaMean = getMean(relativeBuffer[Const.BETA]);
-
-        double t = 100.0 / (alphaMean + betaMean);
-
-        double alphaWeighted = alphaMean * t;
-        double betaWeighted = betaMean * t;
-
-        long alphaPercent = Math.round(alphaWeighted);
-        long betaPercent = Math.round(betaWeighted);
+        //todo: refactor this. TOO EXPLICIT DEPENDENCY FROM relativeBuffer and other
+        BarValues barValues = new BarValues().calculate();
+        long alphaPercent = barValues.getAlphaPercent();
+        long betaPercent = barValues.getBetaPercent();
 
         alphaBar.setText(String.format("%d", alphaPercent));
         betaBar.setText(String.format("%d", betaPercent));
@@ -116,19 +99,11 @@ public class VideoActivity extends Activity {
         ArrayList<Double> packetValues = p.values();
         switch (p.packetType()) {
             case ALPHA_RELATIVE:
-                for (int i = 0; i < packetValues.size(); i++) {
-                    Double v = packetValues.get(i);
-                    relativeBuffer[Const.ALPHA][i] = v;
-                    Log.i(TAG, String.format("ALPHA: %2.6f", v) );
-                }
+                fillRelativeBufferWith(Const.Rhythms.ALPHA, packetValues);
                 relativeStale = true;
                 break;
             case BETA_RELATIVE:
-                for (int i = 0; i < packetValues.size(); i++) {
-                    Double v = packetValues.get(i);
-                    relativeBuffer[Const.BETA][i] = v;
-                    Log.i(TAG, String.format("BETA: %2.6f", v) );
-                }
+                fillRelativeBufferWith(Const.Rhythms.BETA, packetValues);
                 relativeStale = true;
                 break;
             case BATTERY:
@@ -145,7 +120,15 @@ public class VideoActivity extends Activity {
         }
     }
 
-    public void processMuseArtifactPacket(MuseArtifactPacket p, Muse muse) {
+    private void fillRelativeBufferWith(final int rangeIndex, final ArrayList<Double> packetValues) {
+        for (int i = 0; i < packetValues.size(); i++) {
+            Double v = packetValues.get(i);
+            relativeBuffer[rangeIndex][i] = v;
+            //Log.i(TAG, String.format("ALPHA: %2.6f", v) );
+        }
+    }
+
+    public void processMuseArtifactPacket(final MuseArtifactPacket p, Muse muse) {
         isForeheadTouch = p.getHeadbandOn();
         isGoodStale = true;
     }
@@ -189,12 +172,6 @@ public class VideoActivity extends Activity {
     };
 
     /**
-     * The MuseManager is how you detect Muse headbands and receive notifications
-     * when the list of available headbands changes.
-     */
-    private MuseManagerAndroid manager;
-
-    /**
      * A Muse refers to a Muse headband.  Use this to connect/disconnect from the
      * headband, register listeners to receive EEG data and get headband
      * configuration and version information.
@@ -203,28 +180,9 @@ public class VideoActivity extends Activity {
 
     private ContentProvider contentProvider;
 
-    private int selectedMuseIndex;
-    private int ageRangeIndex;
-    private int moodIndex;
-
-    private void fillIndexes(Intent intent) {
-        //todo: check for null, process it - go to start activity
-        ageRangeIndex = intent.getIntExtra(Const.ageRangeIndexStr, -1);
-        assert(ageRangeIndex != -1);
-        moodIndex = intent.getIntExtra(Const.moodStr, -1);
-        assert(moodIndex != -1);
-        selectedMuseIndex = intent.getIntExtra(Const.selectedMuseIndexStr, -1);
-        assert(selectedMuseIndex != -1);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // We need to set the context on MuseManagerAndroid before we can do anything.
-        // This must come before other LibMuse API calls as it also loads the library.
-        manager = MuseManagerAndroid.getInstance();
-        manager.setContext(this);
 
         WeakReference<VideoActivity> weakActivity = new WeakReference<>(this);
         // Register a listener to handle connection state changes
@@ -232,12 +190,16 @@ public class VideoActivity extends Activity {
         // Register a listener to receive data from a Muse.
         dataListener = new DataListener(weakActivity);
 
-        fillIndexes(getIntent());
-        initMoodSolver();
+        moodSolver = new MuseMoodSolver();
 
         initUI();
 
         try {
+            Range<Integer> ageRange = User.getAgeRange();
+            int ageRangeIndex;
+            for (ageRangeIndex = 0; ageRangeIndex < Const.ageRanges.length; ageRangeIndex++)
+                if (Const.ageRanges[ageRangeIndex] == ageRange)
+                    break;
             contentProvider = new ContentProvider(ageRangeIndex);
             videoView.setVideoURI(Uri.fromFile(contentProvider.getNext()));
         } catch (Exception e) {
@@ -246,16 +208,10 @@ public class VideoActivity extends Activity {
             return;
         }
 
-        List<Muse> availableMuses = manager.getMuses();
-
-        if (availableMuses.size() == 0)  {
-            Log.w(TAG, "There is nothing to connect to");
-            return;
-        }
-
+        MuseManager.setContext(this);
         // Cache the Muse that the user has selected.
-        muse = availableMuses.get(selectedMuseIndex);
-        registerMuseListeners(muse);
+        muse = MuseManager.getMuse();
+        MuseManager.registerMuseListeners(connectionListener, dataListener);
         //start receiving muse packets
         muse.runAsynchronously();
         // Start our asynchronous updates of the UI.
@@ -274,10 +230,13 @@ public class VideoActivity extends Activity {
         betaBar = (TextView) findViewById(R.id.beta);
         batteryTextView = (TextView) findViewById(R.id.battery);
         museState = (TextView) findViewById(R.id.museState);
-        good1 = (TextView) findViewById(R.id.good1);
-        good2 = (TextView) findViewById(R.id.good2);
-        good3 = (TextView) findViewById(R.id.good3);
-        good4 = (TextView) findViewById(R.id.good4);
+
+        isGoodIndicators = new TextView[4];
+        isGoodIndicators[Const.Electrodes.FIRST] = (TextView) findViewById(R.id.good1);
+        isGoodIndicators[Const.Electrodes.SECOND] = (TextView) findViewById(R.id.good2);
+        isGoodIndicators[Const.Electrodes.THIRD] = (TextView) findViewById(R.id.good3);
+        isGoodIndicators[Const.Electrodes.FOURTH] = (TextView) findViewById(R.id.good4);
+
         foreheadTouch = (TextView) findViewById(R.id.forehead);
     }
 
@@ -295,15 +254,6 @@ public class VideoActivity extends Activity {
                     }
                 })
                 .show();
-    }
-
-    private void initMoodSolver() {
-        Range<Integer> ageRange = Const.ageRanges[ageRangeIndex];
-        User user = new User(ageRange);
-
-        user.setCurrentMood(Const.moods[moodIndex]);
-
-        moodSolver = new MuseMoodSolver(user);
     }
 
     /**
@@ -325,23 +275,9 @@ public class VideoActivity extends Activity {
      */
     private ConnectionListener connectionListener;
 
-    // Unregister all prior listeners and register our data listener to
-    // receive the MuseDataPacketTypes we are interested in.  If you do
-    // not register a listener for a particular data type, you will not
-    // receive data packets of that type.
-    private void registerMuseListeners(Muse muse) {
-        muse.unregisterAllListeners();
-        muse.registerConnectionListener(connectionListener);
-        muse.registerDataListener(dataListener, MuseDataPacketType.ALPHA_RELATIVE);
-        muse.registerDataListener(dataListener, MuseDataPacketType.BETA_RELATIVE);
-        muse.registerDataListener(dataListener, MuseDataPacketType.IS_GOOD);
-        muse.registerDataListener(dataListener, MuseDataPacketType.ARTIFACTS);
-        muse.registerDataListener(dataListener, MuseDataPacketType.BATTERY);
-    }
-
     private TextView museState;
 
-    private void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
+    public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
         final ConnectionState current = p.getCurrentConnectionState();
 
         //todo: handle connection and disconnection
@@ -365,13 +301,12 @@ public class VideoActivity extends Activity {
         videoView.setMediaController(mediaController);
         videoView.requestFocus();
         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
                 videoView.setVideoURI(Uri.fromFile(contentProvider.getNext()));
                 videoView.start();
-                }
             }
-        );
+        });
     }
 
     @Override
@@ -403,16 +338,34 @@ public class VideoActivity extends Activity {
             muse.disconnect(true);
     }
 
-    class ConnectionListener extends MuseConnectionListener {
-        final WeakReference<VideoActivity> activityRef;
+    private class BarValues {
+        private long alphaPercent;
+        private long betaPercent;
 
-        ConnectionListener(final WeakReference<VideoActivity> activityRef) {
-            this.activityRef = activityRef;
+        public long getAlphaPercent() {
+            return alphaPercent;
         }
 
-        @Override
-        public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
-            activityRef.get().receiveMuseConnectionPacket(p, muse);
+        public long getBetaPercent() {
+            return betaPercent;
+        }
+
+        /***
+         * Calculate weighted values each of channel in relativeBuffer for ALPHA and BETA ranges.
+         * @return new BarValues instance filled according to calculated values
+         */
+        public BarValues calculate() {
+            double alphaMean = Utils.mean(relativeBuffer[Const.Rhythms.ALPHA]);
+            double betaMean = Utils.mean(relativeBuffer[Const.Rhythms.BETA]);
+
+            double t = 100.0 / (alphaMean + betaMean);
+
+            double alphaWeighted = alphaMean * t;
+            double betaWeighted = betaMean * t;
+
+            alphaPercent = Math.round(alphaWeighted);
+            betaPercent = Math.round(betaWeighted);
+            return this;
         }
     }
 }
