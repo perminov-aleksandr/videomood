@@ -19,14 +19,14 @@ public final class Const {
             Mood.AWFUL
     };
 
-    public final class Electrodes{
+    public static final class Electrodes{
         public static final int FIRST = 0;
         public static final int SECOND = 1;
         public static final int THIRD = 2;
         public static final int FOURTH = 3;
     }
 
-    public final class Rhythms{
+    public static final class Rhythms{
         public static final int ALPHA = 0;
         public static final int BETA = 1;
         public static final int GAMMA = 2;

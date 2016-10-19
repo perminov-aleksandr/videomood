@@ -6,7 +6,7 @@ import com.choosemuse.libmuse.MuseConnectionPacket;
 
 import java.lang.ref.WeakReference;
 
-import ru.spbstu.videomood.ru.spbstu.videomood.activities.VideoActivity;
+import ru.spbstu.videomood.activities.VideoActivity;
 
 public class ConnectionListener extends MuseConnectionListener {
     final WeakReference<VideoActivity> activityRef;

@@ -38,5 +38,6 @@
 
     <string name="noAgeRangeSelected">No age range selected</string>
     <string name="noMoodSelected">No mood selected</string>
+    <string name="head_on">Put on</string>
 
 </resources>

@@ -1,13 +1,15 @@
-package ru.spbstu.videomood.ru.spbstu.videomood.activities;
+package ru.spbstu.videomood.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 
 import android.view.Window;
@@ -94,6 +96,8 @@ public class VideoActivity extends Activity {
         //TextView moodTextView = (TextView) findViewById(R.id.mood);
         //moodTextView.setText(moodSolver.getUser().getCurrentMood().toString());
     }
+
+    private static int relativePacketsCounter = 0;
 
     public void processMuseDataPacket(final MuseDataPacket p, final Muse muse) {
         ArrayList<Double> packetValues = p.values();
@@ -195,13 +199,8 @@ public class VideoActivity extends Activity {
         initUI();
 
         try {
-            Range<Integer> ageRange = User.getAgeRange();
-            int ageRangeIndex;
-            for (ageRangeIndex = 0; ageRangeIndex < Const.ageRanges.length; ageRangeIndex++)
-                if (Const.ageRanges[ageRangeIndex] == ageRange)
-                    break;
-            contentProvider = new ContentProvider(ageRangeIndex);
-            videoView.setVideoURI(Uri.fromFile(contentProvider.getNext()));
+            contentProvider = new ContentProvider(User.getAgeRangeIndex());
+            currentVideoUri = Uri.fromFile(contentProvider.getNext());
         } catch (Exception e) {
             e.printStackTrace();
             displayErrorDialog();
@@ -240,6 +239,7 @@ public class VideoActivity extends Activity {
         foreheadTouch = (TextView) findViewById(R.id.forehead);
     }
 
+    //todo: add exact reason
     private void displayErrorDialog() {
         final Activity activity = this;
         new AlertDialog.Builder(this)
@@ -294,6 +294,7 @@ public class VideoActivity extends Activity {
     }
 
     private VideoView videoView;
+    private Uri currentVideoUri;
 
     private void initVideoView() {
         videoView = (VideoView) findViewById(R.id.videoView);
@@ -303,15 +304,42 @@ public class VideoActivity extends Activity {
         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
-                videoView.setVideoURI(Uri.fromFile(contentProvider.getNext()));
+                currentVideoUri = Uri.fromFile(contentProvider.getNext());
+                videoView.setVideoURI(currentVideoUri);
                 videoView.start();
             }
         });
     }
 
+    private void goToCalmActivity(View view) {
+        Intent intent = new Intent(this, CalmActivity.class);
+        startActivity(intent);
+    }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+    }
+
+    private int currentPlayPosition = -1;
+
+    public static String currentVideoUriKey = "currentVideoUri";
+    public static String currentPlayPositionKey = "currentPlayPosition";
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(currentPlayPositionKey, currentPlayPosition);
+        outState.putParcelable(currentVideoUriKey, currentVideoUri);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        currentPlayPosition = savedInstanceState.getInt(currentPlayPositionKey, -1);
+        Uri saved = savedInstanceState.getParcelable(currentVideoUriKey);
+        if (saved != null)
+            currentVideoUri = saved;
     }
 
     @Override
@@ -320,11 +348,20 @@ public class VideoActivity extends Activity {
 
         if (muse != null)
             muse.enableDataTransmission(false);
+
+        videoView.pause();
+        currentPlayPosition = videoView.getCurrentPosition();
     }
 
     @Override
     protected void onResume() {
-        super.onPause();
+        super.onResume();
+
+        videoView.setVideoURI(currentVideoUri);
+        if (currentPlayPosition != -1) {
+            videoView.seekTo(currentPlayPosition);
+            videoView.start();
+        }
 
         if (muse != null)
             muse.enableDataTransmission(true);

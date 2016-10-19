@@ -3,7 +3,7 @@
  * Interaxon, Inc. 2016
  */
 
-package ru.spbstu.videomood.ru.spbstu.videomood.activities;
+package ru.spbstu.videomood.activities;
 
 import android.Manifest;
 import android.app.Activity;
@@ -27,7 +27,6 @@ import com.choosemuse.libmuse.Muse;
 import com.choosemuse.libmuse.MuseFileFactory;
 import com.choosemuse.libmuse.MuseFileWriter;
 import com.choosemuse.libmuse.MuseListener;
-import com.choosemuse.libmuse.MuseManagerAndroid;
 
 import java.io.File;
 import java.lang.ref.WeakReference;

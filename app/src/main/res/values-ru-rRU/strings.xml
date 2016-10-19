@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VideoMood</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Настройки</string>
+    <string name="connect">Подключиться</string>
+    <string name="status">Состояние соединения:</string>
+    <string name="disconnect">Отключиться</string>
+    <string name="refresh">Обновить</string>
+    <string name="init_val">0.0</string>
+    <string name="eeg">Данные ЭЭГ:</string>
+    <string name="accel">Данные акселерометра:</string>
+    <string name="version">Версия:</string>
+    <string name="undefined">неизвестно</string>
+    <string name="artifacts">Blinks, Jaw: </string>
+    <string name="msg_count">Msg number, size: </string>
+    <string name="pause">Pause/Resume</string>
+    <string name="drop">Drop</string>
+    <string name="muse_elem">Alpha relative:</string>
+
+    <string name="permission_dialog_title">Muse Needs Your Permission</string>
+    <string name="permission_dialog_description">Muse needs a few permissions to work properly. On the next screens, tap "Allow" to proceed. If you deny, Muse will not work properly until you go into your Android settings and allow.</string>
+    <string name="permission_dialog_understand">I Understand</string>
+
+    <string name="title_activity_video">VideoActivity</string>
+    <string name="title_activity_user">Данные о пользователе</string>
+    <string name="age">Возраст</string>
+    <string name="mood">Текущее состояние</string>
+    <string name="next">Далее</string>
+    <string name="done">Готово</string>
+    <string name="userDataHeader">Введите данные о пользователе</string>
+    <string name="museConnectHeader">Подключиться</string>
+    <string name="back">Назад</string>
+
+    <string name="noDevicesFound">Не найдено</string>
+    <string name="device">Устройство</string>
+
+    <string name="noAgeRangeSelected">Не выбран возраст</string>
+    <string name="noMoodSelected">Не выбрано текущее состояние</string>
+    <string name="head_on">Надето</string>
+</resources>

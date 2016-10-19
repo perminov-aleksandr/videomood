@@ -5,6 +5,8 @@ import android.os.Build;
 import android.os.Environment;
 
 import java.io.File;
+import java.net.URI;
+import java.util.Objects;
 
 public class ContentProvider {
 
@@ -30,6 +32,7 @@ public class ContentProvider {
     private int index = 0;
 
     public File getNext() {
-        return ageVideos[index++];
+        File nextVideo = ageVideos[index++];
+        return nextVideo;
     }
 }

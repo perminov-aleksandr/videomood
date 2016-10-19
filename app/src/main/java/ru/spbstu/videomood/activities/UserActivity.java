@@ -1,4 +1,4 @@
-package ru.spbstu.videomood.ru.spbstu.videomood.activities;
+package ru.spbstu.videomood.activities;
 
 import android.content.Intent;
 import android.os.Bundle;

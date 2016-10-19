@@ -7,7 +7,7 @@ import com.choosemuse.libmuse.MuseDataPacket;
 
 import java.lang.ref.WeakReference;
 
-import ru.spbstu.videomood.ru.spbstu.videomood.activities.VideoActivity;
+import ru.spbstu.videomood.activities.VideoActivity;
 
 public class DataListener extends MuseDataListener {
     final WeakReference<VideoActivity> activityRef;
@@ -29,6 +29,8 @@ public class DataListener extends MuseDataListener {
         activityRef.get().processMuseDataPacket(p, muse);
         //writeDataPacketToFile(p);
     }
+
+    private static int dataPacketCounter = 0;
 
     /**
      * You will receive a callback to this method each time an artifact packet is generated if you
