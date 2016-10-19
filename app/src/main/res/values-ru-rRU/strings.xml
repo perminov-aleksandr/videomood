@@ -7,22 +7,17 @@
     <string name="status">Состояние соединения:</string>
     <string name="disconnect">Отключиться</string>
     <string name="refresh">Обновить</string>
-    <string name="init_val">0.0</string>
     <string name="eeg">Данные ЭЭГ:</string>
     <string name="accel">Данные акселерометра:</string>
     <string name="version">Версия:</string>
     <string name="undefined">неизвестно</string>
     <string name="artifacts">Blinks, Jaw: </string>
-    <string name="msg_count">Msg number, size: </string>
-    <string name="pause">Pause/Resume</string>
     <string name="drop">Drop</string>
-    <string name="muse_elem">Alpha relative:</string>
 
-    <string name="permission_dialog_title">Muse Needs Your Permission</string>
-    <string name="permission_dialog_description">Muse needs a few permissions to work properly. On the next screens, tap "Allow" to proceed. If you deny, Muse will not work properly until you go into your Android settings and allow.</string>
-    <string name="permission_dialog_understand">I Understand</string>
+    <string name="permission_dialog_title">Muse необходимы разрешения</string>
+    <string name="permission_dialog_description">Muse необходимо несколько разрешений для правильной работы. На следующих экранах нажмите \"Разрешить\", чтобы продолжить. Если вы запретите, Muse не будет работать правильно, пока вы не выдадите разрешение в настройках вашей системы.</string>
+    <string name="permission_dialog_understand">Я понимаю</string>
 
-    <string name="title_activity_video">VideoActivity</string>
     <string name="title_activity_user">Данные о пользователе</string>
     <string name="age">Возраст</string>
     <string name="mood">Текущее состояние</string>
@@ -38,4 +33,5 @@
     <string name="noAgeRangeSelected">Не выбран возраст</string>
     <string name="noMoodSelected">Не выбрано текущее состояние</string>
     <string name="head_on">Надето</string>
+    <string name="calmDownMessage">Для продолжения просмотра видео - дышите глубже</string>
 </resources>

@@ -8,22 +8,22 @@
     <string name="status">Connection Status:</string>
     <string name="disconnect">Disconnect</string>
     <string name="refresh">Refresh</string>
-    <string name="init_val">0.0</string>
+    <string name="init_val" translatable="false">0.0</string>
     <string name="eeg">EEG data:</string>
     <string name="accel">Accelerometer Data:</string>
     <string name="version">Version:</string>
     <string name="undefined">unknown</string>
     <string name="artifacts">Blinks, Jaw: </string>
-    <string name="msg_count">Msg number, size: </string>
-    <string name="pause">Pause/Resume</string>
+    <string name="msg_count" translatable="false">Msg number, size: </string>
+    <string name="pause" translatable="false">Pause/Resume</string>
     <string name="drop">Drop</string>
-    <string name="muse_elem">Alpha relative:</string>
+    <string name="muse_elem" translatable="false">Alpha relative:</string>
 
     <string name="permission_dialog_title">Muse Needs Your Permission</string>
     <string name="permission_dialog_description">Muse needs a few permissions to work properly. On the next screens, tap "Allow" to proceed. If you deny, Muse will not work properly until you go into your Android settings and allow.</string>
     <string name="permission_dialog_understand">I Understand</string>
 
-    <string name="title_activity_video">VideoActivity</string>
+    <string name="title_activity_video" translatable="false">VideoActivity</string>
     <string name="title_activity_user">User data</string>
     <string name="age">Age</string>
     <string name="mood">Current mood</string>
@@ -39,5 +39,6 @@
     <string name="noAgeRangeSelected">No age range selected</string>
     <string name="noMoodSelected">No mood selected</string>
     <string name="head_on">Put on</string>
+    <string name="calmDownMessage">TextView</string>
 
 </resources>

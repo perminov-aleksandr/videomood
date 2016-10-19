@@ -1,4 +1,5 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -13,7 +14,7 @@
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_width="50dp"
+        android:layout_width="40dp"
         android:layout_height="match_parent"
         android:background="@color/black_overlay">
 
@@ -23,7 +24,9 @@
             android:id="@+id/alpha"
             android:layout_weight="54"
             android:background="@android:color/holo_green_light"
-            android:layout_margin="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
             android:textColor="@android:color/white"
             android:text="54"
             android:gravity="center" />
@@ -33,7 +36,9 @@
             android:layout_height="wrap_content"
             android:id="@+id/beta"
             android:layout_weight="46"
-            android:layout_margin="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
             android:background="@android:color/holo_red_light"
             android:gravity="center"
             android:text="46"
@@ -46,7 +51,8 @@
         android:orientation="vertical"
         android:background="@color/black_overlay"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true">
+        android:layout_alignParentEnd="true"
+        android:onClick="displayCalmScreen">
 
         <TextView
             android:text="UNKNOWN"
@@ -109,5 +115,34 @@
 
     </LinearLayout>
 
+    <RelativeLayout
+        android:id="@+id/calmScreen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/black"
+        android:onClick="hideCalmScreen"
+        android:visibility="invisible">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/calm_image_tiger"
+            android:id="@+id/calmImage" />
+
+        <TextView
+            android:text="@string/calmDownMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/calmDownTextView"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:background="@color/black_overlay"
+            android:textColor="@android:color/white"
+            android:textSize="24sp"
+            android:padding="5dp" />
+
+
+    </RelativeLayout>
 
 </RelativeLayout>

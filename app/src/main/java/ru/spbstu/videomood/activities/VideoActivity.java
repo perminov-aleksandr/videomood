@@ -9,12 +9,12 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 
 import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
 
@@ -35,7 +35,6 @@ import ru.spbstu.videomood.DataListener;
 import ru.spbstu.videomood.MuseManager;
 import ru.spbstu.videomood.MuseMoodSolver;
 import ru.spbstu.videomood.R;
-import ru.spbstu.videomood.Range;
 import ru.spbstu.videomood.User;
 import ru.spbstu.videomood.Utils;
 
@@ -74,7 +73,7 @@ public class VideoActivity extends Activity {
     private TextView alphaBar;
     private TextView betaBar;
 
-    private void updateScores() {
+    private void updateBar() {
         //todo: refactor this. TOO EXPLICIT DEPENDENCY FROM relativeBuffer and other
         BarValues barValues = new BarValues().calculate();
         long alphaPercent = barValues.getAlphaPercent();
@@ -158,7 +157,7 @@ public class VideoActivity extends Activity {
         @Override
         public void run() {
             if (relativeStale) {
-                updateScores();
+                updateBar();
                 //moodSolver.solve(meanScores);
                 //updateMood();
                 relativeStale = false;
@@ -217,11 +216,26 @@ public class VideoActivity extends Activity {
         handler.post(tickUi);
     }
 
+    private RelativeLayout calmScreen;
+
+    public void displayCalmScreen(View view) {
+        videoView.pause();
+        mediaController.hide();
+        calmScreen.setVisibility(View.VISIBLE);
+    }
+
+    public void hideCalmScreen(View view) {
+        calmScreen.setVisibility(View.INVISIBLE);
+        videoView.start();
+    }
+
     private void initUI() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_video);
         initTextViews();
         initVideoView();
+
+        calmScreen = (RelativeLayout) findViewById(R.id.calmScreen);
     }
 
     private void initTextViews(){
@@ -294,11 +308,12 @@ public class VideoActivity extends Activity {
     }
 
     private VideoView videoView;
+    private MediaController mediaController;
     private Uri currentVideoUri;
 
     private void initVideoView() {
         videoView = (VideoView) findViewById(R.id.videoView);
-        MediaController mediaController = new MediaController(this);
+        mediaController = new MediaController(this);
         videoView.setMediaController(mediaController);
         videoView.requestFocus();
         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
