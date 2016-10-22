@@ -34,4 +34,8 @@
     <string name="noMoodSelected">Не выбрано текущее состояние</string>
     <string name="head_on">Надето</string>
     <string name="calmDownMessage">Для продолжения просмотра видео - дышите глубже</string>
+    <string name="state_unknown">Неизвестно</string>
+    <string name="state_connecting">Подключение</string>
+    <string name="state_connected">Подключено</string>
+    <string name="state_disconnected">Отключено</string>
 </resources>

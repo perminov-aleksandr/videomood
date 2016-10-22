@@ -32,7 +32,11 @@ public class ContentProvider {
     private int index = 0;
 
     public File getNext() {
-        File nextVideo = ageVideos[index++];
+        index++;
+        if (index == ageVideos.length)
+            index = 0;
+
+        File nextVideo = ageVideos[index];
         return nextVideo;
     }
 }

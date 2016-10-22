@@ -62,14 +62,17 @@ public class VideoActivity extends Activity {
         for (int i = 0; i < isGoodBuffer.length; i++)
             isGoodIndicators[i].setVisibility(isGoodBuffer[i] ? View.VISIBLE : View.INVISIBLE);
 
-        foreheadTouch.setVisibility(isForeheadTouch ? View.VISIBLE : View.INVISIBLE);
+        int visibility = isForeheadTouch ? View.VISIBLE : View.INVISIBLE;
+        foreheadTouch.setVisibility(visibility);
+        rhytmsBar.setVisibility(visibility);
     }
 
     private void updateBattery() {
-        batteryTextView.setText(String.format("%s%%", batteryValue));
+        batteryTextView.setText(String.format("%d%%", (int)batteryValue));
         batteryStale = false;
     }
 
+    private LinearLayout rhytmsBar;
     private TextView alphaBar;
     private TextView betaBar;
 
@@ -79,8 +82,8 @@ public class VideoActivity extends Activity {
         long alphaPercent = barValues.getAlphaPercent();
         long betaPercent = barValues.getBetaPercent();
 
-        alphaBar.setText(String.format("%d", alphaPercent));
-        betaBar.setText(String.format("%d", betaPercent));
+        //alphaBar.setText(String.format("%d", alphaPercent));
+        //betaBar.setText(String.format("%d", betaPercent));
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
         params.weight = (float)alphaPercent;
@@ -236,6 +239,7 @@ public class VideoActivity extends Activity {
         initVideoView();
 
         calmScreen = (RelativeLayout) findViewById(R.id.calmScreen);
+        rhytmsBar = (LinearLayout) findViewById(R.id.rhythmsBar);
     }
 
     private void initTextViews(){
@@ -251,6 +255,8 @@ public class VideoActivity extends Activity {
         isGoodIndicators[Const.Electrodes.FOURTH] = (TextView) findViewById(R.id.good4);
 
         foreheadTouch = (TextView) findViewById(R.id.forehead);
+
+        museIndicators = (LinearLayout) findViewById(R.id.museIndicators);
     }
 
     //todo: add exact reason
@@ -291,19 +297,34 @@ public class VideoActivity extends Activity {
 
     private TextView museState;
 
+    private LinearLayout museIndicators;
+
+    private void setMuseIndicatorsVisible(boolean isVisible) {
+        int visibility = isVisible ? View.VISIBLE : View.INVISIBLE;
+        museIndicators.setVisibility(visibility);
+    }
+
     public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
         final ConnectionState current = p.getCurrentConnectionState();
 
-        //todo: handle connection and disconnection
-        if (current == ConnectionState.CONNECTED) {
-            videoView.start();
+        int stateStringId = R.string.state_unknown;
+        switch (current) {
+            case CONNECTING:
+                stateStringId = R.string.state_connecting;
+                break;
+            case CONNECTED:
+                stateStringId = R.string.state_connected;
+                setMuseIndicatorsVisible(true);
+                break;
+            case DISCONNECTED:
+                stateStringId = R.string.state_disconnected;
+                setMuseIndicatorsVisible(false);
+                break;
         }
-
-        museState.setText(current.toString());
+        museState.setText(getResources().getString(stateStringId));
 
         if (current == ConnectionState.DISCONNECTED) {
             this.muse = null;
-            videoView.pause();
         }
     }
 
@@ -321,6 +342,12 @@ public class VideoActivity extends Activity {
             public void onCompletion(MediaPlayer mediaPlayer) {
                 currentVideoUri = Uri.fromFile(contentProvider.getNext());
                 videoView.setVideoURI(currentVideoUri);
+                videoView.start();
+            }
+        });
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
                 videoView.start();
             }
         });
