@@ -76,7 +76,7 @@ public class UserActivity extends Activity {
         if (!isUserDataValid(ageIndex, moodIndex))
             return;
 
-        User.setCurrentMood(Const.moods[moodIndex]);
+        User.setCurrentMood(Const.moods[1]);
         User.setRange(Const.ageRanges[ageIndex]);
 
         Intent intent = new Intent(this, VideoActivity.class);
@@ -88,11 +88,11 @@ public class UserActivity extends Activity {
             displayValidationMessage(getResources().getString(R.string.noAgeRangeSelected));
             return false;
         }
-        else if (moodIndex == -1)
+        /*else if (moodIndex == -1)
         {
             displayValidationMessage(getResources().getString(R.string.noMoodSelected));
             return false;
-        }
+        }*/
         return true;
     }
 

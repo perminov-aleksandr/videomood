@@ -9,7 +9,11 @@
     <VideoView android:id="@+id/videoView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_centerInParent="true">
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@+id/rhythmsBar"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true">
     </VideoView>
 
     <LinearLayout
@@ -102,7 +106,8 @@
         android:layout_height="match_parent"
         android:background="@android:color/black"
         android:onClick="hideCalmScreen"
-        android:visibility="invisible">
+        android:visibility="invisible"
+        android:layout_alignParentEnd="true">
 
         <ImageView
             android:layout_width="match_parent"
@@ -129,10 +134,10 @@
     <LinearLayout
         android:id="@+id/rhythmsBar"
         android:orientation="vertical"
-        android:layout_width="40dp"
         android:layout_height="match_parent"
         android:background="@color/black_overlay"
-        android:visibility="invisible">
+        android:visibility="invisible"
+        android:layout_width="20dp">
 
         <TextView
             android:id="@+id/alpha"

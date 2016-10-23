@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -44,7 +45,6 @@ import ru.spbstu.videomood.Utils;
 public class VideoActivity extends Activity {
 
     private static final String TAG = "VideoMood:VideoActivity";
-    private MuseMoodSolver moodSolver;
 
     private final int CHANNEL_COUNT = 4;
     private final int RANGE_COUNT = 5;
@@ -55,9 +55,7 @@ public class VideoActivity extends Activity {
     private final int timeArrayLength = 60*10;
     private final Queue<Long[]> percentTimeQueue = new ArrayDeque<>(timeArrayLength);
 
-    //buffer for every range in every channel
     private final double[][] relativeBuffer = new double[RANGE_COUNT][CHANNEL_COUNT];
-    private final double[] meanScores = new double[RANGE_COUNT];
     private boolean relativeStale = false;
 
     private TextView foreheadTouch;
@@ -76,6 +74,10 @@ public class VideoActivity extends Activity {
             isGoodIndicators[i].setVisibility(isGoodBuffer[i] ? View.VISIBLE : View.INVISIBLE);
 
         int visibility = isForeheadTouch ? View.VISIBLE : View.INVISIBLE;
+
+        //if (foreheadTouch.getVisibility() == View.VISIBLE && visibility == View.INVISIBLE)
+          //  Log.i(TAG, "signal miss");
+
         foreheadTouch.setVisibility(visibility);
         rhythmsBar.setVisibility(visibility);
     }
@@ -141,12 +143,9 @@ public class VideoActivity extends Activity {
     private final long second = 1000;
 
     private Handler warningHandler = new Handler();
-    private final long checkWarningDelay = second;
 
     private Handler calmHandler = new Handler();
-    private long checkCalmDelay = second;
 
-    //check every second if 80/20 alpha/beta ratio reached
     private final Runnable checkWarningRunnable = new Runnable() {
         @Override
         public void run() {
@@ -157,6 +156,7 @@ public class VideoActivity extends Activity {
                 calmHandler.postDelayed(checkCalmRunnable, 30 * second);
             } else {
                 //or we could continue watching and counting
+                long checkWarningDelay = second;
                 warningHandler.postDelayed(this, checkWarningDelay);
             }
         }
@@ -170,6 +170,7 @@ public class VideoActivity extends Activity {
                 percentTimeQueue.clear();
                 warningHandler.postDelayed(checkWarningRunnable, 60 * second);
             } else {
+                long checkCalmDelay = second;
                 calmHandler.postDelayed(this, checkCalmDelay);
             }
         }
@@ -181,6 +182,14 @@ public class VideoActivity extends Activity {
         Log.i(TAG, String.format("warning check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
 
         return betaPercentSum >= 20;
+    }
+
+    private boolean checkIsCalm() {
+        calcPercentSum();
+
+        Log.i(TAG, String.format("calm check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
+
+        return alphaPercentSum >= 90;
     }
 
     private void calcPercentSum() {
@@ -196,14 +205,6 @@ public class VideoActivity extends Activity {
         int countSum = percentTimeQueue.size();
         alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
         betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
-    }
-
-    private boolean checkIsCalm() {
-        calcPercentSum();
-
-        Log.i(TAG, String.format("calm check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
-
-        return alphaPercentSum >= 90;
     }
 
     private void fillRelativeBufferWith(final int rangeIndex, final ArrayList<Double> packetValues) {
@@ -240,8 +241,6 @@ public class VideoActivity extends Activity {
         public void run() {
             if (relativeStale) {
                 updateBar();
-                //moodSolver.solve(meanScores);
-                //updateMood();
                 relativeStale = false;
             }
             if (isGoodStale) {
@@ -274,8 +273,6 @@ public class VideoActivity extends Activity {
         connectionListener = new ConnectionListener(weakActivity);
         // Register a listener to receive data from a Muse.
         dataListener = new DataListener(weakActivity);
-
-        moodSolver = new MuseMoodSolver();
 
         initUI();
 
@@ -356,16 +353,17 @@ public class VideoActivity extends Activity {
     }
 
     private void displayReconnectDialog() {
+        Resources resources = getResources();
         new AlertDialog.Builder(this)
-                .setTitle("Unable to connect to Muse")
-                .setMessage("Something went wrong and muse is unavailable now. Want to try again?")
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                .setTitle(resources.getString(R.string.reconnect_header))
+                .setMessage(resources.getString(R.string.reconnect_message))
+                .setNegativeButton(resources.getString(R.string.no), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
                     }
                 })
-                .setPositiveButton("Connect again", new DialogInterface.OnClickListener()
+                .setPositiveButton(resources.getString(R.string.reconnect), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -425,10 +423,6 @@ public class VideoActivity extends Activity {
                 break;
         }
         museState.setText(getResources().getString(stateStringId));
-
-        /*if (current == ConnectionState.DISCONNECTED) {
-            this.muse = null;
-        }*/
     }
 
     private VideoView videoView;
@@ -454,11 +448,6 @@ public class VideoActivity extends Activity {
                 videoView.start();
             }
         });
-    }
-
-    private void goToCalmActivity(View view) {
-        Intent intent = new Intent(this, CalmActivity.class);
-        startActivity(intent);
     }
 
     @Override
@@ -526,11 +515,11 @@ public class VideoActivity extends Activity {
         private long alphaPercent;
         private long betaPercent;
 
-        public long getAlphaPercent() {
+        long getAlphaPercent() {
             return alphaPercent;
         }
 
-        public long getBetaPercent() {
+        long getBetaPercent() {
             return betaPercent;
         }
 
@@ -538,7 +527,7 @@ public class VideoActivity extends Activity {
          * Calculate weighted values each of channel in relativeBuffer for ALPHA and BETA ranges.
          * @return new BarValues instance filled according to calculated values
          */
-        public BarValues calculate() {
+        BarValues calculate() {
             double alphaMean = Utils.mean(relativeBuffer[Const.Rhythms.ALPHA]);
             double betaMean = Utils.mean(relativeBuffer[Const.Rhythms.BETA]);
 

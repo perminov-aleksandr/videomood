@@ -42,13 +42,15 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="@string/mood"
-        android:id="@+id/moodTextView" />
+        android:id="@+id/moodTextView"
+        android:visibility="gone" />
 
     <RadioGroup
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/moodButtonsLayout">
+        android:id="@+id/moodButtonsLayout"
+        android:visibility="gone"        >
 
     </RadioGroup>
 

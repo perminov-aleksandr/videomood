@@ -1,23 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">VideoMood</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="app_name" translatable="false">VideoMood</string>
     <string name="action_settings">Settings</string>
     <string name="connect">Connect</string>
-    <string name="status">Connection Status:</string>
     <string name="disconnect">Disconnect</string>
     <string name="refresh">Refresh</string>
     <string name="init_val" translatable="false">0.0</string>
-    <string name="eeg">EEG data:</string>
-    <string name="accel">Accelerometer Data:</string>
-    <string name="version">Version:</string>
-    <string name="undefined">unknown</string>
-    <string name="artifacts">Blinks, Jaw: </string>
-    <string name="msg_count" translatable="false">Msg number, size: </string>
-    <string name="pause" translatable="false">Pause/Resume</string>
-    <string name="drop">Drop</string>
-    <string name="muse_elem" translatable="false">Alpha relative:</string>
 
     <string name="permission_dialog_title">Muse Needs Your Permission</string>
     <string name="permission_dialog_description">Muse needs a few permissions to work properly. On the next screens, tap "Allow" to proceed. If you deny, Muse will not work properly until you go into your Android settings and allow.</string>
@@ -44,5 +33,9 @@
     <string name="state_connecting">Connecting</string>
     <string name="state_connected">Connected</string>
     <string name="state_disconnected">Disconnected</string>
+    <string name="reconnect_header">Muse disconnected</string>
+    <string name="reconnect_message">Muse is not available now. Want to try again?</string>
+    <string name="reconnect">Reconnect</string>
+    <string name="no">No</string>
 
 </resources>

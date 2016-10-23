@@ -1,18 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">VideoMood</string>
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Настройки</string>
     <string name="connect">Подключиться</string>
-    <string name="status">Состояние соединения:</string>
     <string name="disconnect">Отключиться</string>
     <string name="refresh">Обновить</string>
-    <string name="eeg">Данные ЭЭГ:</string>
-    <string name="accel">Данные акселерометра:</string>
-    <string name="version">Версия:</string>
-    <string name="undefined">неизвестно</string>
-    <string name="artifacts">Blinks, Jaw: </string>
-    <string name="drop">Drop</string>
 
     <string name="permission_dialog_title">Muse необходимы разрешения</string>
     <string name="permission_dialog_description">Muse необходимо несколько разрешений для правильной работы. На следующих экранах нажмите \"Разрешить\", чтобы продолжить. Если вы запретите, Muse не будет работать правильно, пока вы не выдадите разрешение в настройках вашей системы.</string>
@@ -33,9 +24,13 @@
     <string name="noAgeRangeSelected">Не выбран возраст</string>
     <string name="noMoodSelected">Не выбрано текущее состояние</string>
     <string name="head_on">Надето</string>
-    <string name="calmDownMessage">Для продолжения просмотра видео - дышите глубже</string>
+    <string name="calmDownMessage">Для продолжения просмотра видео - дышите глубоко</string>
     <string name="state_unknown">Неизвестно</string>
     <string name="state_connecting">Подключение</string>
     <string name="state_connected">Подключено</string>
     <string name="state_disconnected">Отключено</string>
+    <string name="reconnect_header">Устройство Muse отключено</string>
+    <string name="reconnect_message">Устройство Muse недоступно. Хотите попытаться еще раз?</string>
+    <string name="reconnect">Переподключиться</string>
+    <string name="no">Нет</string>
 </resources>
