@@ -9,6 +9,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 
 import android.view.Window;
@@ -26,7 +27,9 @@ import com.choosemuse.libmuse.MuseConnectionPacket;
 import com.choosemuse.libmuse.MuseDataPacket;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Queue;
 
 import ru.spbstu.videomood.ConnectionListener;
 import ru.spbstu.videomood.Const;
@@ -43,15 +46,25 @@ public class VideoActivity extends Activity {
     private static final String TAG = "VideoMood:VideoActivity";
     private MuseMoodSolver moodSolver;
 
-    private final double[][] relativeBuffer = new double[5][4];
-    private final double[] meanScores = new double[5];
+    private final int CHANNEL_COUNT = 4;
+    private final int RANGE_COUNT = 5;
+
+    private long alphaPercentSum;
+    private long betaPercentSum;
+
+    private final int timeArrayLength = 60*10;
+    private final Queue<Long[]> percentTimeQueue = new ArrayDeque<>(timeArrayLength);
+
+    //buffer for every range in every channel
+    private final double[][] relativeBuffer = new double[RANGE_COUNT][CHANNEL_COUNT];
+    private final double[] meanScores = new double[RANGE_COUNT];
     private boolean relativeStale = false;
 
     private TextView foreheadTouch;
     private boolean isForeheadTouch = false;
 
     private TextView[] isGoodIndicators;
-    private final boolean[] isGoodBuffer = new boolean[4];
+    private final boolean[] isGoodBuffer = new boolean[CHANNEL_COUNT];
     private boolean isGoodStale = false;
 
     private TextView batteryTextView;
@@ -64,7 +77,7 @@ public class VideoActivity extends Activity {
 
         int visibility = isForeheadTouch ? View.VISIBLE : View.INVISIBLE;
         foreheadTouch.setVisibility(visibility);
-        rhytmsBar.setVisibility(visibility);
+        rhythmsBar.setVisibility(visibility);
     }
 
     private void updateBattery() {
@@ -72,7 +85,7 @@ public class VideoActivity extends Activity {
         batteryStale = false;
     }
 
-    private LinearLayout rhytmsBar;
+    private LinearLayout rhythmsBar;
     private TextView alphaBar;
     private TextView betaBar;
 
@@ -82,8 +95,14 @@ public class VideoActivity extends Activity {
         long alphaPercent = barValues.getAlphaPercent();
         long betaPercent = barValues.getBetaPercent();
 
-        //alphaBar.setText(String.format("%d", alphaPercent));
-        //betaBar.setText(String.format("%d", betaPercent));
+        if (percentTimeQueue.size() == timeArrayLength) {
+            percentTimeQueue.remove();
+        }
+
+        Long[] percentArr = new Long[2];
+        percentArr[Const.Rhythms.ALPHA] = alphaPercent;
+        percentArr[Const.Rhythms.BETA] = betaPercent;
+        percentTimeQueue.add(percentArr);
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
         params.weight = (float)alphaPercent;
@@ -93,13 +112,6 @@ public class VideoActivity extends Activity {
         params.weight = (float)betaPercent;
         betaBar.setLayoutParams(params);
     }
-
-    private void updateMood() {
-        //TextView moodTextView = (TextView) findViewById(R.id.mood);
-        //moodTextView.setText(moodSolver.getUser().getCurrentMood().toString());
-    }
-
-    private static int relativePacketsCounter = 0;
 
     public void processMuseDataPacket(final MuseDataPacket p, final Muse muse) {
         ArrayList<Double> packetValues = p.values();
@@ -117,7 +129,7 @@ public class VideoActivity extends Activity {
                 batteryStale = true;
                 break;
             case IS_GOOD:
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < CHANNEL_COUNT; i++)
                     isGoodBuffer[i] = packetValues.get(i) > 0.5;
                 isGoodStale = true;
                 break;
@@ -126,11 +138,78 @@ public class VideoActivity extends Activity {
         }
     }
 
+    private final long second = 1000;
+
+    private Handler warningHandler = new Handler();
+    private final long checkWarningDelay = second;
+
+    private Handler calmHandler = new Handler();
+    private long checkCalmDelay = second;
+
+    //check every second if 80/20 alpha/beta ratio reached
+    private final Runnable checkWarningRunnable = new Runnable() {
+        @Override
+        public void run() {
+            //check if we should interrupt video and ask to calm down
+            if (checkIsWarning()) {
+                displayCalmScreen(findViewById(R.id.museInfo));
+                percentTimeQueue.clear();
+                calmHandler.postDelayed(checkCalmRunnable, 30 * second);
+            } else {
+                //or we could continue watching and counting
+                warningHandler.postDelayed(this, checkWarningDelay);
+            }
+        }
+    };
+
+    private final Runnable checkCalmRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (checkIsCalm()) {
+                hideCalmScreen(findViewById(R.id.calmScreen));
+                percentTimeQueue.clear();
+                warningHandler.postDelayed(checkWarningRunnable, 60 * second);
+            } else {
+                calmHandler.postDelayed(this, checkCalmDelay);
+            }
+        }
+    };
+
+    private boolean checkIsWarning() {
+        calcPercentSum();
+
+        Log.i(TAG, String.format("warning check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
+
+        return betaPercentSum >= 20;
+    }
+
+    private void calcPercentSum() {
+        long inAlphaCount = 0;
+        long inBetaCount = 0;
+        for (Long[] percentArr : percentTimeQueue) {
+            if (percentArr[Const.Rhythms.BETA] > percentArr[Const.Rhythms.ALPHA])
+                inBetaCount++;
+            else
+                inAlphaCount++;
+        }
+
+        int countSum = percentTimeQueue.size();
+        alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
+        betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
+    }
+
+    private boolean checkIsCalm() {
+        calcPercentSum();
+
+        Log.i(TAG, String.format("calm check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
+
+        return alphaPercentSum >= 90;
+    }
+
     private void fillRelativeBufferWith(final int rangeIndex, final ArrayList<Double> packetValues) {
         for (int i = 0; i < packetValues.size(); i++) {
             Double v = packetValues.get(i);
             relativeBuffer[rangeIndex][i] = v;
-            //Log.i(TAG, String.format("ALPHA: %2.6f", v) );
         }
     }
 
@@ -239,7 +318,7 @@ public class VideoActivity extends Activity {
         initVideoView();
 
         calmScreen = (RelativeLayout) findViewById(R.id.calmScreen);
-        rhytmsBar = (LinearLayout) findViewById(R.id.rhythmsBar);
+        rhythmsBar = (LinearLayout) findViewById(R.id.rhythmsBar);
     }
 
     private void initTextViews(){
@@ -271,6 +350,26 @@ public class VideoActivity extends Activity {
                     public void onClick(DialogInterface dialog, int which) {
                         finish();
                         activity.finishAffinity();
+                    }
+                })
+                .show();
+    }
+
+    private void displayReconnectDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Unable to connect to Muse")
+                .setMessage("Something went wrong and muse is unavailable now. Want to try again?")
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .setPositiveButton("Connect again", new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        muse.runAsynchronously();
                     }
                 })
                 .show();
@@ -315,17 +414,21 @@ public class VideoActivity extends Activity {
             case CONNECTED:
                 stateStringId = R.string.state_connected;
                 setMuseIndicatorsVisible(true);
+                warningHandler.postDelayed(checkWarningRunnable, 60 * second);
                 break;
             case DISCONNECTED:
                 stateStringId = R.string.state_disconnected;
                 setMuseIndicatorsVisible(false);
+                warningHandler.removeCallbacks(checkWarningRunnable);
+                calmHandler.removeCallbacks(checkCalmRunnable);
+                displayReconnectDialog();
                 break;
         }
         museState.setText(getResources().getString(stateStringId));
 
-        if (current == ConnectionState.DISCONNECTED) {
+        /*if (current == ConnectionState.DISCONNECTED) {
             this.muse = null;
-        }
+        }*/
     }
 
     private VideoView videoView;
@@ -413,8 +516,10 @@ public class VideoActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
 
-        if (muse != null)
-            muse.disconnect(true);
+        if (muse != null) {
+            muse.unregisterAllListeners();
+            muse.disconnect(false);
+        }
     }
 
     private class BarValues {
