@@ -151,9 +151,7 @@ public class VideoActivity extends Activity {
         public void run() {
             //check if we should interrupt video and ask to calm down
             if (checkIsWarning()) {
-                displayCalmScreen(findViewById(R.id.museInfo));
-                percentTimeQueue.clear();
-                calmHandler.postDelayed(checkCalmRunnable, 30 * second);
+                switchToCalmCheck(findViewById(R.id.museInfo));
             } else {
                 //or we could continue watching and counting
                 long checkWarningDelay = second;
@@ -166,15 +164,27 @@ public class VideoActivity extends Activity {
         @Override
         public void run() {
             if (checkIsCalm()) {
-                hideCalmScreen(findViewById(R.id.calmScreen));
-                percentTimeQueue.clear();
-                warningHandler.postDelayed(checkWarningRunnable, 60 * second);
+                switchToWarningCheck(findViewById(R.id.calmScreen));
             } else {
                 long checkCalmDelay = second;
                 calmHandler.postDelayed(this, checkCalmDelay);
             }
         }
     };
+
+    public void switchToCalmCheck(View view) {
+        displayCalmScreen();
+        percentTimeQueue.clear();
+        warningHandler.removeCallbacks(checkWarningRunnable);
+        calmHandler.postDelayed(checkCalmRunnable, 30 * second);
+    }
+
+    public void switchToWarningCheck(View view) {
+        hideCalmScreen();
+        percentTimeQueue.clear();
+        calmHandler.removeCallbacks(checkCalmRunnable);
+        warningHandler.postDelayed(checkWarningRunnable, 60 * second);
+    }
 
     private boolean checkIsWarning() {
         calcPercentSum();
@@ -297,13 +307,13 @@ public class VideoActivity extends Activity {
 
     private RelativeLayout calmScreen;
 
-    public void displayCalmScreen(View view) {
+    private void displayCalmScreen() {
         videoView.pause();
         mediaController.hide();
         calmScreen.setVisibility(View.VISIBLE);
     }
 
-    public void hideCalmScreen(View view) {
+    private void hideCalmScreen() {
         calmScreen.setVisibility(View.INVISIBLE);
         videoView.start();
     }

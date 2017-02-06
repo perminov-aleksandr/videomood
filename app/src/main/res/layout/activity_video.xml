@@ -17,14 +17,14 @@
     </VideoView>
 
     <LinearLayout
-        android:layout_width="100dp"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:background="@color/black_overlay"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:onClick="displayCalmScreen"
-        android:id="@+id/museInfo">
+        android:onClick="switchToCalmCheck"
+        android:id="@+id/museInfo"
+        android:layout_width="100dp">
 
         <TextView
             android:id="@+id/museState"
@@ -65,7 +65,7 @@
                 android:id="@+id/good1"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:text="1 OK"
+                android:text="•"
                 android:textColor="@android:color/holo_red_light"
                 android:gravity="center"
                 android:visibility="invisible"/>
@@ -74,7 +74,7 @@
                 android:id="@+id/good2"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:text="2 OK"
+                android:text="•"
                 android:textColor="@android:color/holo_green_light"
                 android:gravity="center"
                 android:visibility="invisible"/>
@@ -83,7 +83,7 @@
                 android:id="@+id/good3"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:text="3 OK"
+                android:text="•"
                 android:textColor="@android:color/holo_blue_light"
                 android:gravity="center"
                 android:visibility="invisible"/>
@@ -92,7 +92,7 @@
                 android:id="@+id/good4"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:text="4 OK"
+                android:text="•"
                 android:textColor="@android:color/holo_orange_dark"
                 android:gravity="center"
                 android:visibility="invisible"/>
@@ -105,14 +105,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/black"
-        android:onClick="hideCalmScreen"
+        android:onClick="switchToWarningCheck"
         android:visibility="invisible"
         android:layout_alignParentEnd="true">
 
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:src="@drawable/calm_image_tiger"
+            android:src="@drawable/humster"
             android:id="@+id/calmImage" />
 
         <TextView
