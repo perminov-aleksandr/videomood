@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/activity_main"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="horizontal"
+    tools:context="ru.spbstu.videomoodadmin.activities.MainActivity"
+    android:padding="8dp"
+    android:baselineAligned="false">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+
+        <SurfaceView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/plotView"
+            android:layout_weight="1" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="3">
+
+            <TextView
+                android:text="Video Name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/videoName"
+                android:textAlignment="center"
+                android:padding="8dp" />
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@+id/videoName"
+                android:id="@+id/videoControl"
+                android:elevation="13dp"
+                android:gravity="center">
+
+                <TextView
+                    android:text="Prev"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:id="@+id/prevBtn"
+                    android:textAlignment="center"
+                    android:gravity="center"
+                    android:padding="8dp" />
+
+                <TextView
+                    android:text="Play"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:id="@+id/playBtn"
+                    android:textAlignment="center"
+                    android:gravity="center"
+                    android:padding="8dp" />
+
+                <TextView
+                    android:text="Next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:id="@+id/nextBtn"
+                    android:textAlignment="center"
+                    android:gravity="center"
+                    android:padding="8dp" />
+            </LinearLayout>
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/stateBar"
+        android:layout_weight="3"
+        android:weightSum="1">
+
+        <TextView
+            android:text="Muse On"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/museState"
+            android:textAlignment="center" />
+
+        <TextView
+            android:text="37%"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/museBattery"
+            android:textAlignment="center" />
+
+        <TextView
+            android:text="Headset On"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/headsetState"
+            android:textAlignment="center" />
+
+        <TextView
+            android:text="84%"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/headsetBattery"
+            android:textAlignment="center" />
+    </LinearLayout>
+</LinearLayout>
