@@ -17,4 +17,9 @@ public class ControlPacket extends Packet {
     public Object[] getArguments() {
         return arguments;
     }
+
+    @Override
+    public PacketType type() {
+        return PacketType.DATA;
+    }
 }

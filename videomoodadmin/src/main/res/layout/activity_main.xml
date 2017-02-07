@@ -30,7 +30,8 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/videoName"
                 android:textAlignment="center"
-                android:padding="8dp" />
+                android:padding="8dp"
+                android:onClick="selectVideo" />
 
             <LinearLayout
                 android:orientation="horizontal"
@@ -81,18 +82,11 @@
         android:weightSum="1">
 
         <TextView
-            android:text="Muse On"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/museState"
-            android:textAlignment="center" />
-
-        <TextView
-            android:text="37%"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/museBattery"
-            android:textAlignment="center" />
+            android:id="@+id/connectionStatusLabel"
+            android:textAlignment="center"
+            android:text="@string/state_not_connected" />
 
         <TextView
             android:text="Headset On"
@@ -107,5 +101,20 @@
             android:layout_height="wrap_content"
             android:id="@+id/headsetBattery"
             android:textAlignment="center" />
+
+        <TextView
+            android:text="Muse On"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/museState"
+            android:textAlignment="center" />
+
+        <TextView
+            android:text="37%"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/museBattery"
+            android:textAlignment="center" />
+
     </LinearLayout>
 </LinearLayout>

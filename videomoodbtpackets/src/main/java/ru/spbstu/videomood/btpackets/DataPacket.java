@@ -2,7 +2,7 @@ package ru.spbstu.videomood.btpackets;
 
 import java.util.ArrayList;
 
-public class DataPacket extends Packet {
+public class DataPacket extends Packet implements Cloneable {
     private long timestamp;
 
     private boolean museState;
@@ -101,5 +101,24 @@ public class DataPacket extends Packet {
 
     public void setVideoList(ArrayList<VideoItem> videoList) {
         this.videoList = videoList;
+    }
+
+    public DataPacket clone() {
+        DataPacket packet = new DataPacket();
+        packet.setAlphaPct(this.alphaPct);
+        packet.setAlphaPct(this.betaPct);
+        packet.setHeadsetBatteryPercent(this.headsetBatteryPercent);
+        packet.setMuseBatteryPercent(this.museBatteryPercent);
+        packet.setMuseSensorsState(this.museSensorsState.clone());
+        packet.setTimestamp(this.timestamp);
+        packet.setMuseState(this.museState);
+        packet.setVideoName(this.videoName);
+        packet.setVideoState(this.videoState);
+        return packet;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.DATA;
     }
 }
