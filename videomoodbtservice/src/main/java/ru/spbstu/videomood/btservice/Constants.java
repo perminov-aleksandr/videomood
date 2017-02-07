@@ -1,4 +1,4 @@
-package ru.spbstu.videomoodadmin;
+package ru.spbstu.videomood.btservice;
 
 /**
  * Defines several constants used between {@link BluetoothService} and the UI.

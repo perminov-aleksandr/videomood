@@ -1,1 +1,1 @@
-include ':app', ':videomoodadmin', ':videomoodbtpackets'
+include ':app', ':videomoodadmin', ':videomoodbtservice'

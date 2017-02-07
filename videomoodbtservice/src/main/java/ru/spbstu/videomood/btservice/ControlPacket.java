@@ -1,4 +1,4 @@
-package ru.spbstu.videomood.btpackets;
+package ru.spbstu.videomood.btservice;
 
 public class ControlPacket extends Packet {
     private Command command;

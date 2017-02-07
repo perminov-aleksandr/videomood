@@ -1,4 +1,4 @@
-package ru.spbstu.videomoodadmin;
+package ru.spbstu.videomood.btservice;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;

@@ -1,4 +1,4 @@
-package ru.spbstu.videomood.btpackets;
+package ru.spbstu.videomood.btservice;
 
 public class VideoItem {
     private int id;

@@ -2,7 +2,7 @@ package ru.spbstu.videomoodadmin;
 
 import java.util.Queue;
 
-import ru.spbstu.videomood.btpackets.DataPacket;
+import ru.spbstu.videomood.btservice.DataPacket;
 
 public class VideoMoodData {
     private Queue<Integer> alphas;

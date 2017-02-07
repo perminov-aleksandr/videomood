@@ -11,7 +11,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/videomoodadmin" />
-            <option value="$PROJECT_DIR$/videomoodbtpackets" />
+            <option value="$PROJECT_DIR$/videomoodbtservice" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
