@@ -2,6 +2,8 @@ package ru.spbstu.videomood.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -10,6 +12,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 
@@ -41,10 +44,16 @@ import ru.spbstu.videomood.MuseMoodSolver;
 import ru.spbstu.videomood.R;
 import ru.spbstu.videomood.User;
 import ru.spbstu.videomood.Utils;
+import ru.spbstu.videomood.btservice.BluetoothService;
+import ru.spbstu.videomood.btservice.Constants;
+
+import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 
 public class VideoActivity extends Activity {
 
     private static final String TAG = "VideoMood:VideoActivity";
+
+    private static final int REQUEST_ENABLE_BT = 3;
 
     private final int CHANNEL_COUNT = 4;
     private final int RANGE_COUNT = 5;
@@ -68,6 +77,7 @@ public class VideoActivity extends Activity {
     private TextView batteryTextView;
     private double batteryValue;
     private boolean batteryStale = false;
+    private TextView connectionStatus;
 
     private void updateIsGood() {
         for (int i = 0; i < isGoodBuffer.length; i++)
@@ -303,6 +313,102 @@ public class VideoActivity extends Activity {
         muse.runAsynchronously();
         // Start our asynchronous updates of the UI.
         handler.post(tickUi);
+
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if (mBtService == null) {
+            setupBtService();
+        }
+    }
+
+    private void setupBtService() {
+        mBtService = new BluetoothService(this, mHandler);
+    }
+
+    /**
+     * Local Bluetooth adapter
+     */
+    private BluetoothAdapter mBluetoothAdapter = null;
+
+    /**
+     * Member object for the chat services
+     */
+    private BluetoothService mBtService = null;
+
+    /**
+     * Establish connection with other device
+     *
+     * @param connectionIntent   An {@link Intent} with extra.
+     * @param secure Socket Security type - Secure (true) , Insecure (false)
+     */
+    private void connectDevice(Intent connectionIntent, boolean secure) {
+        // Get the device MAC address
+        String deviceAddress = connectionIntent.getStringExtra(Constants.EXTRA_DEVICE_ADDRESS);
+
+        // Get the BluetoothDevice object
+        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
+        // Attempt to connect to the device
+        mBtService.connect(device, secure);
+    }
+
+    /**
+     * The Handler that gets information back from the BluetoothChatService
+     */
+    private final Handler mHandler = new MessageHandler();
+
+    private void setStatus(int stringResId) {
+        connectionStatus.setText(stringResId);
+    }
+
+    private class MessageHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case Constants.MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case BluetoothService.STATE_CONNECTED:
+                            setStatus(R.string.state_connected);
+                            break;
+                        case BluetoothService.STATE_CONNECTING:
+                            setStatus(R.string.state_connecting);
+                            break;
+                        case BluetoothService.STATE_LISTEN:
+                        case BluetoothService.STATE_NONE:
+                            setStatus(R.string.state_unknown);
+                            break;
+                    }
+                    break;
+                case Constants.MESSAGE_WRITE:
+                    /*byte[] writeBuf = (byte[]) msg.obj;
+                    // construct a string from the buffer
+                    String writeMessage = new String(writeBuf);
+                    mConversationArrayAdapter.add("Me:  " + writeMessage);*/
+                    break;
+                case Constants.MESSAGE_READ:
+                    /*byte[] readBuf = (byte[]) msg.obj;
+                    // construct a string from the valid bytes in the buffer
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);*/
+                    break;
+                case Constants.MESSAGE_DEVICE_NAME:
+                    // save the connected device's name
+                    /*mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
+                    if (null != activity) {
+                        Toast.makeText(activity, "Connected to "
+                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+                    }*/
+                    break;
+                case Constants.MESSAGE_TOAST:
+                    /*Toast.makeText(this, msg.getData().getString(Constants.TOAST),
+                            Toast.LENGTH_SHORT).show();*/
+                    break;
+            }
+        }
     }
 
     private RelativeLayout calmScreen;
@@ -343,6 +449,8 @@ public class VideoActivity extends Activity {
         foreheadTouch = (TextView) findViewById(R.id.forehead);
 
         museIndicators = (LinearLayout) findViewById(R.id.museIndicators);
+
+        connectionStatus = (TextView) findViewById(R.id.connectionStatus);
     }
 
     //todo: add exact reason
@@ -509,6 +617,17 @@ public class VideoActivity extends Activity {
 
         if (muse != null)
             muse.enableDataTransmission(true);
+
+        // Performing this check in onResume() covers the case in which BT was
+        // not enabled during onStart(), so we were paused to enable it...
+        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
+        if (mBtService != null) {
+            // Only if the state is STATE_NONE, do we know that we haven't started already
+            if (mBtService.getState() == BluetoothService.STATE_NONE) {
+                // Start the Bluetooth chat services
+                mBtService.start();
+            }
+        }
     }
 
     @Override
@@ -518,6 +637,10 @@ public class VideoActivity extends Activity {
         if (muse != null) {
             muse.unregisterAllListeners();
             muse.disconnect(false);
+        }
+
+        if (mBtService != null) {
+            mBtService.stop();
         }
     }
 
@@ -552,4 +675,3 @@ public class VideoActivity extends Activity {
         }
     }
 }
-

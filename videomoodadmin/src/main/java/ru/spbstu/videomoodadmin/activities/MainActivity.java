@@ -160,6 +160,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void onStatusClick(View view) {
+        connectDevice(getIntent(), true);
+    }
+
     private void setupBtService() {
         mBtService = new BluetoothService(this, mHandler);
     }
@@ -201,12 +205,12 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Establish connection with other device
      *
-     * @param connectionIntent   An {@link Intent} with {@link ConnectActivity#EXTRA_DEVICE_ADDRESS} extra.
+     * @param connectionIntent   An {@link Intent} with extra.
      * @param secure Socket Security type - Secure (true) , Insecure (false)
      */
     private void connectDevice(Intent connectionIntent, boolean secure) {
         // Get the device MAC address
-        String deviceAddress = connectionIntent.getStringExtra(ConnectActivity.EXTRA_DEVICE_ADDRESS);
+        String deviceAddress = connectionIntent.getStringExtra(Constants.EXTRA_DEVICE_ADDRESS);
 
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);

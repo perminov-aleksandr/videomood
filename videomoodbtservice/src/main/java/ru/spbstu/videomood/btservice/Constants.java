@@ -16,4 +16,6 @@ public interface Constants {
     public static final String DEVICE_NAME = "device_name";
     public static final String TOAST = "toast";
 
+    public static final String EXTRA_DEVICE_ADDRESS = "device_address";
+
 }

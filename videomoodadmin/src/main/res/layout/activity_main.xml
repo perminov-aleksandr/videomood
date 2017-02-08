@@ -86,7 +86,10 @@
             android:layout_height="wrap_content"
             android:id="@+id/connectionStatusLabel"
             android:textAlignment="center"
-            android:text="@string/state_not_connected" />
+            android:text="@string/state_not_connected"
+            android:onClick="onStatusClick"
+            android:paddingBottom="16dp"
+            android:paddingTop="16dp" />
 
         <TextView
             android:text="Headset On"

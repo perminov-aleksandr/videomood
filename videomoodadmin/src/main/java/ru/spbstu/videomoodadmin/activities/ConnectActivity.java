@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import java.util.Set;
 
+import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomoodadmin.R;
 
 public class ConnectActivity extends AppCompatActivity {
@@ -20,11 +21,6 @@ public class ConnectActivity extends AppCompatActivity {
      * Tag for Log
      */
     private static final String TAG = "ConnectActivity";
-
-    /**
-     * Return Intent extra
-     */
-    public static String EXTRA_DEVICE_ADDRESS = "device_address";
 
     /**
      * Member fields
@@ -74,7 +70,7 @@ public class ConnectActivity extends AppCompatActivity {
 
             // Create the result Intent and include the MAC address
             Intent intent = new Intent(ConnectActivity.this, MainActivity.class);
-            intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
+            intent.putExtra(Constants.EXTRA_DEVICE_ADDRESS, address);
 
             // Set result and finish this Activity
             //setResult(Activity.RESULT_OK, intent);
