@@ -452,7 +452,7 @@ public class BluetoothService {
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[4096];
             int bytes;
 
             // Keep listening to the InputStream while connected

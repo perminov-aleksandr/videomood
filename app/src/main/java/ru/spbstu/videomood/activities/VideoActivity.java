@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -24,30 +28,30 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import com.choosemuse.libmuse.Battery;
-import com.choosemuse.libmuse.ConnectionState;
 import com.choosemuse.libmuse.Muse;
 import com.choosemuse.libmuse.MuseArtifactPacket;
-import com.choosemuse.libmuse.MuseConnectionPacket;
 import com.choosemuse.libmuse.MuseDataPacket;
+import com.google.gson.Gson;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Queue;
 
+import ru.spbstu.videomood.AdminDeviceMessageHandler;
 import ru.spbstu.videomood.ConnectionListener;
 import ru.spbstu.videomood.Const;
 import ru.spbstu.videomood.ContentProvider;
 import ru.spbstu.videomood.DataListener;
 import ru.spbstu.videomood.MuseManager;
-import ru.spbstu.videomood.MuseMoodSolver;
 import ru.spbstu.videomood.R;
 import ru.spbstu.videomood.User;
-import ru.spbstu.videomood.Utils;
 import ru.spbstu.videomood.btservice.BluetoothService;
+import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.Constants;
-
-import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
+import ru.spbstu.videomood.btservice.ControlPacket;
+import ru.spbstu.videomood.btservice.DataPacket;
 
 public class VideoActivity extends Activity {
 
@@ -77,16 +81,21 @@ public class VideoActivity extends Activity {
     private TextView batteryTextView;
     private double batteryValue;
     private boolean batteryStale = false;
-    private TextView connectionStatus;
+    private TextView adminDeviceConnectionStatus;
+
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context ctxt, Intent intent) {
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+            dataPacket.setHeadsetBatteryPercent(level);
+        }
+    };
 
     private void updateIsGood() {
         for (int i = 0; i < isGoodBuffer.length; i++)
             isGoodIndicators[i].setVisibility(isGoodBuffer[i] ? View.VISIBLE : View.INVISIBLE);
 
         int visibility = isForeheadTouch ? View.VISIBLE : View.INVISIBLE;
-
-        //if (foreheadTouch.getVisibility() == View.VISIBLE && visibility == View.INVISIBLE)
-          //  Log.i(TAG, "signal miss");
 
         foreheadTouch.setVisibility(visibility);
         rhythmsBar.setVisibility(visibility);
@@ -102,8 +111,7 @@ public class VideoActivity extends Activity {
     private TextView betaBar;
 
     private void updateBar() {
-        //todo: refactor this. TOO EXPLICIT DEPENDENCY FROM relativeBuffer and other
-        BarValues barValues = new BarValues().calculate();
+        BarValues barValues = new BarValues().calculate(relativeBuffer);
         long alphaPercent = barValues.getAlphaPercent();
         long betaPercent = barValues.getBetaPercent();
 
@@ -125,29 +133,25 @@ public class VideoActivity extends Activity {
         betaBar.setLayoutParams(params);
     }
 
-    public void processMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-        ArrayList<Double> packetValues = p.values();
-        switch (p.packetType()) {
-            case ALPHA_RELATIVE:
-                fillRelativeBufferWith(Const.Rhythms.ALPHA, packetValues);
-                relativeStale = true;
-                break;
-            case BETA_RELATIVE:
-                fillRelativeBufferWith(Const.Rhythms.BETA, packetValues);
-                relativeStale = true;
-                break;
-            case BATTERY:
-                batteryValue = p.getBatteryValue(Battery.CHARGE_PERCENTAGE_REMAINING);
-                batteryStale = true;
-                break;
-            case IS_GOOD:
-                for (int i = 0; i < CHANNEL_COUNT; i++)
-                    isGoodBuffer[i] = packetValues.get(i) > 0.5;
-                isGoodStale = true;
-                break;
-            default:
-                break;
+    public void processMuseDataSensors(ArrayList<Double> packetValues) {
+        Boolean[] sensorStates = new Boolean[CHANNEL_COUNT];
+        for (int i = 0; i < CHANNEL_COUNT; i++) {
+            isGoodBuffer[i] = packetValues.get(i) > 0.5;
+            sensorStates[i] = isGoodBuffer[i];
         }
+        dataPacket.setMuseSensorsState(sensorStates);
+        isGoodStale = true;
+    }
+
+    public void processMuseDataBattery(MuseDataPacket p) {
+        batteryValue = p.getBatteryValue(Battery.CHARGE_PERCENTAGE_REMAINING);
+        dataPacket.setMuseBatteryPercent((int)batteryValue);
+        batteryStale = true;
+    }
+
+    public void processMuseDataRelative(ArrayList<Double> packetValues, int relativeIndex) {
+        fillRelativeBufferWith(relativeIndex, packetValues);
+        relativeStale = true;
     }
 
     private final long second = 1000;
@@ -225,6 +229,9 @@ public class VideoActivity extends Activity {
         int countSum = percentTimeQueue.size();
         alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
         betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
+
+        dataPacket.setAlphaPct((int)alphaPercentSum);
+        dataPacket.setBetaPct((int)betaPercentSum);
     }
 
     private void fillRelativeBufferWith(final int rangeIndex, final ArrayList<Double> packetValues) {
@@ -234,7 +241,7 @@ public class VideoActivity extends Activity {
         }
     }
 
-    public void processMuseArtifactPacket(final MuseArtifactPacket p, Muse muse) {
+    public void processMuseArtifactPacket(final MuseArtifactPacket p) {
         isForeheadTouch = p.getHeadbandOn();
         isGoodStale = true;
     }
@@ -275,6 +282,13 @@ public class VideoActivity extends Activity {
         }
     };
 
+    private ContentProvider contentProvider;
+
+    /**
+     * The Handler that gets information back from the BluetoothChatService
+     */
+    private Handler mAdminDeviceMessageHandler;
+
     /**
      * A Muse refers to a Muse headband.  Use this to connect/disconnect from the
      * headband, register listeners to receive EEG data and get headband
@@ -282,19 +296,11 @@ public class VideoActivity extends Activity {
      */
     private Muse muse;
 
-    private ContentProvider contentProvider;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        WeakReference<VideoActivity> weakActivity = new WeakReference<>(this);
-        // Register a listener to handle connection state changes
-        connectionListener = new ConnectionListener(weakActivity);
-        // Register a listener to receive data from a Muse.
-        dataListener = new DataListener(weakActivity);
-
-        initUI();
+        setupUI();
 
         try {
             contentProvider = new ContentProvider(User.getAgeRangeIndex());
@@ -305,16 +311,30 @@ public class VideoActivity extends Activity {
             return;
         }
 
-        MuseManager.setContext(this);
-        // Cache the Muse that the user has selected.
-        muse = MuseManager.getMuse();
-        MuseManager.registerMuseListeners(connectionListener, dataListener);
-        //start receiving muse packets
-        muse.runAsynchronously();
+        WeakReference<VideoActivity> weakActivity = new WeakReference<>(this);
+        // Register a listener to handle connection state changes
+        connectionListener = new ConnectionListener(weakActivity);
+        // Register a listener to receive data from a Muse.
+        dataListener = new DataListener(weakActivity);
+
+        setupMuseManager();
+
+        mAdminDeviceMessageHandler = new AdminDeviceMessageHandler(new WeakReference<>(this));
+
+        registerReceiver(receiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+
         // Start our asynchronous updates of the UI.
         handler.post(tickUi);
+    }
 
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private void setupMuseManager() {
+        MuseManager.setContext(this);
+        MuseManager.registerMuseListeners(connectionListener, dataListener);
+
+        // Cache the Muse that the user has selected.
+        muse = MuseManager.getMuse();
+        //start receiving muse packets
+        muse.runAsynchronously();
     }
 
     @Override
@@ -326,89 +346,60 @@ public class VideoActivity extends Activity {
         }
     }
 
-    private void setupBtService() {
-        mBtService = new BluetoothService(this, mHandler);
-    }
-
-    /**
-     * Local Bluetooth adapter
-     */
-    private BluetoothAdapter mBluetoothAdapter = null;
-
     /**
      * Member object for the chat services
      */
     private BluetoothService mBtService = null;
 
-    /**
-     * Establish connection with other device
-     *
-     * @param connectionIntent   An {@link Intent} with extra.
-     * @param secure Socket Security type - Secure (true) , Insecure (false)
-     */
-    private void connectDevice(Intent connectionIntent, boolean secure) {
-        // Get the device MAC address
-        String deviceAddress = connectionIntent.getStringExtra(Constants.EXTRA_DEVICE_ADDRESS);
-
-        // Get the BluetoothDevice object
-        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
-        // Attempt to connect to the device
-        mBtService.connect(device, secure);
+    private void setupBtService() {
+        mBtService = new BluetoothService(this, mAdminDeviceMessageHandler);
     }
 
-    /**
-     * The Handler that gets information back from the BluetoothChatService
-     */
-    private final Handler mHandler = new MessageHandler();
+    private final DataPacket dataPacket = new DataPacket();
 
-    private void setStatus(int stringResId) {
-        connectionStatus.setText(stringResId);
-    }
-
-    private class MessageHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Constants.MESSAGE_STATE_CHANGE:
-                    switch (msg.arg1) {
-                        case BluetoothService.STATE_CONNECTED:
-                            setStatus(R.string.state_connected);
-                            break;
-                        case BluetoothService.STATE_CONNECTING:
-                            setStatus(R.string.state_connecting);
-                            break;
-                        case BluetoothService.STATE_LISTEN:
-                        case BluetoothService.STATE_NONE:
-                            setStatus(R.string.state_unknown);
-                            break;
-                    }
-                    break;
-                case Constants.MESSAGE_WRITE:
-                    /*byte[] writeBuf = (byte[]) msg.obj;
-                    // construct a string from the buffer
-                    String writeMessage = new String(writeBuf);
-                    mConversationArrayAdapter.add("Me:  " + writeMessage);*/
-                    break;
-                case Constants.MESSAGE_READ:
-                    /*byte[] readBuf = (byte[]) msg.obj;
-                    // construct a string from the valid bytes in the buffer
-                    String readMessage = new String(readBuf, 0, msg.arg1);
-                    mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage);*/
-                    break;
-                case Constants.MESSAGE_DEVICE_NAME:
-                    // save the connected device's name
-                    /*mConnectedDeviceName = msg.getData().getString(Constants.DEVICE_NAME);
-                    if (null != activity) {
-                        Toast.makeText(activity, "Connected to "
-                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
-                    }*/
-                    break;
-                case Constants.MESSAGE_TOAST:
-                    /*Toast.makeText(this, msg.getData().getString(Constants.TOAST),
-                            Toast.LENGTH_SHORT).show();*/
-                    break;
-            }
+    public void processAdminDevicePacket(ControlPacket controlPacket) {
+        Command command = controlPacket.getCommand();
+        Log.i(TAG, "received command " + command);
+        switch (command) {
+            case GET:
+                reply();
+                break;
+            case LIST:
+                dataPacket.setVideoList(contentProvider.getContentList());
+                reply();
+                break;
+            case PLAY:
+                Object[] arguments = controlPacket.getArguments();
+                if (arguments.length > 0) {
+                    Integer videoIndex = (Integer) arguments[0];
+                    File videoToPlay = contentProvider.get(videoIndex);
+                    playVideoFile(videoToPlay);
+                    dataPacket.setVideoName(videoToPlay.getName());
+                }
+                break;
+            case PAUSE:
+                if (videoView.isPlaying())
+                    videoView.pause();
+                else
+                    videoView.start();
+                dataPacket.setVideoState(videoView.isPlaying());
+                break;
+            case NEXT:
+                File nextVideo = contentProvider.getNext();
+                playVideoFile(nextVideo);
+                dataPacket.setVideoName(nextVideo.getName());
+                break;
+            case PREV:
+                File prevVideo = contentProvider.getPrev();
+                playVideoFile(prevVideo);
+                dataPacket.setVideoName(prevVideo.getName());
+                break;
         }
+    }
+
+    private void reply() {
+        String serializedPacket = new Gson().toJson(dataPacket);
+        mBtService.write(serializedPacket.getBytes());
     }
 
     private RelativeLayout calmScreen;
@@ -424,7 +415,7 @@ public class VideoActivity extends Activity {
         videoView.start();
     }
 
-    private void initUI() {
+    private void setupUI() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_video);
         initTextViews();
@@ -432,6 +423,10 @@ public class VideoActivity extends Activity {
 
         calmScreen = (RelativeLayout) findViewById(R.id.calmScreen);
         rhythmsBar = (LinearLayout) findViewById(R.id.rhythmsBar);
+    }
+
+    public void setAdminDeviceStatus(int stringResId) {
+        adminDeviceConnectionStatus.setText(stringResId);
     }
 
     private void initTextViews(){
@@ -450,7 +445,7 @@ public class VideoActivity extends Activity {
 
         museIndicators = (LinearLayout) findViewById(R.id.museIndicators);
 
-        connectionStatus = (TextView) findViewById(R.id.connectionStatus);
+        adminDeviceConnectionStatus = (TextView) findViewById(R.id.connectionStatus);
     }
 
     //todo: add exact reason
@@ -519,28 +514,24 @@ public class VideoActivity extends Activity {
         museIndicators.setVisibility(visibility);
     }
 
-    public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
-        final ConnectionState current = p.getCurrentConnectionState();
+    public void processConnecting() {
+        museState.setText(R.string.state_connecting);
+    }
 
-        int stateStringId = R.string.state_unknown;
-        switch (current) {
-            case CONNECTING:
-                stateStringId = R.string.state_connecting;
-                break;
-            case CONNECTED:
-                stateStringId = R.string.state_connected;
-                setMuseIndicatorsVisible(true);
-                warningHandler.postDelayed(checkWarningRunnable, 60 * second);
-                break;
-            case DISCONNECTED:
-                stateStringId = R.string.state_disconnected;
-                setMuseIndicatorsVisible(false);
-                warningHandler.removeCallbacks(checkWarningRunnable);
-                calmHandler.removeCallbacks(checkCalmRunnable);
-                displayReconnectDialog();
-                break;
-        }
-        museState.setText(getResources().getString(stateStringId));
+    public void processConnect() {
+        museState.setText(R.string.state_connected);
+        setMuseIndicatorsVisible(true);
+        dataPacket.setMuseState(true);
+        warningHandler.postDelayed(checkWarningRunnable, 60 * second);
+    }
+
+    public void processDisconnect() {
+        museState.setText(R.string.state_disconnected);
+        setMuseIndicatorsVisible(false);
+        dataPacket.setMuseState(true);
+        warningHandler.removeCallbacks(checkWarningRunnable);
+        calmHandler.removeCallbacks(checkCalmRunnable);
+        displayReconnectDialog();
     }
 
     private VideoView videoView;
@@ -555,9 +546,7 @@ public class VideoActivity extends Activity {
         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
-                currentVideoUri = Uri.fromFile(contentProvider.getNext());
-                videoView.setVideoURI(currentVideoUri);
-                videoView.start();
+            playVideoFile(contentProvider.getNext());
             }
         });
         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -568,6 +557,12 @@ public class VideoActivity extends Activity {
         });
     }
 
+    private void playVideoFile(File file) {
+        currentVideoUri = Uri.fromFile(file);
+        videoView.setVideoURI(currentVideoUri);
+        videoView.start();
+    }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -575,21 +570,21 @@ public class VideoActivity extends Activity {
 
     private int currentPlayPosition = -1;
 
-    public static String currentVideoUriKey = "currentVideoUri";
-    public static String currentPlayPositionKey = "currentPlayPosition";
+    public static final String CURRENT_VIDEO_URI_KEY = "currentVideoUri";
+    public static final String CURRENT_VIDEO_POSITION_KEY = "currentVideoPosition";
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(currentPlayPositionKey, currentPlayPosition);
-        outState.putParcelable(currentVideoUriKey, currentVideoUri);
+        outState.putInt(CURRENT_VIDEO_POSITION_KEY, currentPlayPosition);
+        outState.putParcelable(CURRENT_VIDEO_URI_KEY, currentVideoUri);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        currentPlayPosition = savedInstanceState.getInt(currentPlayPositionKey, -1);
-        Uri saved = savedInstanceState.getParcelable(currentVideoUriKey);
+        currentPlayPosition = savedInstanceState.getInt(CURRENT_VIDEO_POSITION_KEY, -1);
+        Uri saved = savedInstanceState.getParcelable(CURRENT_VIDEO_URI_KEY);
         if (saved != null)
             currentVideoUri = saved;
     }
@@ -612,7 +607,6 @@ public class VideoActivity extends Activity {
         videoView.setVideoURI(currentVideoUri);
         if (currentPlayPosition != -1) {
             videoView.seekTo(currentPlayPosition);
-            videoView.start();
         }
 
         if (muse != null)
@@ -642,36 +636,8 @@ public class VideoActivity extends Activity {
         if (mBtService != null) {
             mBtService.stop();
         }
-    }
 
-    private class BarValues {
-        private long alphaPercent;
-        private long betaPercent;
-
-        long getAlphaPercent() {
-            return alphaPercent;
-        }
-
-        long getBetaPercent() {
-            return betaPercent;
-        }
-
-        /***
-         * Calculate weighted values each of channel in relativeBuffer for ALPHA and BETA ranges.
-         * @return new BarValues instance filled according to calculated values
-         */
-        BarValues calculate() {
-            double alphaMean = Utils.mean(relativeBuffer[Const.Rhythms.ALPHA]);
-            double betaMean = Utils.mean(relativeBuffer[Const.Rhythms.BETA]);
-
-            double t = 100.0 / (alphaMean + betaMean);
-
-            double alphaWeighted = alphaMean * t;
-            double betaWeighted = betaMean * t;
-
-            alphaPercent = Math.round(alphaWeighted);
-            betaPercent = Math.round(betaWeighted);
-            return this;
-        }
+        unregisterReceiver(receiver);
     }
 }
+

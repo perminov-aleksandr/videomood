@@ -11,4 +11,9 @@
     <string name="state_connected">Connected</string>
     <string name="state_connecting">Connecting</string>
     <string name="state_not_connected">Not connected</string>
+    <string name="state_unknown">Unknown</string>
+    <string name="defaultPercentFormatString">%d%%</string>
+    <string name="videoNotPlayed"><![CDATA[<Video Not Played>]]></string>
+    <string name="headset_on">Headset On</string>
+    <string name="muse_on">Muse On</string>
 </resources>

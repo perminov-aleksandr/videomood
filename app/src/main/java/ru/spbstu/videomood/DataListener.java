@@ -6,6 +6,7 @@ import com.choosemuse.libmuse.MuseDataListener;
 import com.choosemuse.libmuse.MuseDataPacket;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 
 import ru.spbstu.videomood.activities.VideoActivity;
 
@@ -26,11 +27,26 @@ public class DataListener extends MuseDataListener {
      */
     @Override
     public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-        activityRef.get().processMuseDataPacket(p, muse);
-        //writeDataPacketToFile(p);
-    }
+        VideoActivity activity = activityRef.get();
 
-    private static int dataPacketCounter = 0;
+        ArrayList<Double> packetValues = p.values();
+        switch (p.packetType()) {
+            case ALPHA_RELATIVE:
+                activity.processMuseDataRelative(packetValues, Const.Rhythms.ALPHA);
+                break;
+            case BETA_RELATIVE:
+                activity.processMuseDataRelative(packetValues, Const.Rhythms.BETA);
+                break;
+            case BATTERY:
+                activity.processMuseDataBattery(p);
+                break;
+            case IS_GOOD:
+                activity.processMuseDataSensors(packetValues);
+                break;
+            default:
+                break;
+        }
+    }
 
     /**
      * You will receive a callback to this method each time an artifact packet is generated if you
@@ -42,6 +58,6 @@ public class DataListener extends MuseDataListener {
      */
     @Override
     public void receiveMuseArtifactPacket(final MuseArtifactPacket p, final Muse muse) {
-        activityRef.get().processMuseArtifactPacket(p, muse);
+        activityRef.get().processMuseArtifactPacket(p);
     }
 }

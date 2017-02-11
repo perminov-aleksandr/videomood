@@ -11,7 +11,9 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:id="@+id/main"
+        android:visibility="invisible">
 
         <com.github.mikephil.charting.charts.BarChart
             android:layout_width="match_parent"
@@ -22,10 +24,11 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="3">
+            android:layout_weight="3"
+            android:id="@+id/videoInfo">
 
             <TextView
-                android:text="Video Name"
+                android:text="@string/videoNotPlayed"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/videoName"
@@ -49,7 +52,8 @@
                     android:id="@+id/prevBtn"
                     android:textAlignment="center"
                     android:gravity="center"
-                    android:padding="8dp" />
+                    android:padding="8dp"
+                    android:onClick="prev"/>
 
                 <TextView
                     android:text="Play"
@@ -58,6 +62,7 @@
                     android:id="@+id/playBtn"
                     android:textAlignment="center"
                     android:gravity="center"
+                    android:onClick="pause"
                     android:padding="8dp" />
 
                 <TextView
@@ -67,6 +72,7 @@
                     android:id="@+id/nextBtn"
                     android:textAlignment="center"
                     android:gravity="center"
+                    android:onClick="next"
                     android:padding="8dp" />
             </LinearLayout>
         </RelativeLayout>
@@ -77,7 +83,7 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/stateBar"
+        android:id="@+id/info"
         android:layout_weight="3"
         android:weightSum="1">
 
@@ -87,37 +93,44 @@
             android:id="@+id/connectionStatusLabel"
             android:textAlignment="center"
             android:text="@string/state_not_connected"
-            android:onClick="onStatusClick"
             android:paddingBottom="16dp"
             android:paddingTop="16dp" />
 
-        <TextView
-            android:text="Headset On"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/headsetState"
-            android:textAlignment="center" />
+            android:layout_height="match_parent"
+            android:id="@+id/headsetInfo"
+            android:visibility="invisible">
 
-        <TextView
-            android:text="84%"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/headsetBattery"
-            android:textAlignment="center" />
+            <TextView
+                android:text="@string/headset_on"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/headsetState"
+                android:textAlignment="center" />
 
-        <TextView
-            android:text="Muse On"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/museState"
-            android:textAlignment="center" />
+            <TextView
+                android:text="84%"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/headsetBattery"
+                android:textAlignment="center" />
 
-        <TextView
-            android:text="37%"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/museBattery"
-            android:textAlignment="center" />
+            <TextView
+                android:text="@string/muse_on"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/museState"
+                android:textAlignment="center" />
+
+            <TextView
+                android:text="37%"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/museBattery"
+                android:textAlignment="center" />
+        </LinearLayout>
 
     </LinearLayout>
 </LinearLayout>

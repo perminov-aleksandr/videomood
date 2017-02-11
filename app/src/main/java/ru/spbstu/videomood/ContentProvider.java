@@ -6,7 +6,14 @@ import android.os.Environment;
 
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import ru.spbstu.videomood.btservice.VideoItem;
 
 public class ContentProvider {
 
@@ -38,5 +45,31 @@ public class ContentProvider {
 
         File nextVideo = ageVideos[index];
         return nextVideo;
+    }
+
+    public File getPrev() {
+        index--;
+        if (index == 0)
+            index = ageVideos.length;
+
+        File nextVideo = ageVideos[index];
+        return nextVideo;
+    }
+
+    public ArrayList<VideoItem> getContentList() {
+        //File videoStorage = new File(Environment.getExternalStorageDirectory(), "Video");
+        File[] ageDirectories = ageVideoDir.listFiles();
+
+        ArrayList<VideoItem> result = new ArrayList<>(ageDirectories.length);
+        for (int i = 0; i < ageDirectories.length; i++) {
+            result.add(new VideoItem(i, ageDirectories[i].getName(), ""));
+        }
+        return result;
+    }
+
+    public File get(Integer videoIndex) {
+        File[] ageDirectories = ageVideoDir.listFiles();
+
+        return ageDirectories[videoIndex];
     }
 }

@@ -1,5 +1,6 @@
 package ru.spbstu.videomood;
 
+import com.choosemuse.libmuse.ConnectionState;
 import com.choosemuse.libmuse.Muse;
 import com.choosemuse.libmuse.MuseConnectionListener;
 import com.choosemuse.libmuse.MuseConnectionPacket;
@@ -17,6 +18,20 @@ public class ConnectionListener extends MuseConnectionListener {
 
     @Override
     public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
-        activityRef.get().receiveMuseConnectionPacket(p, muse);
+        final ConnectionState current = p.getCurrentConnectionState();
+
+        VideoActivity videoActivity = activityRef.get();
+
+        switch (current) {
+            case CONNECTING:
+                videoActivity.processConnecting();
+                break;
+            case CONNECTED:
+                videoActivity.processConnect();
+                break;
+            case DISCONNECTED:
+                videoActivity.processDisconnect();
+                break;
+        }
     }
 }

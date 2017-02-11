@@ -24,5 +24,11 @@ public enum Command {
     /**
      * Switch to previous video
      */
-    PREV
+    PREV,
+
+
+    /**
+     * Get data request
+     */
+    GET
 }

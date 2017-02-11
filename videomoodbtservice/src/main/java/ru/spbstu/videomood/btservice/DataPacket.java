@@ -3,35 +3,35 @@ package ru.spbstu.videomood.btservice;
 import java.util.ArrayList;
 
 public class DataPacket extends Packet implements Cloneable {
-    private long timestamp;
+    //private long timestamp;
 
-    private boolean museState;
+    private Boolean museState;
 
-    private int museBatteryPercent;
+    private Integer museBatteryPercent;
 
-    private boolean[] museSensorsState;
+    private Boolean[] museSensorsState;
 
-    private int alphaPct;
+    private Integer alphaPct;
 
-    private int betaPct;
+    private Integer betaPct;
 
-    private int headsetBatteryPercent;
+    private Integer headsetBatteryPercent;
 
     private String videoName;
 
-    private boolean videoState;
+    private Boolean videoState;
 
     private ArrayList<VideoItem> videoList;
 
-    public long getTimestamp() {
+    /*public long getTimestamp() {
         return timestamp;
     }
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
-    }
+    }*/
 
-    public boolean isMuseState() {
+    public Boolean getMuseState() {
         return museState;
     }
 
@@ -47,11 +47,11 @@ public class DataPacket extends Packet implements Cloneable {
         this.museBatteryPercent = museBatteryPercent;
     }
 
-    public boolean[] getMuseSensorsState() {
+    public Boolean[] getMuseSensorsState() {
         return museSensorsState;
     }
 
-    public void setMuseSensorsState(boolean[] museSensorsState) {
+    public void setMuseSensorsState(Boolean[] museSensorsState) {
         this.museSensorsState = museSensorsState;
     }
 
@@ -87,7 +87,7 @@ public class DataPacket extends Packet implements Cloneable {
         this.videoName = videoName;
     }
 
-    public boolean isVideoState() {
+    public boolean getVideoState() {
         return videoState;
     }
 
@@ -110,7 +110,7 @@ public class DataPacket extends Packet implements Cloneable {
         packet.setHeadsetBatteryPercent(this.headsetBatteryPercent);
         packet.setMuseBatteryPercent(this.museBatteryPercent);
         packet.setMuseSensorsState(this.museSensorsState.clone());
-        packet.setTimestamp(this.timestamp);
+        //packet.setTimestamp(this.timestamp);
         packet.setMuseState(this.museState);
         packet.setVideoName(this.videoName);
         packet.setVideoState(this.videoState);
