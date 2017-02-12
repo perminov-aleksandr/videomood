@@ -2,7 +2,7 @@ package ru.spbstu.videomood.btservice;
 
 import java.util.ArrayList;
 
-public class DataPacket extends Packet implements Cloneable {
+public class DataPacket extends Packet {
     //private long timestamp;
 
     private Boolean museState;
@@ -39,11 +39,11 @@ public class DataPacket extends Packet implements Cloneable {
         this.museState = museState;
     }
 
-    public int getMuseBatteryPercent() {
+    public Integer getMuseBatteryPercent() {
         return museBatteryPercent;
     }
 
-    public void setMuseBatteryPercent(int museBatteryPercent) {
+    public void setMuseBatteryPercent(Integer museBatteryPercent) {
         this.museBatteryPercent = museBatteryPercent;
     }
 
@@ -55,27 +55,27 @@ public class DataPacket extends Packet implements Cloneable {
         this.museSensorsState = museSensorsState;
     }
 
-    public int getAlphaPct() {
+    public Integer getAlphaPct() {
         return alphaPct;
     }
 
-    public void setAlphaPct(int alphaPct) {
+    public void setAlphaPct(Integer alphaPct) {
         this.alphaPct = alphaPct;
     }
 
-    public int getBetaPct() {
+    public Integer getBetaPct() {
         return betaPct;
     }
 
-    public void setBetaPct(int betaPct) {
+    public void setBetaPct(Integer betaPct) {
         this.betaPct = betaPct;
     }
 
-    public int getHeadsetBatteryPercent() {
+    public Integer getHeadsetBatteryPercent() {
         return headsetBatteryPercent;
     }
 
-    public void setHeadsetBatteryPercent(int headsetBatteryPercent) {
+    public void setHeadsetBatteryPercent(Integer headsetBatteryPercent) {
         this.headsetBatteryPercent = headsetBatteryPercent;
     }
 
@@ -87,7 +87,7 @@ public class DataPacket extends Packet implements Cloneable {
         this.videoName = videoName;
     }
 
-    public boolean getVideoState() {
+    public Boolean getVideoState() {
         return videoState;
     }
 
@@ -101,20 +101,6 @@ public class DataPacket extends Packet implements Cloneable {
 
     public void setVideoList(ArrayList<VideoItem> videoList) {
         this.videoList = videoList;
-    }
-
-    public DataPacket clone() {
-        DataPacket packet = new DataPacket();
-        packet.setAlphaPct(this.alphaPct);
-        packet.setAlphaPct(this.betaPct);
-        packet.setHeadsetBatteryPercent(this.headsetBatteryPercent);
-        packet.setMuseBatteryPercent(this.museBatteryPercent);
-        packet.setMuseSensorsState(this.museSensorsState.clone());
-        //packet.setTimestamp(this.timestamp);
-        packet.setMuseState(this.museState);
-        packet.setVideoName(this.videoName);
-        packet.setVideoState(this.videoState);
-        return packet;
     }
 
     @Override

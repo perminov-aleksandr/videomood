@@ -50,7 +50,7 @@ public class ContentProvider {
     public File getPrev() {
         index--;
         if (index == 0)
-            index = ageVideos.length;
+            index = ageVideos.length-1;
 
         File nextVideo = ageVideos[index];
         return nextVideo;

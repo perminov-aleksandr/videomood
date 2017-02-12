@@ -41,12 +41,14 @@ public class AdminDeviceMessageHandler extends Handler {
                         break;
                 }
                 break;
-            case Constants.MESSAGE_READ:
+            case Constants.MESSAGE_PACKET:
                 byte[] readBuf = (byte[]) msg.obj;
                 // construct a string from the valid bytes in the buffer
                 String readMessage = new String(readBuf, 0, msg.arg1);
+                Log.i("VideoActivity", "RECEIVING: " + readMessage);
                 ControlPacket cp = new Gson().fromJson(readMessage, ControlPacket.class);
-                videoActivity.processAdminDevicePacket(cp);
+                if (cp != null)
+                    videoActivity.processAdminDevicePacket(cp);
                 break;
         }
     }

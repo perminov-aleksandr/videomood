@@ -2,7 +2,6 @@ package ru.spbstu.videomoodadmin.activities;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -12,7 +11,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -25,7 +23,6 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
@@ -41,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Intent request codes
     private static final int REQUEST_ENABLE_BT = 3;
+    private static final String TAG = "MainActivity";
 
     private TextView connectionStatus;
     private BarChart chart;
@@ -50,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private int time = 0;
 
     private final int chartSize = 60;
+    public static ArrayList<String> videoItems;
 
     private BarDataSet createSet() {
         ArrayList<BarEntry> vals = new ArrayList<>();
@@ -64,10 +63,9 @@ public class MainActivity extends AppCompatActivity {
         return set;
     }
 
-
     private int defaultDataSetIndex = 0;
 
-    private void addEntry(int alphaValue) {
+    private void addEntry(int alphaValue, int betaValue) {
 
         BarData data = chart.getData();
 
@@ -82,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
             time++;
 
-            data.addEntry(new BarEntry(time, (float) Math.sin(time)), defaultDataSetIndex);
+            data.addEntry(new BarEntry(time, alphaValue, betaValue), defaultDataSetIndex);
             if (set.getEntryCount() == chartSize)
                 set.removeEntry(0);
             data.notifyDataChanged();
@@ -242,8 +240,8 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void sendPacket(ControlPacket controlPacket) {
-        Log.i("VideoMood Admin", "send command " + controlPacket.getCommand());
         String serializedPacket = new Gson().toJson(controlPacket);
+        Log.i(TAG, "SENDING: " + serializedPacket);
         mBtService.write(serializedPacket.getBytes());
     }
 
@@ -258,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
                         case BluetoothService.STATE_CONNECTED:
                             setStatus(R.string.state_connected);
                             sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
-                            mainView.setVisibility(View.VISIBLE);
+                            //mainView.setVisibility(View.VISIBLE);
                             break;
                         case BluetoothService.STATE_CONNECTING:
                             setStatus(R.string.state_connecting);
@@ -266,14 +264,15 @@ public class MainActivity extends AppCompatActivity {
                         case BluetoothService.STATE_LISTEN:
                         case BluetoothService.STATE_NONE:
                             setStatus(R.string.state_not_connected);
-                            mainView.setVisibility(View.INVISIBLE);
+                            //mainView.setVisibility(View.INVISIBLE);
                             break;
                     }
                     break;
-                case Constants.MESSAGE_READ:
+                case Constants.MESSAGE_PACKET:
                     byte[] readBuf = (byte[]) msg.obj;
                     // construct a string from the valid bytes in the buffer
                     String readMessage = new String(readBuf, 0, msg.arg1);
+                    Log.i(TAG, "RECEIVING: " + readMessage);
                     dataPacket = new Gson().fromJson(readMessage, DataPacket.class);
                     processPacketData();
                     break;
@@ -285,6 +284,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView museBatteryTextView;
     private TextView headsetBatteryTextView;
     private TextView videoNameTextView;
+    private TextView nextTextView;
+    private TextView prevTextView;
     private TextView pauseTextView;
 
     private void setupTextViews() {
@@ -293,9 +294,16 @@ public class MainActivity extends AppCompatActivity {
         headsetBatteryTextView = (TextView) findViewById(R.id.headsetBattery);
         videoNameTextView = (TextView) findViewById(R.id.videoName);
         pauseTextView = (TextView) findViewById(R.id.playBtn);
+        prevTextView = (TextView) findViewById(R.id.prevBtn);
+        nextTextView = (TextView) findViewById(R.id.nextBtn);
     }
 
     private void processPacketData() {
+        Integer alphaPct = dataPacket.getAlphaPct();
+        Integer betaPct = dataPacket.getBetaPct();
+        if (alphaPct != null && betaPct != null)
+            addEntry(alphaPct, betaPct);
+
         Boolean isMuseConnected = dataPacket.getMuseState();
         if (isMuseConnected != null && isMuseConnected) {
             museStatusTextView.setText(R.string.state_connected);
@@ -307,7 +315,14 @@ public class MainActivity extends AppCompatActivity {
             museBatteryTextView.setVisibility(View.INVISIBLE);
         }
 
-        headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, dataPacket.getHeadsetBatteryPercent()));
+        Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
+        if (headsetBatteryPercent != null)
+        {
+            headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, headsetBatteryPercent));
+            headsetBatteryTextView.setVisibility(View.VISIBLE);
+        }
+        else
+            headsetBatteryTextView.setVisibility(View.INVISIBLE);
 
         String videoname = dataPacket.getVideoName();
         if (videoname != null && !videoname.equals("")) {
@@ -321,14 +336,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         ArrayList<VideoItem> lVideoItems = dataPacket.getVideoList();
-        /*if (lVideoItems != null) {
+        if (lVideoItems != null) {
+
             videoItems.clear();
             for (VideoItem videoItem : lVideoItems)
                 videoItems.add(videoItem.getName());
 
             Intent intent = new Intent(this, SelectVideoActivity.class);
-            intent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
+            //intent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivityForResult(intent, SELECT_VIDEO_REQUEST);
-        }*/
+        }
     }
 }

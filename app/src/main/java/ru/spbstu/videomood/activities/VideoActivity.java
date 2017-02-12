@@ -86,8 +86,8 @@ public class VideoActivity extends Activity {
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context ctxt, Intent intent) {
-            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-            dataPacket.setHeadsetBatteryPercent(level);
+        int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+        dataPacket.setHeadsetBatteryPercent(level);
         }
     };
 
@@ -304,7 +304,9 @@ public class VideoActivity extends Activity {
 
         try {
             contentProvider = new ContentProvider(User.getAgeRangeIndex());
-            currentVideoUri = Uri.fromFile(contentProvider.getNext());
+            File videoFile = contentProvider.getNext();
+            currentVideoUri = Uri.fromFile(videoFile);
+            dataPacket.setVideoName(videoFile.getName());
         } catch (Exception e) {
             e.printStackTrace();
             displayErrorDialog();
@@ -374,7 +376,6 @@ public class VideoActivity extends Activity {
                     Integer videoIndex = (Integer) arguments[0];
                     File videoToPlay = contentProvider.get(videoIndex);
                     playVideoFile(videoToPlay);
-                    dataPacket.setVideoName(videoToPlay.getName());
                 }
                 break;
             case PAUSE:
@@ -387,18 +388,17 @@ public class VideoActivity extends Activity {
             case NEXT:
                 File nextVideo = contentProvider.getNext();
                 playVideoFile(nextVideo);
-                dataPacket.setVideoName(nextVideo.getName());
                 break;
             case PREV:
                 File prevVideo = contentProvider.getPrev();
                 playVideoFile(prevVideo);
-                dataPacket.setVideoName(prevVideo.getName());
                 break;
         }
     }
 
     private void reply() {
         String serializedPacket = new Gson().toJson(dataPacket);
+        Log.i(TAG, "SENDING: " + serializedPacket);
         mBtService.write(serializedPacket.getBytes());
     }
 
@@ -528,7 +528,7 @@ public class VideoActivity extends Activity {
     public void processDisconnect() {
         museState.setText(R.string.state_disconnected);
         setMuseIndicatorsVisible(false);
-        dataPacket.setMuseState(true);
+        dataPacket.setMuseState(false);
         warningHandler.removeCallbacks(checkWarningRunnable);
         calmHandler.removeCallbacks(checkCalmRunnable);
         displayReconnectDialog();
@@ -546,7 +546,8 @@ public class VideoActivity extends Activity {
         videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mediaPlayer) {
-            playVideoFile(contentProvider.getNext());
+                File nextVideo = contentProvider.getNext();
+                playVideoFile(nextVideo);
             }
         });
         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -558,6 +559,7 @@ public class VideoActivity extends Activity {
     }
 
     private void playVideoFile(File file) {
+        dataPacket.setVideoName(file.getName());
         currentVideoUri = Uri.fromFile(file);
         videoView.setVideoURI(currentVideoUri);
         videoView.start();

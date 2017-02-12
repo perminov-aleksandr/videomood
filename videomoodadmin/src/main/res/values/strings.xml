@@ -16,4 +16,7 @@
     <string name="videoNotPlayed"><![CDATA[<Video Not Played>]]></string>
     <string name="headset_on">Headset On</string>
     <string name="muse_on">Muse On</string>
+    <string name="previous">Previous</string>
+    <string name="play">Play</string>
+    <string name="next">Next</string>
 </resources>

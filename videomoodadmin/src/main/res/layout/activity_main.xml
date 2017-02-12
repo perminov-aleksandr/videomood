@@ -12,14 +12,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:id="@+id/main"
-        android:visibility="invisible">
+        android:id="@+id/main">
 
         <com.github.mikephil.charting.charts.BarChart
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/plotView"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:padding="4dp" />
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -32,7 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/videoName"
-                android:textAlignment="center"
+                android:gravity="center"
                 android:padding="8dp"
                 android:onClick="selectVideo" />
 
@@ -42,11 +42,10 @@
                 android:layout_height="match_parent"
                 android:layout_below="@+id/videoName"
                 android:id="@+id/videoControl"
-                android:elevation="13dp"
                 android:gravity="center">
 
                 <TextView
-                    android:text="Prev"
+                    android:text="@string/previous"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:id="@+id/prevBtn"
@@ -56,7 +55,7 @@
                     android:onClick="prev"/>
 
                 <TextView
-                    android:text="Play"
+                    android:text="@string/play"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:id="@+id/playBtn"
@@ -66,7 +65,7 @@
                     android:padding="8dp" />
 
                 <TextView
-                    android:text="Next"
+                    android:text="@string/next"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:id="@+id/nextBtn"
@@ -101,7 +100,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/headsetInfo"
-            android:visibility="invisible">
+            android:visibility="visible">
 
             <TextView
                 android:text="@string/headset_on"
@@ -111,7 +110,7 @@
                 android:textAlignment="center" />
 
             <TextView
-                android:text="84%"
+                android:text="@string/defaultPercentFormatString"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/headsetBattery"
@@ -125,7 +124,7 @@
                 android:textAlignment="center" />
 
             <TextView
-                android:text="37%"
+                android:text="@string/defaultPercentFormatString"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/museBattery"

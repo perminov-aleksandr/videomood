@@ -9,10 +9,6 @@ public class VideoMoodData {
 
     private DataPacket dataPacket;
 
-    public void setDataPacket(DataPacket packet){
-        this.dataPacket = packet.clone();
-    }
-
     public void setAlphas(Queue<Integer> alphas) {
         this.alphas = alphas;
     }
