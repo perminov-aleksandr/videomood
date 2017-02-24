@@ -27,7 +27,7 @@ public class SelectVideoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_select_video);
 
         videosArrayAdapter = new ArrayAdapter<>(this, R.layout.device_name);
-        //videosArrayAdapter.addAll(MainActivity.videoItems);
+        videosArrayAdapter.addAll(MainActivity.videoItems);
 
         ListView pairedListView = (ListView) findViewById(R.id.videoList);
         pairedListView.setAdapter(videosArrayAdapter);

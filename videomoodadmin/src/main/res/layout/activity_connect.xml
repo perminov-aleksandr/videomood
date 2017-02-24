@@ -16,7 +16,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/selectDeviceLabel"
-        android:elevation="1dp"
         style="@style/Base.TextAppearance.AppCompat.Title"
         android:padding="8dp"
         android:paddingStart="16dp"
@@ -27,7 +26,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/paired_devices_label"
-        android:elevation="1dp"
         style="@style/Base.TextAppearance.AppCompat.Subhead"
         android:padding="8dp"
         android:paddingStart="16dp"
@@ -37,8 +35,6 @@
         android:id="@+id/paired_devices"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:stackFromBottom="true"
-        />
+        android:layout_weight="1"/>
 
 </LinearLayout>

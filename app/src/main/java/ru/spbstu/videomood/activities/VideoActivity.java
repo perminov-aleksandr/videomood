@@ -124,6 +124,9 @@ public class VideoActivity extends Activity {
         percentArr[Const.Rhythms.BETA] = betaPercent;
         percentTimeQueue.add(percentArr);
 
+        dataPacket.setAlphaPct(new Long(alphaPercent).intValue());
+        dataPacket.setBetaPct(new Long(betaPercent).intValue());
+
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
         params.weight = (float)alphaPercent;
         alphaBar.setLayoutParams(params);
@@ -190,14 +193,14 @@ public class VideoActivity extends Activity {
         displayCalmScreen();
         percentTimeQueue.clear();
         warningHandler.removeCallbacks(checkWarningRunnable);
-        calmHandler.postDelayed(checkCalmRunnable, 30 * second);
+        calmHandler.postDelayed(checkCalmRunnable, 10 * second);
     }
 
     public void switchToWarningCheck(View view) {
         hideCalmScreen();
         percentTimeQueue.clear();
         calmHandler.removeCallbacks(checkCalmRunnable);
-        warningHandler.postDelayed(checkWarningRunnable, 60 * second);
+        warningHandler.postDelayed(checkWarningRunnable, 20 * second);
     }
 
     private boolean checkIsWarning() {
@@ -229,9 +232,6 @@ public class VideoActivity extends Activity {
         int countSum = percentTimeQueue.size();
         alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
         betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
-
-        dataPacket.setAlphaPct((int)alphaPercentSum);
-        dataPacket.setBetaPct((int)betaPercentSum);
     }
 
     private void fillRelativeBufferWith(final int rangeIndex, final ArrayList<Double> packetValues) {
@@ -363,17 +363,13 @@ public class VideoActivity extends Activity {
         Command command = controlPacket.getCommand();
         Log.i(TAG, "received command " + command);
         switch (command) {
-            case GET:
-                reply();
-                break;
             case LIST:
                 dataPacket.setVideoList(contentProvider.getContentList());
-                reply();
                 break;
             case PLAY:
                 Object[] arguments = controlPacket.getArguments();
                 if (arguments.length > 0) {
-                    Integer videoIndex = (Integer) arguments[0];
+                    Integer videoIndex = ((Double) arguments[0]).intValue();
                     File videoToPlay = contentProvider.get(videoIndex);
                     playVideoFile(videoToPlay);
                 }
@@ -394,18 +390,21 @@ public class VideoActivity extends Activity {
                 playVideoFile(prevVideo);
                 break;
         }
+        reply();
     }
 
     private void reply() {
         String serializedPacket = new Gson().toJson(dataPacket);
         Log.i(TAG, "SENDING: " + serializedPacket);
         mBtService.write(serializedPacket.getBytes());
+        dataPacket.setVideoList(null);
     }
 
     private RelativeLayout calmScreen;
 
     private void displayCalmScreen() {
         videoView.pause();
+        dataPacket.setVideoState(false);
         mediaController.hide();
         calmScreen.setVisibility(View.VISIBLE);
     }
@@ -413,6 +412,7 @@ public class VideoActivity extends Activity {
     private void hideCalmScreen() {
         calmScreen.setVisibility(View.INVISIBLE);
         videoView.start();
+        dataPacket.setVideoState(true);
     }
 
     private void setupUI() {
@@ -560,6 +560,7 @@ public class VideoActivity extends Activity {
 
     private void playVideoFile(File file) {
         dataPacket.setVideoName(file.getName());
+        dataPacket.setVideoState(true);
         currentVideoUri = Uri.fromFile(file);
         videoView.setVideoURI(currentVideoUri);
         videoView.start();
@@ -599,6 +600,7 @@ public class VideoActivity extends Activity {
             muse.enableDataTransmission(false);
 
         videoView.pause();
+        dataPacket.setVideoState(false);
         currentPlayPosition = videoView.getCurrentPosition();
     }
 
@@ -609,6 +611,8 @@ public class VideoActivity extends Activity {
         videoView.setVideoURI(currentVideoUri);
         if (currentPlayPosition != -1) {
             videoView.seekTo(currentPlayPosition);
+            videoView.pause();
+            dataPacket.setVideoState(false);
         }
 
         if (muse != null)

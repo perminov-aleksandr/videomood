@@ -27,7 +27,7 @@
             android:layout_weight="3"
             android:id="@+id/videoInfo">
 
-            <TextView
+            <Button
                 android:text="@string/videoNotPlayed"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -44,35 +44,38 @@
                 android:id="@+id/videoControl"
                 android:gravity="center">
 
-                <TextView
-                    android:text="@string/previous"
+                <Button
+                    android:text="@string/fa_previous"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:id="@+id/prevBtn"
-                    android:textAlignment="center"
+                    android:textAlignment="gravity"
                     android:gravity="center"
-                    android:padding="8dp"
+                    android:padding="16dp"
+                    android:textSize="64sp"
                     android:onClick="prev"/>
 
-                <TextView
-                    android:text="@string/play"
+                <Button
+                    android:text="@string/fa_play"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:id="@+id/playBtn"
-                    android:textAlignment="center"
+                    android:textAlignment="gravity"
                     android:gravity="center"
                     android:onClick="pause"
-                    android:padding="8dp" />
+                    android:textSize="96sp"
+                    android:padding="16dp" />
 
-                <TextView
-                    android:text="@string/next"
+                <Button
+                    android:text="@string/fa_next"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:id="@+id/nextBtn"
-                    android:textAlignment="center"
+                    android:textAlignment="gravity"
                     android:gravity="center"
                     android:onClick="next"
-                    android:padding="8dp" />
+                    android:textSize="64sp"
+                    android:padding="16dp" />
             </LinearLayout>
         </RelativeLayout>
 
@@ -87,13 +90,25 @@
         android:weightSum="1">
 
         <TextView
+            android:text="@string/fa_user"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/user"
+            android:gravity="center"
+            android:textSize="96sp"
+            android:textAlignment="gravity"
+            android:padding="16dp" />
+
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/connectionStatusLabel"
-            android:textAlignment="center"
+            android:textAlignment="gravity"
+            android:gravity="center"
             android:text="@string/state_not_connected"
             android:paddingBottom="16dp"
-            android:paddingTop="16dp" />
+            android:paddingTop="16dp"
+            android:layout_marginBottom="16dp" />
 
         <LinearLayout
             android:orientation="vertical"
@@ -107,28 +122,35 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/headsetState"
-                android:textAlignment="center" />
+                android:textAlignment="gravity"
+                android:gravity="center"
+                android:layout_marginTop="16dp" />
 
             <TextView
                 android:text="@string/defaultPercentFormatString"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/headsetBattery"
-                android:textAlignment="center" />
+                android:textAlignment="gravity"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
 
             <TextView
                 android:text="@string/muse_on"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/museState"
-                android:textAlignment="center" />
+                android:textAlignment="gravity"
+                android:gravity="center"
+                android:layout_marginTop="16dp" />
 
             <TextView
                 android:text="@string/defaultPercentFormatString"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/museBattery"
-                android:textAlignment="center" />
+                android:textAlignment="gravity"
+                android:gravity="center" />
         </LinearLayout>
 
     </LinearLayout>

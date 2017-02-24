@@ -40,7 +40,7 @@ public class ContentProvider {
 
     public File getNext() {
         index++;
-        if (index == ageVideos.length)
+        if (index >= ageVideos.length)
             index = 0;
 
         File nextVideo = ageVideos[index];
@@ -49,7 +49,7 @@ public class ContentProvider {
 
     public File getPrev() {
         index--;
-        if (index == 0)
+        if (index <= 0)
             index = ageVideos.length-1;
 
         File nextVideo = ageVideos[index];

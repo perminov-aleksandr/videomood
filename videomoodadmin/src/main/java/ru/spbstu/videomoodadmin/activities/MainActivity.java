@@ -4,16 +4,19 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
@@ -21,6 +24,7 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.gson.Gson;
+import com.joanzapata.iconify.widget.IconTextView;
 
 import java.util.ArrayList;
 
@@ -48,14 +52,14 @@ public class MainActivity extends AppCompatActivity {
     private int time = 0;
 
     private final int chartSize = 60;
-    public static ArrayList<String> videoItems;
+    public static ArrayList<String> videoItems = new ArrayList<>();
 
-    private BarDataSet createSet() {
+    private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> vals = new ArrayList<>();
         vals.add(new BarEntry(0,0));
-        BarDataSet set = new BarDataSet(vals, "Dynamic Data");
+        BarDataSet set = new BarDataSet(vals, name);
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
-        set.setColor(ColorTemplate.getHoloBlue());
+        set.setColor(color);
         set.setHighLightColor(Color.rgb(244, 117, 117));
         set.setValueTextColor(Color.WHITE);
         set.setValueTextSize(9f);
@@ -63,37 +67,34 @@ public class MainActivity extends AppCompatActivity {
         return set;
     }
 
-    private int defaultDataSetIndex = 0;
+    private int alphaDataSetIndex = 0;
+    private int betaDataSetIndex = 1;
 
+    private IBarDataSet alphaSet;
+    private IBarDataSet betaSet;
+
+    BarData barData;
+
+    //todo: extract init chart and update data
     private void addEntry(int alphaValue, int betaValue) {
-
         BarData data = chart.getData();
 
         if (data != null) {
-
-            IBarDataSet set = data.getDataSetByIndex(defaultDataSetIndex);
-
-            if (set == null) {
-                set = createSet();
-                data.addDataSet(set);
-            }
-
             time++;
 
-            data.addEntry(new BarEntry(time, alphaValue, betaValue), defaultDataSetIndex);
-            if (set.getEntryCount() == chartSize)
-                set.removeEntry(0);
+            data.addEntry(new BarEntry(time, 100), alphaDataSetIndex);
+            data.addEntry(new BarEntry(time, betaValue), betaDataSetIndex);
+            if (alphaSet.getEntryCount() == chartSize) {
+                alphaSet.removeEntry(0);
+                betaSet.removeEntry(0);
+            }
             data.notifyDataChanged();
 
             // let the chart know it's data has changed
             chart.notifyDataSetChanged();
 
-            // limit the number of visible entries
-            chart.setVisibleXRangeMaximum(60);
-            // mChart.setVisibleYRange(30, AxisDependency.LEFT);
-
-            // move to the latest entry
             chart.moveViewToX(data.getEntryCount());
+            chart.setVisibleXRangeMaximum(60);
 
             // this automatically refreshes the chart (calls invalidate())
             // mChart.moveViewTo(data.getXValCount()-7, 55f,
@@ -105,13 +106,24 @@ public class MainActivity extends AppCompatActivity {
         connectionStatus = (TextView) findViewById(R.id.connectionStatusLabel);
         chart = (BarChart) findViewById(R.id.plotView);
 
-        BarData data = new BarData();
-        chart.setData(data);
+        barData = new BarData();
+        chart.setData(barData);
+        chart.setBorderWidth(0f);
+        chart.setContentDescription("");
+        initChart();
 
         setupTextViews();
 
         videoControl = (LinearLayout) findViewById(R.id.videoControl);
         mainView = findViewById(R.id.main);
+    }
+
+    private void initChart() {
+        alphaSet = createSet("Alpha", Color.rgb(0, 255, 0));
+        barData.addDataSet(alphaSet);
+
+        betaSet = createSet("Beta", Color.rgb(255, 0, 0));
+        barData.addDataSet(betaSet);
     }
 
     @Override
@@ -264,6 +276,7 @@ public class MainActivity extends AppCompatActivity {
                         case BluetoothService.STATE_LISTEN:
                         case BluetoothService.STATE_NONE:
                             setStatus(R.string.state_not_connected);
+                            sendMessageHandler.removeCallbacks(sendMessageRunnable);
                             //mainView.setVisibility(View.INVISIBLE);
                             break;
                     }
@@ -284,18 +297,24 @@ public class MainActivity extends AppCompatActivity {
     private TextView museBatteryTextView;
     private TextView headsetBatteryTextView;
     private TextView videoNameTextView;
-    private TextView nextTextView;
-    private TextView prevTextView;
-    private TextView pauseTextView;
+    private TextView pauseBtn;
 
     private void setupTextViews() {
         museStatusTextView = (TextView) findViewById(R.id.museState);
         museBatteryTextView = (TextView) findViewById(R.id.museBattery);
         headsetBatteryTextView = (TextView) findViewById(R.id.headsetBattery);
         videoNameTextView = (TextView) findViewById(R.id.videoName);
-        pauseTextView = (TextView) findViewById(R.id.playBtn);
-        prevTextView = (TextView) findViewById(R.id.prevBtn);
-        nextTextView = (TextView) findViewById(R.id.nextBtn);
+        pauseBtn = (TextView) findViewById(R.id.playBtn);
+
+        Typeface font = Typeface.createFromAsset( getAssets(), "fonts/fontawesome.ttf" );
+        pauseBtn.setTypeface(font);
+
+        TextView prevBtn = (TextView) findViewById(R.id.prevBtn);
+        TextView nextBtn = (TextView) findViewById(R.id.nextBtn);
+        TextView userTextView = (TextView) findViewById(R.id.user);
+        nextBtn.setTypeface(font);
+        prevBtn.setTypeface(font);
+        userTextView.setTypeface(font);
     }
 
     private void processPacketData() {
@@ -327,7 +346,8 @@ public class MainActivity extends AppCompatActivity {
         String videoname = dataPacket.getVideoName();
         if (videoname != null && !videoname.equals("")) {
             videoNameTextView.setText(videoname);
-            pauseTextView.setText(dataPacket.getVideoState() ? "Pause" : "Play");
+            Boolean videoState = dataPacket.getVideoState();
+            pauseBtn.setText(videoState != null && videoState ? "PAUSE" : "PLAY");
             videoControl.setVisibility(View.VISIBLE);
         }
         else {
@@ -337,13 +357,12 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayList<VideoItem> lVideoItems = dataPacket.getVideoList();
         if (lVideoItems != null) {
-
             videoItems.clear();
             for (VideoItem videoItem : lVideoItems)
                 videoItems.add(videoItem.getName());
 
             Intent intent = new Intent(this, SelectVideoActivity.class);
-            //intent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
+            intent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivityForResult(intent, SELECT_VIDEO_REQUEST);
         }
     }
