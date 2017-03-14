@@ -14,9 +14,12 @@
     <string name="state_unknown">Unknown</string>
     <string name="defaultPercentFormatString">%d%%</string>
     <string name="videoNotPlayed"><![CDATA[<Video Not Playing>]]></string>
+    <string name="headset">Headset</string>
     <string name="headset_on">Headset On</string>
+    <string name="muse">Muse</string>
     <string name="muse_on">Muse On</string>
     <string name="previous">Previous</string>
     <string name="play">Play</string>
     <string name="next">Next</string>
+    <string name="defaultUser">Vasya Pupkin</string>
 </resources>

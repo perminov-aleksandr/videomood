@@ -10,17 +10,36 @@
 
     <style name="commonButton">
         <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/text_color</item>
+        <item name="android:background">@android:color/transparent</item>
     </style>
 
     <style name="videoButton" parent="commonButton">
-        <item name="android:textColor">@color/text_color</item>
         <item name="android:layout_width">65dp</item>
         <item name="android:layout_height">65dp</item>
         <item name="android:minHeight">50dp</item>
         <item name="android:layout_marginLeft">5dp</item>
         <item name="android:layout_marginRight">5dp</item>
         <item name="android:textSize">50sp</item>
-        <item name="android:background">@android:color/transparent</item>
     </style>
 
+    <style name="selectVideoButton" parent="commonButton">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:textSize">40sp</item>
+    </style>
+
+    <style name="sideBlock">
+        <item name="android:orientation">vertical</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">20dp</item>
+    </style>
+    <style name="sideIcon">
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/colorPrimary</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">30sp</item>
+        <item name="android:layout_width">match_parent</item>
+    </style>
 </resources>

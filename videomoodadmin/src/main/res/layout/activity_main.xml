@@ -8,146 +8,166 @@
     android:baselineAligned="false">
 
     <LinearLayout
+        android:id="@+id/info"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="3"
         android:orientation="vertical"
+        android:weightSum="1">
+
+        <LinearLayout
+            style="@style/sideBlock"
+            android:id="@+id/userBlock">
+            <TextView
+                style="@style/sideIcon"
+                android:text="@string/fa_user" />
+            <TextView
+                android:id="@+id/userName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/defaultUser"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/sideBlock"
+            android:id="@+id/headsetInfo">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/headset"
+                android:textAlignment="gravity" />
+            <TextView
+                android:id="@+id/headsetState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/state_connected"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/headsetBattery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/defaultPercentFormatString"
+                android:textAlignment="gravity" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/sideBlock"
+            android:id="@+id/museInfo">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/muse"
+                android:textAlignment="gravity" />
+            <TextView
+                android:id="@+id/museState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/state_connected"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/museBattery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/defaultPercentFormatString"
+                android:textAlignment="gravity" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:id="@+id/main">
+        android:orientation="vertical">
 
         <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/plotView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/plotView"
             android:layout_weight="1"
             android:padding="4dp" />
 
         <RelativeLayout
+            android:id="@+id/videoInfo"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="3"
-            android:id="@+id/videoInfo">
+            android:layout_weight="3">
 
-            <Button
-                android:text="@string/videoNotPlayed"
+            <LinearLayout
+                android:id="@+id/videoTrack"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/videoName"
                 android:gravity="center"
-                android:padding="8dp"
-                android:onClick="selectVideo" />
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/videoName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4"
+                    android:gravity="left"
+                    android:padding="8dp"
+                    android:text="@string/videoNotPlayed"
+                    android:textAlignment="gravity" />
+
+                <Button
+                    android:id="@+id/videoSelect"
+                    style="@style/selectVideoButton"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:onClick="selectVideo"
+                    android:text="@string/fa_select_video" />
+            </LinearLayout>
+
 
             <SeekBar
                 android:id="@+id/seekBar"
-                android:layout_below="@+id/videoName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:progress="60"
-                android:max="100" />
+                android:layout_below="@+id/videoTrack"
+                android:max="100"
+                android:progress="60" />
 
             <LinearLayout
-                android:orientation="horizontal"
+                android:id="@+id/videoControl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/seekBar"
-                android:id="@+id/videoControl"
-                android:gravity="center">
+                android:gravity="center"
+                android:orientation="horizontal">
 
                 <Button
-                    style="@style/videoButton"
-                    android:text="@string/fa_previous"
                     android:id="@+id/prevBtn"
-                    android:textAlignment="gravity"
-                    android:onClick="prev" />
+                    style="@style/videoButton"
+                    android:onClick="prev"
+                    android:text="@string/fa_previous"
+                    android:textAlignment="gravity" />
 
                 <Button
-                    style="@style/videoButton"
-                    android:text="@string/fa_play"
                     android:id="@+id/playBtn"
-                    android:textAlignment="gravity"
-                    android:onClick="pause" />
+                    style="@style/videoButton"
+                    android:onClick="pause"
+                    android:text="@string/fa_play"
+                    android:textAlignment="gravity" />
 
                 <Button
-                    style="@style/videoButton"
-                    android:text="@string/fa_next"
                     android:id="@+id/nextBtn"
-                    android:textAlignment="gravity"
-                    android:onClick="next" />
+                    style="@style/videoButton"
+                    android:onClick="next"
+                    android:text="@string/fa_next"
+                    android:textAlignment="gravity" />
             </LinearLayout>
         </RelativeLayout>
 
     </LinearLayout>
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/info"
-        android:layout_weight="3"
-        android:weightSum="1">
-
-        <TextView
-            android:text="@string/fa_user"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/user"
-            android:gravity="center"
-            android:textSize="96sp"
-            android:textAlignment="gravity"
-            android:padding="16dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/connectionStatusLabel"
-            android:textAlignment="gravity"
-            android:gravity="center"
-            android:text="@string/state_not_connected"
-            android:paddingBottom="16dp"
-            android:paddingTop="16dp"
-            android:layout_marginBottom="16dp" />
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/headsetInfo"
-            android:visibility="visible">
-
-            <TextView
-                android:text="@string/headset_on"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/headsetState"
-                android:textAlignment="gravity"
-                android:gravity="center"
-                android:layout_marginTop="16dp" />
-
-            <TextView
-                android:text="@string/defaultPercentFormatString"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/headsetBattery"
-                android:textAlignment="gravity"
-                android:gravity="center"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
-                android:text="@string/muse_on"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/museState"
-                android:textAlignment="gravity"
-                android:gravity="center"
-                android:layout_marginTop="16dp" />
-
-            <TextView
-                android:text="@string/defaultPercentFormatString"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/museBattery"
-                android:textAlignment="gravity"
-                android:gravity="center" />
-        </LinearLayout>
-
-    </LinearLayout>
 </LinearLayout>
