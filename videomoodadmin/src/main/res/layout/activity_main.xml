@@ -1,25 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:id="@+id/activity_main"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:rowCount="2"
+    android:columnCount="2"
     tools:context="ru.spbstu.videomoodadmin.activities.MainActivity"
     android:padding="8dp"
     android:baselineAligned="false">
 
     <LinearLayout
         android:id="@+id/info"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="3"
-        android:orientation="vertical"
-        android:weightSum="1">
+        android:layout_row="0"
+        android:layout_column="0"
+        android:layout_gravity="fill"
+        android:padding="10dp"
+        android:orientation="vertical">
 
         <LinearLayout
             style="@style/sideBlock"
             android:id="@+id/userBlock">
             <TextView
                 style="@style/sideIcon"
+                android:id="@+id/userIcon"
                 android:text="@string/fa_user" />
             <TextView
                 android:id="@+id/userName"
@@ -82,92 +84,95 @@
 
     </LinearLayout>
 
+    <ImageView
+        android:id="@+id/videoPreview"
+        android:layout_column="0"
+        android:layout_row="1"
+        android:maxHeight="300dp"
+        android:minHeight="100dp"
+        android:minWidth="150dp"
+        android:layout_gravity="fill"
+        android:background="@color/colorPrimary"/>
+
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/plotView"
+        android:layout_gravity="fill"
+        android:layout_row="0"
+        android:layout_column="1"
+        android:padding="4dp" />
+
     <LinearLayout
-        android:id="@+id/main"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:id="@+id/videoInfo"
+        android:layout_gravity="fill_horizontal"
+        android:orientation="vertical"
+        android:layout_row="1"
+        android:layout_column="1">
 
-        <com.github.mikephil.charting.charts.BarChart
-            android:id="@+id/plotView"
+        <LinearLayout
+            android:id="@+id/videoTrack"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:padding="4dp" />
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-        <RelativeLayout
-            android:id="@+id/videoInfo"
+            <TextView
+                android:id="@+id/videoName"
+
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="left"
+                android:padding="8dp"
+                android:text="@string/videoNotPlayed"
+                android:textAlignment="gravity" />
+
+            <Button
+                android:id="@+id/videoSelect"
+                style="@style/selectVideoButton"
+                android:gravity="center"
+                android:onClick="selectVideo"
+                android:text="@string/fa_select_video" />
+        </LinearLayout>
+
+
+        <SeekBar
+            android:id="@+id/seekBar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="3">
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/videoTrack"
+            android:max="100"
+            android:progress="60" />
 
-            <LinearLayout
-                android:id="@+id/videoTrack"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal">
+        <LinearLayout
+            android:id="@+id/videoControl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/seekBar"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/videoName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="4"
-                    android:gravity="left"
-                    android:padding="8dp"
-                    android:text="@string/videoNotPlayed"
-                    android:textAlignment="gravity" />
+            <Button
+                android:id="@+id/prevBtn"
+                style="@style/videoButton"
+                android:onClick="prev"
+                android:text="@string/fa_previous"
+                android:textAlignment="gravity" />
 
-                <Button
-                    android:id="@+id/videoSelect"
-                    style="@style/selectVideoButton"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:onClick="selectVideo"
-                    android:text="@string/fa_select_video" />
-            </LinearLayout>
+            <Button
+                android:id="@+id/playBtn"
+                style="@style/videoButton"
+                android:onClick="pause"
+                android:text="@string/fa_play"
+                android:textAlignment="gravity" />
 
-
-            <SeekBar
-                android:id="@+id/seekBar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/videoTrack"
-                android:max="100"
-                android:progress="60" />
-
-            <LinearLayout
-                android:id="@+id/videoControl"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/seekBar"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/prevBtn"
-                    style="@style/videoButton"
-                    android:onClick="prev"
-                    android:text="@string/fa_previous"
-                    android:textAlignment="gravity" />
-
-                <Button
-                    android:id="@+id/playBtn"
-                    style="@style/videoButton"
-                    android:onClick="pause"
-                    android:text="@string/fa_play"
-                    android:textAlignment="gravity" />
-
-                <Button
-                    android:id="@+id/nextBtn"
-                    style="@style/videoButton"
-                    android:onClick="next"
-                    android:text="@string/fa_next"
-                    android:textAlignment="gravity" />
-            </LinearLayout>
-        </RelativeLayout>
-
+            <Button
+                android:id="@+id/nextBtn"
+                style="@style/videoButton"
+                android:onClick="next"
+                android:text="@string/fa_next"
+                android:textAlignment="gravity" />
+        </LinearLayout>
     </LinearLayout>
 
-</LinearLayout>
+
+</GridLayout>

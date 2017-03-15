@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setupUI() {
-        connectionStatus = (TextView) findViewById(R.id.connectionStatusLabel);
+        //connectionStatus = (TextView) findViewById(R.id.connectionStatusLabel);
         chart = (BarChart) findViewById(R.id.plotView);
 
         barData = new BarData();
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         setupTextViews();
 
         videoControl = (LinearLayout) findViewById(R.id.videoControl);
-        mainView = findViewById(R.id.main);
+       // mainView = findViewById(R.id.main);
     }
 
     private void initChart() {
@@ -237,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setStatus(int stringResId) {
-        connectionStatus.setText(stringResId);
+       // connectionStatus.setText(stringResId);
     }
 
     private Handler sendMessageHandler = new Handler();
@@ -299,6 +299,11 @@ public class MainActivity extends AppCompatActivity {
     private TextView videoNameTextView;
     private TextView pauseBtn;
 
+    private void setFont(Typeface font, int id) {
+        TextView item = (TextView) findViewById(id);
+        item.setTypeface(font);
+    }
+
     private void setupTextViews() {
         museStatusTextView = (TextView) findViewById(R.id.museState);
         museBatteryTextView = (TextView) findViewById(R.id.museBattery);
@@ -309,12 +314,10 @@ public class MainActivity extends AppCompatActivity {
         Typeface font = Typeface.createFromAsset( getAssets(), "fonts/fontawesome.ttf" );
         pauseBtn.setTypeface(font);
 
-        TextView prevBtn = (TextView) findViewById(R.id.prevBtn);
-        TextView nextBtn = (TextView) findViewById(R.id.nextBtn);
-        TextView userTextView = (TextView) findViewById(R.id.user);
-        nextBtn.setTypeface(font);
-        prevBtn.setTypeface(font);
-        userTextView.setTypeface(font);
+        setFont(font, R.id.prevBtn);
+        setFont(font, R.id.nextBtn);
+        setFont(font, R.id.userIcon);
+        setFont(font, R.id.videoSelect);
     }
 
     private void processPacketData() {
