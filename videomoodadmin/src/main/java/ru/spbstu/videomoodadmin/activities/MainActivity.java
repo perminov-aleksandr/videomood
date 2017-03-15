@@ -28,6 +28,8 @@ import com.google.gson.Gson;
 import com.joanzapata.iconify.widget.IconTextView;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
@@ -40,6 +42,10 @@ import ru.spbstu.videomoodadmin.R;
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final boolean IS_DEBUG = false;
+
+    private DataPacket testDataPacket;
 
     // Intent request codes
     private static final int REQUEST_ENABLE_BT = 3;
@@ -145,19 +151,48 @@ public class MainActivity extends AppCompatActivity {
 
         setupUI();
 
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (!IS_DEBUG) {
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        } else {
+            testDataPacket = new DataPacket();
+            testDataPacket.setVideoName("Video Name");
+            testDataPacket.setMuseState(true);
+            testDataPacket.setMuseBatteryPercent(24);
+            testDataPacket.setAlphaPct(20);
+            testDataPacket.setBetaPct(80);
+            testDataPacket.setHeadsetBatteryPercent(68);
+            testDataPacket.setVideoState(true);
+            dataPacket = testDataPacket;
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        // If BT is not on, request that it be enabled
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-        } else if (mBtService == null) {
-            setupBtService();
-            connectDevice(getIntent(), true);
+
+        if (!IS_DEBUG) {
+            // If BT is not on, request that it be enabled
+            if (!mBluetoothAdapter.isEnabled()) {
+                Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+            } else if (mBtService == null) {
+                setupBtService();
+                connectDevice(getIntent(), true);
+            }
+        } else {
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+
+                private double time;
+
+                @Override
+                public void run() {
+                    testDataPacket.setBetaPct((int) (Math.sin(time++) * 50.0) + 50);
+                    Message msg = new Message();
+                    msg.what = Constants.MESSAGE_PACKET;
+                    mHandler.sendMessage(msg);
+                }
+            }, 0, 1000);
         }
     }
 
@@ -169,14 +204,16 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        // Performing this check in onResume() covers the case in which BT was
-        // not enabled during onStart(), so we were paused to enable it...
-        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-        if (mBtService != null) {
-            // Only if the state is STATE_NONE, do we know that we haven't started already
-            if (mBtService.getState() == BluetoothService.STATE_NONE) {
-                // Start the Bluetooth chat services
-                mBtService.start();
+        if (!IS_DEBUG) {
+            // Performing this check in onResume() covers the case in which BT was
+            // not enabled during onStart(), so we were paused to enable it...
+            // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
+            if (mBtService != null) {
+                // Only if the state is STATE_NONE, do we know that we haven't started already
+                if (mBtService.getState() == BluetoothService.STATE_NONE) {
+                    // Start the Bluetooth chat services
+                    mBtService.start();
+                }
             }
         }
     }
@@ -184,8 +221,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mBtService != null) {
-            mBtService.stop();
+
+        if (!IS_DEBUG) {
+            if (mBtService != null) {
+                mBtService.stop();
+            }
         }
     }
 
@@ -264,9 +304,11 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void sendPacket(ControlPacket controlPacket) {
-        String serializedPacket = new Gson().toJson(controlPacket);
-        Log.i(TAG, "SENDING: " + serializedPacket);
-        mBtService.write(serializedPacket.getBytes());
+        if (mBtService != null) {
+            String serializedPacket = new Gson().toJson(controlPacket);
+            Log.i(TAG, "SENDING: " + serializedPacket);
+            mBtService.write(serializedPacket.getBytes());
+        }
     }
 
     private DataPacket dataPacket;
@@ -294,11 +336,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 case Constants.MESSAGE_PACKET:
-                    byte[] readBuf = (byte[]) msg.obj;
-                    // construct a string from the valid bytes in the buffer
-                    String readMessage = new String(readBuf, 0, msg.arg1);
-                    Log.i(TAG, "RECEIVING: " + readMessage);
-                    dataPacket = new Gson().fromJson(readMessage, DataPacket.class);
+                    if (!IS_DEBUG) {
+                        byte[] readBuf = (byte[]) msg.obj;
+                        // construct a string from the valid bytes in the buffer
+                        String readMessage = new String(readBuf, 0, msg.arg1);
+                        Log.i(TAG, "RECEIVING: " + readMessage);
+                        dataPacket = new Gson().fromJson(readMessage, DataPacket.class);
+                    }
                     processPacketData();
                     break;
             }
