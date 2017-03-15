@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
@@ -104,12 +105,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void setupUI() {
         //connectionStatus = (TextView) findViewById(R.id.connectionStatusLabel);
-        chart = (BarChart) findViewById(R.id.plotView);
-
-        barData = new BarData();
-        chart.setData(barData);
-        chart.setBorderWidth(0f);
-        chart.setContentDescription("");
         initChart();
 
         setupTextViews();
@@ -119,10 +114,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initChart() {
-        alphaSet = createSet("Alpha", Color.rgb(0, 255, 0));
+        chart = (BarChart) findViewById(R.id.plotView);
+
+        barData = new BarData();
+
+        XAxis xAx = chart.getXAxis(); //no axis
+        YAxis yAx = chart.getAxisLeft();
+        YAxis yRightAx = chart.getAxisRight();
+        xAx.setEnabled(false);
+        yAx.setEnabled(false);
+        yRightAx.setEnabled(false);
+
+        chart.setDrawGridBackground(false); //no grid
+        chart.setDescription(null); //no description
+
+        chart.setData(barData);
+        chart.setBorderWidth(0f);
+
+        alphaSet = createSet("Alpha", Color.rgb(18, 103, 231));
         barData.addDataSet(alphaSet);
 
-        betaSet = createSet("Beta", Color.rgb(255, 0, 0));
+        betaSet = createSet("Beta", Color.rgb(215, 69, 46));
         barData.addDataSet(betaSet);
     }
 
