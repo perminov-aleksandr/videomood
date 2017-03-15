@@ -37,9 +37,6 @@
             android:name=".activities.VideoActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_video" />
-        <activity
-            android:name=".activities.CalmActivity"
-            android:label="@string/title_activity_user" />
 
         <meta-data
             android:name="com.google.android.gms.version"

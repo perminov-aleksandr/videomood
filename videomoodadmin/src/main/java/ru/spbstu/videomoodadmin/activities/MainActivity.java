@@ -362,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
         if (videoname != null && !videoname.equals("")) {
             videoNameTextView.setText(videoname);
             Boolean videoState = dataPacket.getVideoState();
-            pauseBtn.setText(videoState != null && videoState ? "PAUSE" : "PLAY");
+            pauseBtn.setText(videoState != null && videoState ? R.string.fa_pause : R.string.fa_play);
             videoControl.setVisibility(View.VISIBLE);
         }
         else {

@@ -8,12 +8,13 @@ import com.choosemuse.libmuse.MuseDataPacket;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import ru.spbstu.videomood.activities.MuseActivity;
 import ru.spbstu.videomood.activities.VideoActivity;
 
 public class DataListener extends MuseDataListener {
-    final WeakReference<VideoActivity> activityRef;
+    final WeakReference<MuseActivity> activityRef;
 
-    public DataListener(final WeakReference<VideoActivity> activityRef) {
+    public DataListener(final WeakReference<MuseActivity> activityRef) {
         this.activityRef = activityRef;
     }
 
@@ -27,7 +28,7 @@ public class DataListener extends MuseDataListener {
      */
     @Override
     public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
-        VideoActivity activity = activityRef.get();
+        MuseActivity activity = activityRef.get();
 
         ArrayList<Double> packetValues = p.values();
         switch (p.packetType()) {

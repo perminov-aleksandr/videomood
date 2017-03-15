@@ -55,6 +55,14 @@ public class DataPacket extends Packet {
         this.museSensorsState = museSensorsState;
     }
 
+    public void setMuseSensorsState(boolean[] museSensorsState) {
+        Boolean[] sensorStates = new Boolean[museSensorsState.length];
+        for (int i = 0; i < sensorStates.length; i++) {
+            sensorStates[i] = museSensorsState[i];
+        }
+        setMuseSensorsState(sensorStates);
+    }
+
     public Integer getAlphaPct() {
         return alphaPct;
     }

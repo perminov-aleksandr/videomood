@@ -28,6 +28,7 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import com.choosemuse.libmuse.Battery;
+import com.choosemuse.libmuse.ConnectionState;
 import com.choosemuse.libmuse.Muse;
 import com.choosemuse.libmuse.MuseArtifactPacket;
 import com.choosemuse.libmuse.MuseDataPacket;
@@ -53,14 +54,8 @@ import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
 
-public class VideoActivity extends Activity {
-
+public class VideoActivity extends MuseActivity {
     private static final String TAG = "VideoMood:VideoActivity";
-
-    private static final int REQUEST_ENABLE_BT = 3;
-
-    private final int CHANNEL_COUNT = 4;
-    private final int RANGE_COUNT = 5;
 
     private long alphaPercentSum;
     private long betaPercentSum;
@@ -68,19 +63,12 @@ public class VideoActivity extends Activity {
     private final int timeArrayLength = 60*10;
     private final Queue<Long[]> percentTimeQueue = new ArrayDeque<>(timeArrayLength);
 
-    private final double[][] relativeBuffer = new double[RANGE_COUNT][CHANNEL_COUNT];
-    private boolean relativeStale = false;
-
     private TextView foreheadTouch;
-    private boolean isForeheadTouch = false;
 
     private TextView[] isGoodIndicators;
-    private final boolean[] isGoodBuffer = new boolean[CHANNEL_COUNT];
-    private boolean isGoodStale = false;
 
     private TextView batteryTextView;
-    private double batteryValue;
-    private boolean batteryStale = false;
+
     private TextView adminDeviceConnectionStatus;
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -91,9 +79,9 @@ public class VideoActivity extends Activity {
         }
     };
 
-    private void updateIsGood() {
-        for (int i = 0; i < isGoodBuffer.length; i++)
-            isGoodIndicators[i].setVisibility(isGoodBuffer[i] ? View.VISIBLE : View.INVISIBLE);
+    private void updateMuseSensors() {
+        for (int i = 0; i < sensorsStateBuffer.length; i++)
+            isGoodIndicators[i].setVisibility(sensorsStateBuffer[i] ? View.VISIBLE : View.INVISIBLE);
 
         int visibility = isForeheadTouch ? View.VISIBLE : View.INVISIBLE;
 
@@ -136,27 +124,6 @@ public class VideoActivity extends Activity {
         betaBar.setLayoutParams(params);
     }
 
-    public void processMuseDataSensors(ArrayList<Double> packetValues) {
-        Boolean[] sensorStates = new Boolean[CHANNEL_COUNT];
-        for (int i = 0; i < CHANNEL_COUNT; i++) {
-            isGoodBuffer[i] = packetValues.get(i) > 0.5;
-            sensorStates[i] = isGoodBuffer[i];
-        }
-        dataPacket.setMuseSensorsState(sensorStates);
-        isGoodStale = true;
-    }
-
-    public void processMuseDataBattery(MuseDataPacket p) {
-        batteryValue = p.getBatteryValue(Battery.CHARGE_PERCENTAGE_REMAINING);
-        dataPacket.setMuseBatteryPercent((int)batteryValue);
-        batteryStale = true;
-    }
-
-    public void processMuseDataRelative(ArrayList<Double> packetValues, int relativeIndex) {
-        fillRelativeBufferWith(relativeIndex, packetValues);
-        relativeStale = true;
-    }
-
     private final long second = 1000;
 
     private Handler warningHandler = new Handler();
@@ -166,6 +133,7 @@ public class VideoActivity extends Activity {
     private final Runnable checkWarningRunnable = new Runnable() {
         @Override
         public void run() {
+            calcPercentSum();
             //check if we should interrupt video and ask to calm down
             if (checkIsWarning()) {
                 switchToCalmCheck(findViewById(R.id.museInfo));
@@ -180,6 +148,7 @@ public class VideoActivity extends Activity {
     private final Runnable checkCalmRunnable = new Runnable() {
         @Override
         public void run() {
+            calcPercentSum();
             if (checkIsCalm()) {
                 switchToWarningCheck(findViewById(R.id.calmScreen));
             } else {
@@ -204,16 +173,12 @@ public class VideoActivity extends Activity {
     }
 
     private boolean checkIsWarning() {
-        calcPercentSum();
-
         Log.i(TAG, String.format("warning check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
 
         return betaPercentSum >= 20;
     }
 
     private boolean checkIsCalm() {
-        calcPercentSum();
-
         Log.i(TAG, String.format("calm check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
 
         return alphaPercentSum >= 90;
@@ -232,18 +197,6 @@ public class VideoActivity extends Activity {
         int countSum = percentTimeQueue.size();
         alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
         betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
-    }
-
-    private void fillRelativeBufferWith(final int rangeIndex, final ArrayList<Double> packetValues) {
-        for (int i = 0; i < packetValues.size(); i++) {
-            Double v = packetValues.get(i);
-            relativeBuffer[rangeIndex][i] = v;
-        }
-    }
-
-    public void processMuseArtifactPacket(final MuseArtifactPacket p) {
-        isForeheadTouch = p.getHeadbandOn();
-        isGoodStale = true;
     }
 
     /**
@@ -270,31 +223,45 @@ public class VideoActivity extends Activity {
                 updateBar();
                 relativeStale = false;
             }
-            if (isGoodStale) {
-                updateIsGood();
-                isGoodStale = false;
+            if (sensorsStale) {
+                updateMuseSensors();
+                dataPacket.setMuseSensorsState(sensorsStateBuffer);
+                sensorsStale = false;
             }
             if (batteryStale) {
                 updateBattery();
+                dataPacket.setMuseBatteryPercent((int)batteryValue);
                 batteryStale = false;
+            }
+            if (isConnectionStatusStale) {
+                updateConnectionStatus();
             }
             handler.postDelayed(tickUi, 1000 / 60);
         }
     };
 
+    private void updateConnectionStatus() {
+        ConnectionState connectionState = getConnectionState();
+        switch (connectionState) {
+            case CONNECTING:
+                processConnecting();
+                break;
+            case CONNECTED:
+                processConnect();
+                break;
+            case DISCONNECTED:
+                processDisconnect();
+                break;
+        }
+        isConnectionStatusStale = false;
+    }
+
     private ContentProvider contentProvider;
 
     /**
-     * The Handler that gets information back from the BluetoothChatService
+     * The Handler that gets information back from the BluetoothService
      */
     private Handler mAdminDeviceMessageHandler;
-
-    /**
-     * A Muse refers to a Muse headband.  Use this to connect/disconnect from the
-     * headband, register listeners to receive EEG data and get headband
-     * configuration and version information.
-     */
-    private Muse muse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -313,14 +280,6 @@ public class VideoActivity extends Activity {
             return;
         }
 
-        WeakReference<VideoActivity> weakActivity = new WeakReference<>(this);
-        // Register a listener to handle connection state changes
-        connectionListener = new ConnectionListener(weakActivity);
-        // Register a listener to receive data from a Muse.
-        dataListener = new DataListener(weakActivity);
-
-        setupMuseManager();
-
         mAdminDeviceMessageHandler = new AdminDeviceMessageHandler(new WeakReference<>(this));
 
         registerReceiver(receiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -329,15 +288,7 @@ public class VideoActivity extends Activity {
         handler.post(tickUi);
     }
 
-    private void setupMuseManager() {
-        MuseManager.setContext(this);
-        MuseManager.registerMuseListeners(connectionListener, dataListener);
 
-        // Cache the Muse that the user has selected.
-        muse = MuseManager.getMuse();
-        //start receiving muse packets
-        muse.runAsynchronously();
-    }
 
     @Override
     public void onStart() {
@@ -480,30 +431,11 @@ public class VideoActivity extends Activity {
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        muse.runAsynchronously();
+                        reconnectMuse();
                     }
                 })
                 .show();
     }
-
-    /**
-     * The DataListener is how you will receive EEG (and other) data from the
-     * headband.
-     * <p>
-     * Note that DataListener is an inner class at the bottom of this file
-     * that extends MuseDataListener.
-     */
-    private DataListener dataListener;
-
-    /**
-     * The ConnectionListener will be notified whenever there is a change in
-     * the connection state of a headband, for example when the headband connects
-     * or disconnects.
-     * <p>
-     * Note that ConnectionListener is an inner class at the bottom of this file
-     * that extends MuseConnectionListener.
-     */
-    private ConnectionListener connectionListener;
 
     private TextView museState;
 
@@ -596,9 +528,6 @@ public class VideoActivity extends Activity {
     protected void onPause() {
         super.onPause();
 
-        if (muse != null)
-            muse.enableDataTransmission(false);
-
         videoView.pause();
         dataPacket.setVideoState(false);
         currentPlayPosition = videoView.getCurrentPosition();
@@ -615,9 +544,6 @@ public class VideoActivity extends Activity {
             dataPacket.setVideoState(false);
         }
 
-        if (muse != null)
-            muse.enableDataTransmission(true);
-
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
         // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
@@ -633,11 +559,6 @@ public class VideoActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        if (muse != null) {
-            muse.unregisterAllListeners();
-            muse.disconnect(false);
-        }
 
         if (mBtService != null) {
             mBtService.stop();

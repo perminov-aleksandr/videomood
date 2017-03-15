@@ -3,6 +3,7 @@
     <string name="fa_previous">&#xf049;</string>
     <string name="fa_next">&#xf050;</string>
     <string name="fa_play">&#xf04b;</string>
+    <string name="fa_pause">&#xf04c;</string>
     <string name="fa_user">&#xf2be;</string>
     <string name="fa_select_video">&#xf07c;</string>
     <string name="fa_battery_full">&#xf240;</string>
