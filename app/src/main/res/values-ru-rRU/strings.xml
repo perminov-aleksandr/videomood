@@ -33,4 +33,12 @@
     <string name="reconnect_message">Устройство Muse недоступно. Хотите попытаться еще раз?</string>
     <string name="reconnect">Переподключиться</string>
     <string name="no">Нет</string>
+    <string name="button_scan">Сканировать</string>
+    <string name="none_found">Устройства не найдены</string>
+    <string name="none_paired">Устройства не подключены</string>
+    <string name="press_back_again_to_exit">Нажмите НАЗАД еще раз для выхода</string>
+    <string name="scanning">Сканирование</string>
+    <string name="select_device">Выберите устройство</string>
+    <string name="title_other_devices">Другие устройства</string>
+    <string name="title_paired_devices">Подключенные устройства</string>
 </resources>

@@ -319,6 +319,7 @@ public class VideoActivity extends MuseActivity {
 
     public void processAdminDevicePacket(ControlPacket controlPacket) {
         Command command = controlPacket.getCommand();
+        Object[] arguments = controlPacket.getArguments();
         Log.i(TAG, "received command " + command);
         switch (command) {
             case GET:
@@ -330,7 +331,6 @@ public class VideoActivity extends MuseActivity {
                 dataPacket.setVideoList(contentProvider.getContentList());
                 break;
             case PLAY:
-                Object[] arguments = controlPacket.getArguments();
                 if (arguments.length > 0) {
                     Integer videoIndex = ((Double) arguments[0]).intValue();
                     File videoToPlay = contentProvider.get(videoIndex);
@@ -352,6 +352,16 @@ public class VideoActivity extends MuseActivity {
                 File prevVideo = contentProvider.getPrev();
                 playVideoFile(prevVideo);
                 break;
+            case REWIND:
+                arguments = controlPacket.getArguments();
+                if (arguments.length > 0)
+                {
+                    Double positionPct = (Double) arguments[0];
+                    int duration = videoView.getDuration();
+                    int seekingPosition = (int) (duration * (positionPct / 100.0));
+                    videoView.seekTo(seekingPosition);
+                }
+                break;
         }
         reply();
         dataPacket.setAlphaPct(null);
@@ -360,7 +370,7 @@ public class VideoActivity extends MuseActivity {
 
     private static final int screenshotWidth = 100;
     private static final int screenshotHeight = 100;
-    private static final int compressQuality = 0;
+    private static final int compressQuality = 100;
 
     private void writeScreenshotTo(DataPacket dataPacket) {
         Bitmap screenshot = takeScreenshot();
@@ -453,6 +463,7 @@ public class VideoActivity extends MuseActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
+                        videoView.start();
                     }
                 })
                 .setPositiveButton(resources.getString(R.string.reconnect), new DialogInterface.OnClickListener()
@@ -460,6 +471,7 @@ public class VideoActivity extends MuseActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         reconnectMuse();
+                        videoView.start();
                     }
                 })
                 .show();
@@ -491,6 +503,7 @@ public class VideoActivity extends MuseActivity {
         dataPacket.setMuseState(false);
         warningHandler.removeCallbacks(checkWarningRunnable);
         calmHandler.removeCallbacks(checkCalmRunnable);
+        videoView.pause();
         displayReconnectDialog();
     }
 
@@ -513,9 +526,34 @@ public class VideoActivity extends MuseActivity {
         videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
+                mp.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+                    @Override
+                    public void onSeekComplete(MediaPlayer mp) {
+                        int currentPosMsec = mp.getCurrentPosition();
+                        int durationMsec = mp.getDuration();
+                        int currentPositionPct = 100 * currentPosMsec / durationMsec;
+                        dataPacket.setCurrentPosition(currentPositionPct);
+                    }
+                });
                 videoView.start();
             }
         });
+        mediaController.setPrevNextListeners(
+                new View.OnClickListener() {
+                     @Override
+                     public void onClick(View v) {
+                         File prevVideo = contentProvider.getPrev();
+                         playVideoFile(prevVideo);
+                     }
+                 },
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        File nextVideo = contentProvider.getNext();
+                        playVideoFile(nextVideo);
+                    }
+                });
+
     }
 
     private void playVideoFile(File file) {

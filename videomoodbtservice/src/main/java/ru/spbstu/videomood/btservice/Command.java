@@ -30,5 +30,10 @@ public enum Command {
     /**
      * Get data request
      */
-    GET
+    GET,
+
+    /**
+     * Change current video position
+     */
+    REWIND
 }

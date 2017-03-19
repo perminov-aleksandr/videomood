@@ -23,7 +23,10 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".activities.MainActivity"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:noHistory="true"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -32,11 +35,15 @@
         </activity>
         <activity
             android:name=".activities.UserActivity"
-            android:label="@string/title_activity_user" />
+            android:label="@string/title_activity_user"
+            android:noHistory="true"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation|screenSize"/>
         <activity
             android:name=".activities.VideoActivity"
-            android:configChanges="orientation|screenSize"
-            android:label="@string/title_activity_video" />
+            android:label="@string/title_activity_video"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize"/>
 
         <meta-data
             android:name="com.google.android.gms.version"

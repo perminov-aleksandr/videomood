@@ -16,7 +16,7 @@ import ru.spbstu.videomood.ConnectionListener;
 import ru.spbstu.videomood.DataListener;
 import ru.spbstu.videomood.MuseManager;
 
-public abstract class MuseActivity extends Activity {
+public abstract class MuseActivity extends BaseActivity {
     /**
      * A Muse refers to a Muse headband.  Use this to connect/disconnect from the
      * headband, register listeners to receive EEG data and get headband

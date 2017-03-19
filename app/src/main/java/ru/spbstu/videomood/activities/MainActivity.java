@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import ru.spbstu.videomood.MuseManager;
 import ru.spbstu.videomood.R;
 
-public class MainActivity extends Activity {
+public class MainActivity extends BaseActivity {
 
     /**
      * Tag used for logging purposes.
@@ -100,6 +100,13 @@ public class MainActivity extends Activity {
         fileThread.start();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MuseManager.startListening();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         // It is important to call stopListening when the Activity is paused
@@ -187,10 +194,15 @@ public class MainActivity extends Activity {
         spinnerAdapter.clear();
         boolean isAnyDevices = list != null && list.size() > 0;
         musesSpinner.setEnabled(isAnyDevices);
-        if (isAnyDevices)
+        if (isAnyDevices) {
             for (Muse m : list) {
                 spinnerAdapter.add(m.getName() + " - " + m.getMacAddress());
             }
+            if (list.size() == 1) {
+                musesSpinner.setSelection(0);
+                goToUserData(findViewById(R.id.next));
+            }
+        }
         else {
             spinnerAdapter.add(getResources().getString(R.string.noDevicesFound));
             Log.i(TAG, "no devices found");
