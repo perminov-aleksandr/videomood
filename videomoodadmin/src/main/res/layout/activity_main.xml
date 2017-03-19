@@ -83,7 +83,7 @@
         </LinearLayout>
 
 
-        <com.github.mikephil.charting.charts.PieChart
+        <ru.spbstu.videomoodadmin.HorseshoeView
             android:id="@+id/deviceInfo"
             android:layout_width="150dp"
             android:layout_height="150dp"

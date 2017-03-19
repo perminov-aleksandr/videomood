@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#333436</color>
     <color name="colorAccent">#fd8017</color>
     <color name="warningColor">#d7452e</color>
-    <color name="calmColor">#1267e7</color>
+    <color name="calmColor">#fd8017</color>
+    <color name="calmColor2">#1267e7</color>
     <color name="almostBackground">#eeeeee</color>
 </resources>

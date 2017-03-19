@@ -25,10 +25,12 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.DataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
+import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
 import ru.spbstu.videomood.btservice.VideoItem;
+import ru.spbstu.videomoodadmin.HorseshoeView;
 import ru.spbstu.videomoodadmin.R;
 
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
@@ -58,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView connectionStatus;
     private BarChart chart;
-    private PieChart sensorsChart;
+    private HorseshoeView sensorsChart;
     private LinearLayout videoControl;
 
     private int time = 0;
@@ -94,7 +97,9 @@ public class MainActivity extends AppCompatActivity {
         if (data != null) {
             time++;
 
-            data.addEntry(new BarEntry(time, betaValue), isPanic ? betaDataSetIndex : alphaDataSetIndex);
+            int currentDataSetIndex = isPanic ? betaDataSetIndex : alphaDataSetIndex;
+            data.addEntry(new BarEntry(time, betaValue), currentDataSetIndex);
+            data.addEntry(new BarEntry(time, 0), isPanic ? alphaDataSetIndex : betaDataSetIndex);
             if (alphaSet.getEntryCount() == chartSize) {
                 alphaSet.removeEntry(0);
                 betaSet.removeEntry(0);
@@ -115,11 +120,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void setupUI() {
         initChart();
-        initSensorsChart();
 
         setupTextViews();
 
         videoControl = (LinearLayout) findViewById(R.id.videoControl);
+        sensorsChart = (HorseshoeView) findViewById(R.id.deviceInfo);
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -138,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private String initSensorsChart() {
+    /*private String initSensorsChart() {
         sensorsChart = (PieChart) findViewById(R.id.deviceInfo);
 
         int[] colors = new int[]{
@@ -167,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
         description.setEnabled(false);
         sensorsChart.setDescription(description);
         return "";
-    }
+    }*/
 
     private void initChart() {
         chart = (BarChart) findViewById(R.id.plotView);
@@ -207,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
             testDataPacket = new DataPacket();
             testDataPacket.setVideoName("Video Name");
             testDataPacket.setMuseState(true);
-            testDataPacket.setMuseBatteryPercent(24);
+            testDataPacket.setMuseBatteryPercent(14);
             testDataPacket.setAlphaPct(20);
             testDataPacket.setBetaPct(80);
             testDataPacket.setHeadsetBatteryPercent(68);
@@ -451,10 +456,20 @@ public class MainActivity extends AppCompatActivity {
         Boolean isMuseConnected = dataPacket.getMuseState();
         if (isMuseConnected != null && isMuseConnected) {
             museStatusTextView.setText(R.string.state_connected);
-            museStatusTextView.setTextColor(getResources().getColor(R.color.warningColor));
-            museBatteryTextView.setTextColor(calcBatteryTextColor(dataPacket.getMuseBatteryPercent()));
-            museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, dataPacket.getMuseBatteryPercent()));
+            museStatusTextView.setTextColor(getResources().getColor(R.color.colorAccent));
+
+            Integer museBatteryPercent = dataPacket.getMuseBatteryPercent();
+            museBatteryTextView.setTextColor(calcBatteryTextColor(museBatteryPercent));
+            museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, museBatteryPercent));
             museBatteryTextView.setVisibility(View.VISIBLE);
+
+            Boolean[] sensorsState = dataPacket.getMuseSensorsState();
+            if (sensorsState != null) {
+                sensorsChart.setCircles(sensorsState);
+                sensorsChart.setVisibility(View.VISIBLE);
+            } else {
+                sensorsChart.setVisibility(View.INVISIBLE);
+            }
         }
         else {
             museStatusTextView.setText(R.string.state_not_connected);
@@ -465,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
         Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
         if (headsetBatteryPercent != null)
         {
-            headsetStateTextView.setTextColor(getResources().getColor(R.color.warningColor));
+            headsetStateTextView.setTextColor(getResources().getColor(R.color.colorAccent));
             museBatteryTextView.setTextColor(calcBatteryTextColor(headsetBatteryPercent));
             headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, headsetBatteryPercent));
             headsetBatteryTextView.setVisibility(View.VISIBLE);
