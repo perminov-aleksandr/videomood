@@ -14,18 +14,24 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -41,7 +47,7 @@ import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final boolean IS_DEBUG = false;
+    private final boolean IS_DEBUG = true;
 
     private DataPacket testDataPacket;
 
@@ -51,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView connectionStatus;
     private BarChart chart;
+    private PieChart sensorsChart;
     private LinearLayout videoControl;
     private View mainView;
 
@@ -107,13 +114,53 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setupUI() {
-        //connectionStatus = (TextView) findViewById(R.id.connectionStatusLabel);
         initChart();
+        //initSensorsChart();
 
         setupTextViews();
 
         videoControl = (LinearLayout) findViewById(R.id.videoControl);
-       // mainView = findViewById(R.id.main);
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                ControlPacket cp = new ControlPacket(Command.REWIND, seekBar.getProgress());
+                sendPacket(cp);
+            }
+        });
+    }
+
+    private String initSensorsChart() {
+        sensorsChart = (PieChart) findViewById(R.id.sensorsChart);
+
+        int[] colors = new int[]{
+            Color.RED,
+            Color.BLUE,
+            Color.GREEN,
+            Color.YELLOW,
+            Color.CYAN
+        };
+
+        PieData data = new PieData();
+        for (int i = 0; i < 5; i++) {
+            List<PieEntry> pieEntryList = new ArrayList<>();
+            pieEntryList.add(new PieEntry(20));
+            PieDataSet test = new PieDataSet(pieEntryList, "Test");
+            test.setColor(colors[i]);
+            data.addDataSet(test);
+        }
+        data.notifyDataChanged();
+        sensorsChart.notifyDataSetChanged();
+        sensorsChart.setData(data);
+        return "";
     }
 
     private void initChart() {
@@ -160,6 +207,8 @@ public class MainActivity extends AppCompatActivity {
             testDataPacket.setHeadsetBatteryPercent(68);
             testDataPacket.setVideoState(true);
             testDataPacket.setIsPanic(false);
+            testDataPacket.setScreenshot(null);
+            testDataPacket.setCurrentPosition(60);
             dataPacket = testDataPacket;
         }
     }
@@ -262,7 +311,9 @@ public class MainActivity extends AppCompatActivity {
      */
     private final Handler mHandler = new MessageHandler();
 
-    static final int SELECT_VIDEO_REQUEST = 1;
+    private static final int SELECT_VIDEO_REQUEST = 1;
+
+    private SeekBar seekBar;
 
     public static final String EXTRA_SELECTED_VIDEO = "selected_video";
 
@@ -411,6 +462,11 @@ public class MainActivity extends AppCompatActivity {
             videoNameTextView.setText(videoname);
             Boolean videoState = dataPacket.getVideoState();
             pauseBtn.setText(videoState != null && videoState ? R.string.fa_pause : R.string.fa_play);
+
+            Integer videoPosition = dataPacket.getCurrentPosition();
+            if (videoPosition != null)
+                seekBar.setProgress(videoPosition);
+
             videoControl.setVisibility(View.VISIBLE);
         }
         else {

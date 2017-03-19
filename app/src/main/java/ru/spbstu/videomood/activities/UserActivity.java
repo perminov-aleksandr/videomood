@@ -12,7 +12,7 @@ import ru.spbstu.videomood.Const;
 import ru.spbstu.videomood.R;
 import ru.spbstu.videomood.User;
 
-public class UserActivity extends Activity {
+public class UserActivity extends BaseActivity {
 
     private static final String TAG = "VideoMood:UserActivity";
 

@@ -47,6 +47,8 @@ public class DataPacket extends Packet {
 
     private Boolean videoState;
 
+    private int currentPosition;
+
     private ArrayList<VideoItem> videoList;
 
     public Boolean getMuseState() {
@@ -145,11 +147,15 @@ public class DataPacket extends Packet {
     private String screenshot;
 
     public void setScreenshot(byte[] screenshot) {
-        this.screenshot = Base64.encodeToString(screenshot, Base64.DEFAULT);
+        if (screenshot != null)
+            this.screenshot = Base64.encodeToString(screenshot, Base64.DEFAULT);
     }
 
     public byte[] getScreenshot() {
-        return Base64.decode(this.screenshot, Base64.DEFAULT);
+        if (this.screenshot != null)
+            return Base64.decode(this.screenshot, Base64.DEFAULT);
+        else
+            return null;
     }
 
     private static final Gson gson = new GsonBuilder().setLenient().create();
@@ -167,5 +173,13 @@ public class DataPacket extends Packet {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public int getCurrentPosition() {
+        return currentPosition;
+    }
+
+    public void setCurrentPosition(int currentPosition) {
+        this.currentPosition = currentPosition;
     }
 }
