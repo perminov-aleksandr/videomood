@@ -277,7 +277,7 @@ public class VideoActivity extends MuseActivity {
         setupUI();
 
         try {
-            contentProvider = new ContentProvider(User.getAgeRangeIndex());
+            contentProvider = new ContentProvider();
             File videoFile = contentProvider.getNext();
             currentVideoUri = Uri.fromFile(videoFile);
             dataPacket.setVideoName(videoFile.getName());

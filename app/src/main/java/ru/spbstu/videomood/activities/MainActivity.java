@@ -128,7 +128,7 @@ public class MainActivity extends BaseActivity {
 
         Log.i(TAG, "selected muse is " + muse.getMacAddress());
 
-        Intent intent = new Intent(this, UserActivity.class);
+        Intent intent = new Intent(this, VideoActivity.class);
         startActivity(intent);
     }
 
