@@ -5,4 +5,5 @@
     <color name="colorAccent">#fd8017</color>
     <color name="warningColor">#1267e7</color>
     <color name="calmColor">#d7452e</color>
+    <color name="almostBackground">#dddddd</color>
 </resources>

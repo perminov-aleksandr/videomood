@@ -347,6 +347,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView museStatusTextView;
     private TextView museBatteryTextView;
+    private TextView headsetStateTextView;
     private TextView headsetBatteryTextView;
     private TextView videoNameTextView;
     private TextView pauseBtn;
@@ -359,6 +360,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupTextViews() {
         museStatusTextView = (TextView) findViewById(R.id.museState);
         museBatteryTextView = (TextView) findViewById(R.id.museBattery);
+        headsetStateTextView = (TextView) findViewById(R.id.headsetState);
         headsetBatteryTextView = (TextView) findViewById(R.id.headsetBattery);
         videoNameTextView = (TextView) findViewById(R.id.videoName);
         pauseBtn = (TextView) findViewById(R.id.playBtn);
@@ -382,22 +384,27 @@ public class MainActivity extends AppCompatActivity {
         Boolean isMuseConnected = dataPacket.getMuseState();
         if (isMuseConnected != null && isMuseConnected) {
             museStatusTextView.setText(R.string.state_connected);
+            museStatusTextView.setTextColor(getResources().getColor(R.color.calmColor));
             museBatteryTextView.setVisibility(View.VISIBLE);
             museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, dataPacket.getMuseBatteryPercent()));
         }
         else {
             museStatusTextView.setText(R.string.state_not_connected);
+            museStatusTextView.setTextColor(getResources().getColor(R.color.warningColor));
             museBatteryTextView.setVisibility(View.INVISIBLE);
         }
 
         Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
         if (headsetBatteryPercent != null)
         {
+            headsetStateTextView.setTextColor(getResources().getColor(R.color.calmColor));
             headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, headsetBatteryPercent));
             headsetBatteryTextView.setVisibility(View.VISIBLE);
         }
-        else
+        else {
+            headsetStateTextView.setTextColor(getResources().getColor(R.color.warningColor));
             headsetBatteryTextView.setVisibility(View.INVISIBLE);
+        }
 
         String videoname = dataPacket.getVideoName();
         if (videoname != null && !videoname.equals("")) {

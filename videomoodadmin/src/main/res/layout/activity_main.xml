@@ -21,8 +21,6 @@
         <LinearLayout
             style="@style/sideBlock"
             android:id="@+id/userBlock"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:orientation="vertical">
             <TextView
                 style="@style/sideIcon"
@@ -32,70 +30,64 @@
                 android:layout_height="wrap_content" />
 
             <TextView
+                style="@style/sideBlockText"
                 android:id="@+id/userName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/defaultUser"
-                android:gravity="center" />
+                android:text="@string/defaultUser" />
         </LinearLayout>
 
         <LinearLayout
             style="@style/sideBlock"
             android:id="@+id/headsetInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:orientation="vertical">
-
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/headset"
-                android:textAlignment="gravity" />
+                style="@style/sideBlockHeader"
+                android:text="@string/headset" />
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="5dp"
+                android:background="@color/almostBackground" />
             <TextView
+                style="@style/sideBlockText.Ok"
                 android:id="@+id/headsetState"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/state_connected"
-                android:gravity="center" />
+                android:text="@string/state_connected"/>
 
             <TextView
+                style="@style/sideBlockText.Ok"
                 android:id="@+id/headsetBattery"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/defaultPercentFormatString"
-                android:textAlignment="gravity" />
+                android:text="@string/defaultPercentFormatString" />
         </LinearLayout>
 
         <LinearLayout
             style="@style/sideBlock"
             android:id="@+id/museInfo"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:orientation="vertical" >
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/muse"
-                android:textAlignment="gravity" />
+                style="@style/sideBlockHeader"
+                android:text="@string/muse" />
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="5dp"
+                android:background="@color/almostBackground" />
             <TextView
+                style="@style/sideBlockText.Danger"
                 android:id="@+id/museState"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/state_connected"
-                android:gravity="center" />
+                android:text="@string/state_not_connected"/>
 
             <TextView
+                style="@style/sideBlockText"
                 android:id="@+id/museBattery"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="@string/defaultPercentFormatString"
-                android:textAlignment="gravity" />
+                android:text="@string/defaultPercentFormatString" />
         </LinearLayout>
 
+
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/deviceInfo"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_gravity="fill"
+            android:padding="4dp" />
     </LinearLayout>
 
     <ImageView
@@ -140,6 +132,7 @@
                 android:gravity="left"
                 android:padding="8dp"
                 android:text="@string/videoNotPlayed"
+                android:textSize="20sp"
                 android:textAlignment="gravity" />
 
             <Button
@@ -156,8 +149,7 @@
         <SeekBar
             android:id="@+id/seekBar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/videoTrack"
+            android:layout_height="50dp"
             android:max="100"
             android:progress="60" />
 
@@ -165,7 +157,6 @@
             android:id="@+id/videoControl"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/seekBar"
             android:gravity="center"
             android:orientation="horizontal">
 
@@ -180,7 +171,7 @@
 
             <Button
                 android:id="@+id/playBtn"
-                style="@style/videoButton"
+                style="@style/videoButtonPlay"
                 android:onClick="pause"
                 android:text="@string/fa_play"
                 android:textAlignment="gravity"
