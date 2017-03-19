@@ -2,8 +2,6 @@ package ru.spbstu.videomood.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,15 +9,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
-
 import android.view.Window;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
@@ -27,30 +25,22 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
 
-import com.choosemuse.libmuse.Battery;
 import com.choosemuse.libmuse.ConnectionState;
-import com.choosemuse.libmuse.Muse;
-import com.choosemuse.libmuse.MuseArtifactPacket;
-import com.choosemuse.libmuse.MuseDataPacket;
-import com.google.gson.Gson;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Queue;
 
 import ru.spbstu.videomood.AdminDeviceMessageHandler;
-import ru.spbstu.videomood.ConnectionListener;
 import ru.spbstu.videomood.Const;
 import ru.spbstu.videomood.ContentProvider;
-import ru.spbstu.videomood.DataListener;
-import ru.spbstu.videomood.MuseManager;
 import ru.spbstu.videomood.R;
 import ru.spbstu.videomood.User;
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
-import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
 
@@ -98,7 +88,12 @@ public class VideoActivity extends MuseActivity {
     private TextView alphaBar;
     private TextView betaBar;
 
+    private int alphaPct;
+    private int betaPct;
+
     private void updateBar() {
+        //TODO: move logic of calc alpha and beta percent to separate method
+
         BarValues barValues = new BarValues().calculate(relativeBuffer);
         long alphaPercent = barValues.getAlphaPercent();
         long betaPercent = barValues.getBetaPercent();
@@ -112,8 +107,8 @@ public class VideoActivity extends MuseActivity {
         percentArr[Const.Rhythms.BETA] = betaPercent;
         percentTimeQueue.add(percentArr);
 
-        dataPacket.setAlphaPct(new Long(alphaPercent).intValue());
-        dataPacket.setBetaPct(new Long(betaPercent).intValue());
+        alphaPct = new Long(alphaPercent).intValue();
+        betaPct = new Long(betaPercent).intValue();
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
         params.weight = (float)alphaPercent;
@@ -159,6 +154,7 @@ public class VideoActivity extends MuseActivity {
     };
 
     public void switchToCalmCheck(View view) {
+        dataPacket.setIsPanic(true);
         displayCalmScreen();
         percentTimeQueue.clear();
         warningHandler.removeCallbacks(checkWarningRunnable);
@@ -166,6 +162,7 @@ public class VideoActivity extends MuseActivity {
     }
 
     public void switchToWarningCheck(View view) {
+        dataPacket.setIsPanic(false);
         hideCalmScreen();
         percentTimeQueue.clear();
         calmHandler.removeCallbacks(checkCalmRunnable);
@@ -256,6 +253,16 @@ public class VideoActivity extends MuseActivity {
         isConnectionStatusStale = false;
     }
 
+    private Bitmap takeScreenshot() {
+        View view = getWindow().getDecorView().getRootView();
+        view.setDrawingCacheEnabled(true);
+        Bitmap bitmap = Bitmap.createBitmap(view.getDrawingCache());
+        view.setDrawingCacheEnabled(false);
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+        return bitmap;
+    }
+
     private ContentProvider contentProvider;
 
     /**
@@ -314,6 +321,11 @@ public class VideoActivity extends MuseActivity {
         Command command = controlPacket.getCommand();
         Log.i(TAG, "received command " + command);
         switch (command) {
+            case GET:
+                dataPacket.setAlphaPct(alphaPct);
+                dataPacket.setBetaPct(betaPct);
+                writeScreenshotTo(dataPacket);
+                break;
             case LIST:
                 dataPacket.setVideoList(contentProvider.getContentList());
                 break;
@@ -342,12 +354,28 @@ public class VideoActivity extends MuseActivity {
                 break;
         }
         reply();
+        dataPacket.setAlphaPct(null);
+        dataPacket.setBetaPct(null);
+    }
+
+    private static final int screenshotWidth = 100;
+    private static final int screenshotHeight = 100;
+    private static final int compressQuality = 0;
+
+    private void writeScreenshotTo(DataPacket dataPacket) {
+        Bitmap screenshot = takeScreenshot();
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(screenshot, screenshotWidth, screenshotHeight, false);
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, out);
+            dataPacket.setScreenshot(out.toByteArray());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void reply() {
-        String serializedPacket = new Gson().toJson(dataPacket);
-        Log.i(TAG, "SENDING: " + serializedPacket);
-        mBtService.write(serializedPacket.getBytes());
+        byte[] packetBytes = dataPacket.toBytes();
+        mBtService.write(packetBytes);
         dataPacket.setVideoList(null);
     }
 

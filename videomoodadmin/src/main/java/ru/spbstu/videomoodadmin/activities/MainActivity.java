@@ -3,30 +3,28 @@ package ru.spbstu.videomoodadmin.activities;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
-import com.google.gson.Gson;
-import com.joanzapata.iconify.widget.IconTextView;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -83,14 +81,13 @@ public class MainActivity extends AppCompatActivity {
     BarData barData;
 
     //todo: extract init chart and update data
-    private void addEntry(int alphaValue, int betaValue) {
+    private void addEntry(int alphaValue, int betaValue, boolean isPanic) {
         BarData data = chart.getData();
 
         if (data != null) {
             time++;
 
-            data.addEntry(new BarEntry(time, 100), alphaDataSetIndex);
-            data.addEntry(new BarEntry(time, betaValue), betaDataSetIndex);
+            data.addEntry(new BarEntry(time, betaValue), isPanic ? betaDataSetIndex : alphaDataSetIndex);
             if (alphaSet.getEntryCount() == chartSize) {
                 alphaSet.removeEntry(0);
                 betaSet.removeEntry(0);
@@ -137,10 +134,10 @@ public class MainActivity extends AppCompatActivity {
         chart.setData(barData);
         chart.setBorderWidth(0f);
 
-        alphaSet = createSet("Alpha", Color.rgb(18, 103, 231));
+        alphaSet = createSet(getResources().getString(R.string.warning), getResources().getColor(R.color.warningColor));
         barData.addDataSet(alphaSet);
 
-        betaSet = createSet("Beta", Color.rgb(215, 69, 46));
+        betaSet = createSet(getResources().getString(R.string.calm), getResources().getColor(R.color.calmColor));
         barData.addDataSet(betaSet);
     }
 
@@ -162,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
             testDataPacket.setBetaPct(80);
             testDataPacket.setHeadsetBatteryPercent(68);
             testDataPacket.setVideoState(true);
+            testDataPacket.setIsPanic(false);
             dataPacket = testDataPacket;
         }
     }
@@ -182,12 +180,16 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Timer timer = new Timer();
             timer.schedule(new TimerTask() {
-
                 private double time;
+                private long panicTicks = 0;
 
                 @Override
                 public void run() {
                     testDataPacket.setBetaPct((int) (Math.sin(time++) * 50.0) + 50);
+                    if (panicTicks-- == 0) {
+                        testDataPacket.setIsPanic(!testDataPacket.isPanic());
+                        panicTicks = Math.round(5 + Math.random() * 25);
+                    }
                     Message msg = new Message();
                     msg.what = Constants.MESSAGE_PACKET;
                     mHandler.sendMessage(msg);
@@ -305,9 +307,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendPacket(ControlPacket controlPacket) {
         if (mBtService != null) {
-            String serializedPacket = new Gson().toJson(controlPacket);
-            Log.i(TAG, "SENDING: " + serializedPacket);
-            mBtService.write(serializedPacket.getBytes());
+            byte[] msgBytes = controlPacket.toBytes();
+            mBtService.write(msgBytes);
         }
     }
 
@@ -322,7 +323,6 @@ public class MainActivity extends AppCompatActivity {
                         case BluetoothService.STATE_CONNECTED:
                             setStatus(R.string.state_connected);
                             sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
-                            //mainView.setVisibility(View.VISIBLE);
                             break;
                         case BluetoothService.STATE_CONNECTING:
                             setStatus(R.string.state_connecting);
@@ -331,19 +331,15 @@ public class MainActivity extends AppCompatActivity {
                         case BluetoothService.STATE_NONE:
                             setStatus(R.string.state_not_connected);
                             sendMessageHandler.removeCallbacks(sendMessageRunnable);
-                            //mainView.setVisibility(View.INVISIBLE);
                             break;
                     }
                     break;
                 case Constants.MESSAGE_PACKET:
                     if (!IS_DEBUG) {
-                        byte[] readBuf = (byte[]) msg.obj;
-                        // construct a string from the valid bytes in the buffer
-                        String readMessage = new String(readBuf, 0, msg.arg1);
-                        Log.i(TAG, "RECEIVING: " + readMessage);
-                        dataPacket = new Gson().fromJson(readMessage, DataPacket.class);
+                        dataPacket = DataPacket.createFrom((String)msg.obj);
                     }
-                    processPacketData();
+                    if (dataPacket != null)
+                        processPacketData();
                     break;
             }
         }
@@ -379,8 +375,9 @@ public class MainActivity extends AppCompatActivity {
     private void processPacketData() {
         Integer alphaPct = dataPacket.getAlphaPct();
         Integer betaPct = dataPacket.getBetaPct();
-        if (alphaPct != null && betaPct != null)
-            addEntry(alphaPct, betaPct);
+        Boolean isPanic = dataPacket.isPanic();
+        if (alphaPct != null && betaPct != null && isPanic != null)
+            addEntry(alphaPct, betaPct, isPanic);
 
         Boolean isMuseConnected = dataPacket.getMuseState();
         if (isMuseConnected != null && isMuseConnected) {
@@ -423,6 +420,13 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, SelectVideoActivity.class);
             intent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivityForResult(intent, SELECT_VIDEO_REQUEST);
+        }
+
+        byte[] screenshot = dataPacket.getScreenshot();
+        if (screenshot != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(screenshot, 0, screenshot.length);
+            ImageView videoPreview = (ImageView)findViewById(R.id.videoPreview);
+            videoPreview.setImageBitmap(bitmap);
         }
     }
 }

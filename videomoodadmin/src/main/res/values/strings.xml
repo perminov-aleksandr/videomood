@@ -22,4 +22,6 @@
     <string name="play">Play</string>
     <string name="next">Next</string>
     <string name="defaultUser">Vasya Pupkin</string>
+    <string name="calm">Calm</string>
+    <string name="warning">Warning</string>
 </resources>

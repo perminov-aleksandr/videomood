@@ -5,13 +5,14 @@ import android.os.Message;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 
 import ru.spbstu.videomood.activities.VideoActivity;
 import ru.spbstu.videomood.btservice.BluetoothService;
-import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
 
@@ -42,13 +43,13 @@ public class AdminDeviceMessageHandler extends Handler {
                 }
                 break;
             case Constants.MESSAGE_PACKET:
-                byte[] readBuf = (byte[]) msg.obj;
-                // construct a string from the valid bytes in the buffer
-                String readMessage = new String(readBuf, 0, msg.arg1);
-                Log.i("VideoActivity", "RECEIVING: " + readMessage);
-                ControlPacket cp = new Gson().fromJson(readMessage, ControlPacket.class);
-                if (cp != null)
-                    videoActivity.processAdminDevicePacket(cp);
+                try {
+                    ControlPacket cp = ControlPacket.createFrom((String)msg.obj);
+                    if (cp != null)
+                        videoActivity.processAdminDevicePacket(cp);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 break;
         }
     }

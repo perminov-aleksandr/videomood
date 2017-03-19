@@ -5,17 +5,20 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -33,7 +36,7 @@ public class BluetoothService {
 
     // Unique UUID for this application
     private static final UUID MY_UUID_SECURE =
-            UUID.nameUUIDFromBytes("video_mood_admin_secure".getBytes());
+            UUID.nameUUIDFromBytes("video_mood".getBytes());
 
     // Member fields
     private final BluetoothAdapter mAdapter;
@@ -207,10 +210,10 @@ public class BluetoothService {
     /**
      * Write to the ConnectedThread in an unsynchronized manner
      *
-     * @param out The bytes to write
+     * @param buffer The bytes to write
      * @see ConnectedThread#write(byte[])
      */
-    public void write(byte[] out) {
+    public void write(byte[] buffer) {
         // Create temporary object
         ConnectedThread r;
         // Synchronize a copy of the ConnectedThread
@@ -219,7 +222,7 @@ public class BluetoothService {
             r = mConnectedThread;
         }
         // Perform the write unsynchronized
-        r.write(out);
+        r.write(buffer);
     }
 
     /**
@@ -430,22 +433,41 @@ public class BluetoothService {
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
-            byte[] buffer = new byte[4096];
-            int bytes;
+            byte[] buffer = new byte[1024*1024];
+            String prev = "";
 
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
                 try {
                     // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
+                    int bytes = mmInStream.read(buffer);
+                    byte[] actualBytes = Arrays.copyOf(buffer, bytes);
+                    String messageString = new String(actualBytes, Constants.DEFAULT_CHARSET);
+                    prev = prev.concat(messageString);
+                    if (messageString.endsWith("}")) {
+                        Log.i(TAG, String.format("RECIEVING: %s", prev));
+                        mHandler.obtainMessage(Constants.MESSAGE_PACKET, -1, -1, prev)
+                                .sendToTarget();
+                        prev = "";
+                    }
 
-                    // Send the obtained bytes to the UI Activity
-                    mHandler.obtainMessage(Constants.MESSAGE_PACKET, bytes, -1, buffer)
-                            .sendToTarget();
+                    // Read file in stream mode
+                    /*while (mmInStream.hasNext()) {
+                        // Read data into object model
+                        Packet packet = gson.fromJson(mmInStream, Packet.class);
+                        Log.i(TAG, "RECEIVING:" + gson.toJson(packet, Packet.class));
+                        // Send the obtained bytes to the UI Activity
+                        mHandler.obtainMessage(Constants.MESSAGE_PACKET, -1, -1, packet)
+                                .sendToTarget();
+                        break;
+                    }*/
+                    //mmInStream.endObject();
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
                     break;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
         }
@@ -457,12 +479,9 @@ public class BluetoothService {
          */
         public void write(byte[] buffer) {
             try {
+                Log.i(TAG, String.format("SENDING: %s", new String(buffer, Constants.DEFAULT_CHARSET)));
                 mmOutStream.write(buffer);
-
-                // Share the sent message back to the UI Activity
-                /*mHandler.obtainMessage(Constants.MESSAGE_PACKET, buffer.length, -1, buffer)
-                        .sendToTarget();*/
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Exception during write", e);
                 connectionLost();
             }

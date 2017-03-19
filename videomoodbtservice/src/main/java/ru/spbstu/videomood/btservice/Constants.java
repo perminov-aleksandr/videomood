@@ -10,4 +10,6 @@ public interface Constants {
     public static final int MESSAGE_PACKET = 2;
 
     public static final String EXTRA_DEVICE_ADDRESS = "device_address";
+
+    public static final String DEFAULT_CHARSET = "UTF-8";
 }

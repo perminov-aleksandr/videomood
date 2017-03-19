@@ -1,8 +1,32 @@
 package ru.spbstu.videomood.btservice;
 
+import android.support.annotation.Nullable;
+import android.util.Base64;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 public class DataPacket extends Packet {
+
+    public DataPacket() {}
+
+    public static DataPacket createFrom(String json) {
+        return gson.fromJson(json, DataPacket.class);
+    }
+
+    @Nullable
+    public static DataPacket createFrom(byte[] bytes) {
+        try {
+            return createFrom(new String(bytes, Constants.DEFAULT_CHARSET));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     //private long timestamp;
 
     private Boolean museState;
@@ -15,6 +39,8 @@ public class DataPacket extends Packet {
 
     private Integer betaPct;
 
+    private Boolean isPanic;
+
     private Integer headsetBatteryPercent;
 
     private String videoName;
@@ -22,14 +48,6 @@ public class DataPacket extends Packet {
     private Boolean videoState;
 
     private ArrayList<VideoItem> videoList;
-
-    /*public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }*/
 
     public Boolean getMuseState() {
         return museState;
@@ -114,5 +132,40 @@ public class DataPacket extends Packet {
     @Override
     public PacketType type() {
         return PacketType.DATA;
+    }
+
+    public Boolean isPanic() {
+        return isPanic;
+    }
+
+    public void setIsPanic(Boolean panic) {
+        isPanic = panic;
+    }
+
+    private String screenshot;
+
+    public void setScreenshot(byte[] screenshot) {
+        this.screenshot = Base64.encodeToString(screenshot, Base64.DEFAULT);
+    }
+
+    public byte[] getScreenshot() {
+        return Base64.decode(this.screenshot, Base64.DEFAULT);
+    }
+
+    private static final Gson gson = new GsonBuilder().setLenient().create();
+
+    private String toJson() {
+        return gson.toJson(this, DataPacket.class);
+    }
+
+    @Override
+    public byte[] toBytes() {
+        try {
+            String json = this.toJson();
+            return json.getBytes(Constants.DEFAULT_CHARSET);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
