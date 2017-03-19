@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
@@ -59,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     private BarChart chart;
     private PieChart sensorsChart;
     private LinearLayout videoControl;
-    private View mainView;
 
     private int time = 0;
 
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void setupUI() {
         initChart();
-        //initSensorsChart();
+        initSensorsChart();
 
         setupTextViews();
 
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String initSensorsChart() {
-        sensorsChart = (PieChart) findViewById(R.id.sensorsChart);
+        sensorsChart = (PieChart) findViewById(R.id.deviceInfo);
 
         int[] colors = new int[]{
             Color.RED,
@@ -149,17 +149,23 @@ public class MainActivity extends AppCompatActivity {
             Color.CYAN
         };
 
-        PieData data = new PieData();
-        for (int i = 0; i < 5; i++) {
-            List<PieEntry> pieEntryList = new ArrayList<>();
-            pieEntryList.add(new PieEntry(20));
-            PieDataSet test = new PieDataSet(pieEntryList, "Test");
-            test.setColor(colors[i]);
-            data.addDataSet(test);
-        }
-        data.notifyDataChanged();
-        sensorsChart.notifyDataSetChanged();
+        List<PieEntry> pieEntryList = new ArrayList<>();
+        pieEntryList.add(new PieEntry(20));
+        pieEntryList.add(new PieEntry(20));
+        pieEntryList.add(new PieEntry(20));
+        pieEntryList.add(new PieEntry(20));
+        pieEntryList.add(new PieEntry(20));
+        PieDataSet dataSet = new PieDataSet(pieEntryList, "");
+        dataSet.setColor(getResources().getColor(R.color.colorAccent));
+        dataSet.setSliceSpace(4);
+        dataSet.setDrawValues(false);
+        PieData data = new PieData(dataSet);
         sensorsChart.setData(data);
+        sensorsChart.setTransparentCircleRadius(0);
+        sensorsChart.setTransparentCircleAlpha(1);
+        Description description = new Description();
+        description.setEnabled(false);
+        sensorsChart.setDescription(description);
         return "";
     }
 
@@ -181,10 +187,10 @@ public class MainActivity extends AppCompatActivity {
         chart.setData(barData);
         chart.setBorderWidth(0f);
 
-        alphaSet = createSet(getResources().getString(R.string.warning), getResources().getColor(R.color.warningColor));
+        alphaSet = createSet(getResources().getString(R.string.calm), getResources().getColor(R.color.calmColor));
         barData.addDataSet(alphaSet);
 
-        betaSet = createSet(getResources().getString(R.string.calm), getResources().getColor(R.color.calmColor));
+        betaSet = createSet(getResources().getString(R.string.warning), getResources().getColor(R.color.warningColor));
         barData.addDataSet(betaSet);
     }
 
