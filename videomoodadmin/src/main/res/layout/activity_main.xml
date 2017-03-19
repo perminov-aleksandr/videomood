@@ -49,12 +49,12 @@
                 android:layout_marginBottom="5dp"
                 android:background="@color/almostBackground" />
             <TextView
-                style="@style/sideBlockText.Ok"
+                style="@style/sideBlockText"
                 android:id="@+id/headsetState"
                 android:text="@string/state_connected"/>
 
             <TextView
-                style="@style/sideBlockText.Ok"
+                style="@style/sideBlockText"
                 android:id="@+id/headsetBattery"
                 android:text="@string/defaultPercentFormatString" />
         </LinearLayout>
@@ -72,7 +72,7 @@
                 android:layout_marginBottom="5dp"
                 android:background="@color/almostBackground" />
             <TextView
-                style="@style/sideBlockText.Danger"
+                style="@style/sideBlockText"
                 android:id="@+id/museState"
                 android:text="@string/state_not_connected"/>
 
@@ -86,7 +86,7 @@
         <com.github.mikephil.charting.charts.PieChart
             android:id="@+id/deviceInfo"
             android:layout_width="150dp"
-            android:layout_height="200dp"
+            android:layout_height="150dp"
             android:layout_gravity="fill"
             android:padding="4dp" />
     </LinearLayout>
@@ -128,12 +128,12 @@
 
             <TextView
                 android:id="@+id/videoName"
-
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="left"
                 android:padding="8dp"
+                android:layout_marginLeft="10dp"
                 android:text="@string/videoNotPlayed"
                 android:textSize="20sp"
                 android:textAlignment="gravity" />

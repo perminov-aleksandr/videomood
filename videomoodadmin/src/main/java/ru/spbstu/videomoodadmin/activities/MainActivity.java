@@ -431,6 +431,16 @@ public class MainActivity extends AppCompatActivity {
         setFont(font, R.id.videoSelect);
     }
 
+    private int calcBatteryTextColor(int percents) {
+        if (percents < 20) {
+            return getResources().getColor(R.color.warningColor);
+        }
+        else {
+            return getResources().getColor(R.color.colorPrimary);
+        }
+
+    }
+
     private void processPacketData() {
         Integer alphaPct = dataPacket.getAlphaPct();
         Integer betaPct = dataPacket.getBetaPct();
@@ -441,25 +451,27 @@ public class MainActivity extends AppCompatActivity {
         Boolean isMuseConnected = dataPacket.getMuseState();
         if (isMuseConnected != null && isMuseConnected) {
             museStatusTextView.setText(R.string.state_connected);
-            museStatusTextView.setTextColor(getResources().getColor(R.color.calmColor));
-            museBatteryTextView.setVisibility(View.VISIBLE);
+            museStatusTextView.setTextColor(getResources().getColor(R.color.warningColor));
+            museBatteryTextView.setTextColor(calcBatteryTextColor(dataPacket.getMuseBatteryPercent()));
             museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, dataPacket.getMuseBatteryPercent()));
+            museBatteryTextView.setVisibility(View.VISIBLE);
         }
         else {
             museStatusTextView.setText(R.string.state_not_connected);
-            museStatusTextView.setTextColor(getResources().getColor(R.color.warningColor));
+            museStatusTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
             museBatteryTextView.setVisibility(View.INVISIBLE);
         }
 
         Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
         if (headsetBatteryPercent != null)
         {
-            headsetStateTextView.setTextColor(getResources().getColor(R.color.calmColor));
+            headsetStateTextView.setTextColor(getResources().getColor(R.color.warningColor));
+            museBatteryTextView.setTextColor(calcBatteryTextColor(headsetBatteryPercent));
             headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, headsetBatteryPercent));
             headsetBatteryTextView.setVisibility(View.VISIBLE);
         }
         else {
-            headsetStateTextView.setTextColor(getResources().getColor(R.color.warningColor));
+            headsetStateTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
             headsetBatteryTextView.setVisibility(View.INVISIBLE);
         }
 
