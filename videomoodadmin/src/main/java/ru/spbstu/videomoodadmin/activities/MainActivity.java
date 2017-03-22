@@ -416,7 +416,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void setFont(Typeface font, int id) {
         TextView item = (TextView) findViewById(id);
-        item.setTypeface(font);
+        setFont(font, item);
+    }
+
+    private void setFont(Typeface font, TextView textView) {
+        textView.setTypeface(font);
     }
 
     private void setupTextViews() {
@@ -428,12 +432,21 @@ public class MainActivity extends AppCompatActivity {
         pauseBtn = (TextView) findViewById(R.id.playBtn);
 
         Typeface font = Typeface.createFromAsset( getAssets(), "fonts/fontawesome.ttf" );
-        pauseBtn.setTypeface(font);
 
         setFont(font, R.id.prevBtn);
         setFont(font, R.id.nextBtn);
         setFont(font, R.id.userIcon);
         setFont(font, R.id.videoSelect);
+        setFont(font, pauseBtn);
+
+        TextView userIcon = (TextView) findViewById(R.id.userIcon);
+        userIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, UsersActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     private int calcBatteryTextColor(int percents) {
@@ -443,7 +456,6 @@ public class MainActivity extends AppCompatActivity {
         else {
             return getResources().getColor(R.color.colorPrimary);
         }
-
     }
 
     private void processPacketData() {

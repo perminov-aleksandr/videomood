@@ -31,7 +31,7 @@ public class HorseshoeView extends SurfaceView {
 
     private void init() {
         background = BitmapFactory.decodeResource(getResources(), R.drawable.horseshoe);
-        circles = new boolean[]{
+        circles = new Boolean[]{
             true,true,true,true,true
         };
         surfaceHolder = getHolder();
@@ -58,7 +58,7 @@ public class HorseshoeView extends SurfaceView {
         surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
     }
 
-    private boolean[] circles;
+    private Boolean[] circles;
 
     private Bitmap background;
 
@@ -78,7 +78,7 @@ public class HorseshoeView extends SurfaceView {
         }
     }
 
-    public boolean[] getCircles() {
+    public Boolean[] getCircles() {
         return circles;
     }
 

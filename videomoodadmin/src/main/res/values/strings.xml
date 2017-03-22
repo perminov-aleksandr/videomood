@@ -24,4 +24,11 @@
     <string name="defaultUser">Vasya Pupkin</string>
     <string name="calm">Calm</string>
     <string name="warning">Warning</string>
+    <string name="users">Users</string>
+    <string name="createUser">Create user</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="confirm">Confirm</string>
+    <string name="sex">Sex</string>
+    <string name="cancel">Cancel</string>
 </resources>
