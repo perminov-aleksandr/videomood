@@ -18,20 +18,18 @@ public final class VideoMoodDbWorker {
     }
 
     public User createUser(@NonNull User user) {
-        // Gets the data repository in write mode
         SQLiteDatabase db = helper.getWritableDatabase();
 
-        // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_FIRSTNAME, user.firstName);
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_LASTNAME, user.lastName);
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_SEX, user.sex);
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_BIRTHDATE, user.birthDateStr);
 
-        // Insert the new row, returning the primary key value of the new row
         long newUserId = db.insert(VideoMoodDataContract.UserEntry.TABLE_NAME, null, values);
-        db.close();
         user.id = (int) newUserId;
+
+        db.close();
         return user;
     }
 
@@ -61,14 +59,14 @@ public final class VideoMoodDbWorker {
         );
         cursor.moveToFirst();
 
-        User user = createFrom(cursor);
+        User user = createUserFrom(cursor);
         cursor.close();
         db.close();
         return user;
     }
 
     @NonNull
-    private User createFrom(Cursor cursor) {
+    private User createUserFrom(Cursor cursor) {
         User user = new User();
         user.id = cursor.getInt(cursor.getColumnIndexOrThrow(VideoMoodDataContract.UserEntry.COLUMN_NAME_ID));
         user.firstName = cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.UserEntry.COLUMN_NAME_FIRSTNAME));
@@ -94,7 +92,7 @@ public final class VideoMoodDbWorker {
         ArrayList<User> arrayList = new ArrayList<>(cursor.getCount());
 
         while (cursor.moveToNext()) {
-            User user = createFrom(cursor);
+            User user = createUserFrom(cursor);
             arrayList.add(user);
         }
 
@@ -102,6 +100,16 @@ public final class VideoMoodDbWorker {
         db.close();
 
         return arrayList;
+    }
+
+    private Seance createSeanceFrom(Cursor cursor) {
+        Seance seance = new Seance();
+        seance.setId(cursor.getColumnIndexOrThrow(VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID));
+        seance.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow(VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID)));
+        seance.setDateFrom(cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATESTART)));
+        seance.setDateTo(cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATEFINISH)));
+        seance.setData(cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATA)));
+        return seance;
     }
 
     public void removeUser(int id) {
@@ -113,19 +121,78 @@ public final class VideoMoodDbWorker {
         db.close();
     }
 
-    public Seance createSeance(){
-        return null;
+    public Seance createSeance(@NonNull Seance seance) {
+        SQLiteDatabase db = helper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATESTART, seance.getDateFrom());
+        values.put(VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATEFINISH, seance.getDateTo());
+        values.put(VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID, seance.getUserId());
+        values.put(VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATA, seance.getDataStr());
+
+        long newSeanceId = db.insert(VideoMoodDataContract.SessionEntry.TABLE_NAME, null, values);
+        seance.setId((int) newSeanceId);
+
+        db.close();
+        return seance;
     }
 
     public Seance getSeance(int id){
-        return null;
+        SQLiteDatabase db = helper.getWritableDatabase();
+
+        String sortOrder = VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID;
+
+        String[] selectionArgs = {Integer.toString(id)};
+        String selection = VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID + "=?";
+        Cursor cursor = db.query(
+                VideoMoodDataContract.SessionEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+        cursor.moveToFirst();
+
+        Seance seance = createSeanceFrom(cursor);
+        cursor.close();
+        db.close();
+        return seance;
     }
 
     public List<Seance> getSeances(int userId){
-        return new ArrayList<>();
+        SQLiteDatabase db = helper.getWritableDatabase();
+
+        Cursor cursor = db.query(
+                VideoMoodDataContract.SessionEntry.TABLE_NAME,
+                projection,
+                VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID + "=?",
+                new String[]{ Integer.toString(userId) },
+                null,
+                null,
+                null
+        );
+
+        ArrayList<Seance> arrayList = new ArrayList<>(cursor.getCount());
+
+        while (cursor.moveToNext()) {
+            Seance seance = createSeanceFrom(cursor);
+            arrayList.add(seance);
+        }
+
+        cursor.close();
+        db.close();
+
+        return arrayList;
     }
 
     public void removeSeance(int seanceId) {
+        SQLiteDatabase db = helper.getWritableDatabase();
 
+        String[] whereArgs = {Integer.toString(seanceId)};
+        db.delete(VideoMoodDataContract.SessionEntry.TABLE_NAME, VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID + "=?", whereArgs);
+
+        db.close();
     }
 }

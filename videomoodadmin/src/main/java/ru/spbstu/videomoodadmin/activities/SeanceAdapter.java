@@ -42,9 +42,9 @@ public class SeanceAdapter extends ArrayAdapter<Seance> {
         Seance seance = getItem(position);
         if (seance != null) {
             //todo: extract times and dates
-            viewHolder.dateTextView.setText(seance.dateFrom);
-            viewHolder.fromTextView.setText(seance.dateFrom);
-            viewHolder.toTextView.setText(seance.dateTo);
+            viewHolder.dateTextView.setText(seance.getDateFrom());
+            viewHolder.fromTextView.setText(seance.getDateFrom());
+            viewHolder.toTextView.setText(seance.getDateTo());
         }
 
         return convertView;
