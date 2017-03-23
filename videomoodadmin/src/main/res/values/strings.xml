@@ -21,7 +21,8 @@
     <string name="previous">Previous</string>
     <string name="play">Play</string>
     <string name="next">Next</string>
-    <string name="defaultUser">Vasya Pupkin</string>
+    <string name="defaultUser_firstname">Vasya</string>
+    <string name="defaultUser_lastname">Pupkin</string>
     <string name="calm">Calm</string>
     <string name="warning">Warning</string>
     <string name="users">Users</string>
@@ -31,4 +32,18 @@
     <string name="confirm">Confirm</string>
     <string name="sex">Sex</string>
     <string name="cancel">Cancel</string>
+    <string name="male">Male</string>
+    <string name="birthdate">Birth date</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="seances">Seances</string>
+    <string name="female">Female</string>
+    <string name="default_birthdate">01.01.1999</string>
+    <string name="user_card">User Card</string>
+    <string name="create_user">Create User</string>
+    <string name="no_seances">No seances</string>
+    <string name="no_users">No users</string>
+    <string name="user_create_error">Unable to create user</string>
+    <string name="no_data">No items available</string>
 </resources>

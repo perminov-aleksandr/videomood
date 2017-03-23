@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:baselineAligned="false">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/usersListViewLayout"
@@ -16,6 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/textView"
+            android:theme="@style/header"
             android:padding="10dp" />
 
         <ListView
@@ -23,6 +25,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
         </ListView>
+
+        <TextView
+            android:text="@string/no_users"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/users_nodata"
+            android:padding="5dp"
+            android:visibility="gone"
+            android:gravity="center" />
 
         <Button
             android:id="@+id/createUserBtn"
@@ -41,6 +52,13 @@
         android:visibility="visible">
 
         <TextView
+            android:text="@string/create_user"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:theme="@style/header" />
+
+        <TextView
             android:text="@string/first_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -52,7 +70,8 @@
             android:layout_height="wrap_content"
             android:inputType="textPersonName"
             android:ems="10"
-            android:id="@+id/firstname_textbox" />
+            android:id="@+id/firstname_textbox"
+            android:text="@string/defaultUser_firstname" />
 
         <TextView
             android:text="@string/last_name"
@@ -65,10 +84,11 @@
             android:layout_height="wrap_content"
             android:inputType="textPersonName"
             android:ems="10"
-            android:id="@+id/lastname_textbox" />
+            android:id="@+id/lastname_textbox"
+            android:text="@string/defaultUser_lastname" />
 
         <TextView
-            android:text="Birth Date"
+            android:text="@string/birthdate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/textView2"
@@ -79,7 +99,8 @@
             android:layout_height="wrap_content"
             android:inputType="date"
             android:ems="10"
-            android:id="@+id/birthdate_editbox" />
+            android:id="@+id/birthdate_editbox"
+            android:text="@string/default_birthdate" />
 
         <TextView
             android:text="@string/sex"
@@ -94,14 +115,15 @@
             android:id="@+id/sex_radiogroup" >
 
             <RadioButton
-                android:text="Male"
+                android:text="@string/male"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/maleRadioButton"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:checked="true" />
 
             <RadioButton
-                android:text="Female"
+                android:text="@string/female"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/femaleRadioButton"
@@ -119,6 +141,96 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/cancelCreateUserBtn" />
+
+    </LinearLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="4dp"
+        android:id="@+id/usercard"
+        android:layout_weight="1">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/user_card"
+            android:padding="5dp"
+            android:theme="@style/header" />
+
+        <TextView
+            android:text="@string/first_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp" />
+
+        <TextView
+            android:text="@string/defaultUser_firstname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/usercard_firstname"
+            android:padding="5dp" />
+
+        <TextView
+            android:text="@string/last_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp" />
+
+        <TextView
+            android:text="@string/defaultUser_lastname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/usercard_lastname"
+            android:padding="5dp" />
+
+        <TextView
+            android:text="@string/birthdate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp" />
+
+        <TextView
+            android:text="@string/default_birthdate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/usercard_birthdate"
+            android:padding="5dp" />
+
+        <TextView
+            android:text="@string/sex"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp" />
+
+        <TextView
+            android:text="@string/male"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/usercard_sex"
+            android:padding="5dp" />
+
+        <TextView
+            android:text="@string/seances"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <ListView
+            android:id="@+id/usercard_seances"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        </ListView>
+
+        <TextView
+            android:id="@+id/usercard_seances_nodata"
+            android:text="@string/no_seances"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:visibility="gone"
+            android:gravity="center" />
 
     </LinearLayout>
 

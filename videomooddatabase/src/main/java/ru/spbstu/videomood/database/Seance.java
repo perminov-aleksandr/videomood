@@ -1,13 +1,13 @@
 package ru.spbstu.videomood.database;
 
-import java.util.Date;
-
 public class Seance{
     public int id;
 
-    private Date dateFrom;
+    public String dateFrom;
 
-    private Date dateTo;
+    public String dateTo;
 
-    private User user;
+    public int userId;
+
+    public String dataStr;
 }

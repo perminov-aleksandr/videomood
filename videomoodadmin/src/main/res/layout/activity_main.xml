@@ -32,7 +32,7 @@
             <TextView
                 style="@style/sideBlockText"
                 android:id="@+id/userName"
-                android:text="@string/defaultUser" />
+                android:text="@string/defaultUser_firstname" />
         </LinearLayout>
 
         <LinearLayout
@@ -42,7 +42,9 @@
 
             <TextView
                 style="@style/sideBlockHeader"
-                android:text="@string/headset" />
+                android:text="@string/headset"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
@@ -65,7 +67,9 @@
             android:orientation="vertical" >
             <TextView
                 style="@style/sideBlockHeader"
-                android:text="@string/muse" />
+                android:text="@string/muse"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"

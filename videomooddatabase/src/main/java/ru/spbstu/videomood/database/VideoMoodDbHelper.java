@@ -5,14 +5,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class VideoMoodDbHelper extends SQLiteOpenHelper {
-    public static final int DATABASE_VERSION = 2;
+    public static final int DATABASE_VERSION = 3;
     public static final String DATABASE_NAME = "VideoMood.db";
 
     private static final String TEXT_TYPE = " TEXT";
     private static final String COMMA_SEP = ",";
     private static final String SQL_CREATE_USERS =
             "CREATE TABLE " + VideoMoodDataContract.UserEntry.TABLE_NAME + " (" +
-                    VideoMoodDataContract.UserEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+                    VideoMoodDataContract.UserEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                     VideoMoodDataContract.UserEntry.COLUMN_NAME_FIRSTNAME + TEXT_TYPE + COMMA_SEP +
                     VideoMoodDataContract.UserEntry.COLUMN_NAME_LASTNAME + TEXT_TYPE + COMMA_SEP +
                     VideoMoodDataContract.UserEntry.COLUMN_NAME_BIRTHDATE + TEXT_TYPE + COMMA_SEP +
@@ -21,7 +21,7 @@ public class VideoMoodDbHelper extends SQLiteOpenHelper {
 
     private static final String SQL_CREATE_SEANCES =
             "CREATE TABLE " + VideoMoodDataContract.SessionEntry.TABLE_NAME + " (" +
-                    VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+                    VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                     VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID + TEXT_TYPE + COMMA_SEP +
                     VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATESTART + TEXT_TYPE + COMMA_SEP +
                     VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATEFINISH + TEXT_TYPE + COMMA_SEP +

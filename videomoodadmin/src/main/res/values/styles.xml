@@ -39,8 +39,10 @@
         <item name="android:layout_marginTop">8dp</item>
         <item name="android:layout_marginBottom">8dp</item>
     </style>
-    <style name="sideBlockText">
+    <style name="text">
         <item name="android:textSize">20sp</item>
+    </style>
+    <style name="sideBlockText" parent="text">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:gravity">center</item>
@@ -54,8 +56,10 @@
     <style name="sideBlockText.Ok">
         <item name="android:textColor">#1267e7</item>
     </style>
-    <style name="sideBlockHeader" parent="sideBlockText">
+    <style name="header" parent="text">
         <item name="android:textSize">20sp</item>
+    </style>
+    <style name="sideBlockHeader" parent="header">
     </style>
     <style name="sideIcon">
         <item name="android:gravity">center</item>

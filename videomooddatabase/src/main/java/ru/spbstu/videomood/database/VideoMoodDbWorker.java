@@ -23,7 +23,6 @@ public final class VideoMoodDbWorker {
 
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
-        values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_ID, user.id);
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_FIRSTNAME, user.firstName);
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_LASTNAME, user.lastName);
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_SEX, user.sex);
@@ -47,7 +46,6 @@ public final class VideoMoodDbWorker {
     public User getUser(int id){
         SQLiteDatabase db = helper.getWritableDatabase();
 
-        // How you want the results sorted in the resulting Cursor
         String sortOrder = VideoMoodDataContract.UserEntry.COLUMN_NAME_ID;
 
         String[] selectionArgs = {Integer.toString(id)};
@@ -124,7 +122,7 @@ public final class VideoMoodDbWorker {
     }
 
     public List<Seance> getSeances(int userId){
-        return null;
+        return new ArrayList<>();
     }
 
     public void removeSeance(int seanceId) {
