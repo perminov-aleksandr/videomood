@@ -2,12 +2,16 @@ package ru.spbstu.videomood.database;
 
 import com.google.gson.Gson;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Seance{
     private int id;
+
+    public static final DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd'T'HH:mm:ss");
 
     private String dateFrom;
 
@@ -29,6 +33,8 @@ public class Seance{
 
     public void setData(List<SeanceDataEntry> data) {
         this.data = data;
+
+        this.dataStr = new Gson().toJson(data.toArray(), SeanceDataEntry[].class);
     }
 
     public void setData(String dataStr) {

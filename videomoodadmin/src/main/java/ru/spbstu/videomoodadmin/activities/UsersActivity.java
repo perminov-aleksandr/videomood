@@ -1,7 +1,10 @@
 package ru.spbstu.videomoodadmin.activities;
 
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -14,12 +17,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import ru.spbstu.videomood.database.User;
-import ru.spbstu.videomood.database.VideoMoodDbWorker;
+import ru.spbstu.videomood.database.VideoMoodDbContext;
+import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
 
 public class UsersActivity extends AppCompatActivity {
 
-    private VideoMoodDbWorker dbWorker;
+    private VideoMoodDbContext dbContext;
     private View createUserForm;
     private View userCard;
     private RadioGroup sexRadioGroup;
@@ -31,7 +35,7 @@ public class UsersActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_users);
 
-        dbWorker = new VideoMoodDbWorker(this);
+        dbContext = new VideoMoodDbContext(this);
 
         Button createButton = (Button) findViewById(R.id.createUserBtn);
         createButton.setOnClickListener(new View.OnClickListener() {
@@ -57,6 +61,14 @@ public class UsersActivity extends AppCompatActivity {
             }
         });
 
+        Button startSessionBtn = (Button) findViewById(R.id.startSessionBtn);
+        startSessionBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startSession();
+            }
+        });
+
         createUserForm = findViewById(R.id.userCreateLayout);
         createUserForm.setVisibility(View.GONE);
 
@@ -66,7 +78,16 @@ public class UsersActivity extends AppCompatActivity {
         sexRadioGroup = (RadioGroup) findViewById(R.id.sex_radiogroup);
     }
 
+    private int selectedUserId;
+
+    private void startSession() {
+        Intent intent = new Intent(this, ConnectActivity.class);
+        intent.putExtra(AdminConst.EXTRA_USER_ID, selectedUserId);
+        startActivity(intent);
+    }
+
     private void confirmCreateUser() {
+        //Get values from form
         EditText firstNameView = (EditText) findViewById(R.id.firstname_textbox);
         String firstName = firstNameView.getText().toString();
         EditText lastNameView = (EditText) findViewById(R.id.lastname_textbox);
@@ -74,6 +95,7 @@ public class UsersActivity extends AppCompatActivity {
         EditText birthDateView = (EditText) findViewById(R.id.birthdate_editbox);
         String birthdate = birthDateView.getText().toString();
 
+        //construct a user instance
         User userToCreate = new User();
         userToCreate.firstName = firstName;
         userToCreate.lastName = lastName;
@@ -81,7 +103,8 @@ public class UsersActivity extends AppCompatActivity {
         RadioButton selectedSex = (RadioButton)sexRadioGroup.getChildAt(0);
         userToCreate.sex = selectedSex.getText().toString();
 
-        dbWorker.createUser(userToCreate);
+        //try to create it with dbContext
+        dbContext.createUser(userToCreate);
 
         if (userToCreate.id != -1)
             userAdapter.add(userToCreate);
@@ -100,23 +123,46 @@ public class UsersActivity extends AppCompatActivity {
         createUserForm.setVisibility(View.GONE);
     }
 
+    private ListView usersListView;
+
     @Override
     protected void onStart() {
         super.onStart();
 
-        final ListView usersListView =  (ListView) findViewById(R.id.usersListView);
+        usersListView = (ListView) findViewById(R.id.usersListView);
         userAdapter = new UserAdapter(this, R.layout.user_item);
         usersListView.setAdapter(userAdapter);
-        userAdapter.addAll(dbWorker.getUsers());
+        userAdapter.addAll(dbContext.getUsers());
 
         usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 createUserForm.setVisibility(View.GONE);
                 User user = (User) usersListView.getItemAtPosition(position);
+                selectedUserId = user.id;
                 initUserCard(user);
                 userCard.setVisibility(View.VISIBLE);
                 usersListView.setEmptyView(findViewById(R.id.users_nodata));
+            }
+        });
+
+        usersListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                AlertDialog.Builder adb = new AlertDialog.Builder(UsersActivity.this);
+                final int positionToRemove = position;
+                final User userToRemove = userAdapter.getItem(positionToRemove);
+                adb.setTitle(R.string.deleteUserDialogTittle);
+                adb.setMessage(getString(R.string.deleteUserDialogMessage, userToRemove.firstName));
+                adb.setNegativeButton("Cancel", null);
+                adb.setPositiveButton("Ok", new AlertDialog.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dbContext.removeUser(userToRemove.id);
+                        userAdapter.remove(userToRemove);
+                        userAdapter.notifyDataSetChanged();
+                    }});
+                adb.show();
+                return true;
             }
         });
     }
@@ -136,7 +182,7 @@ public class UsersActivity extends AppCompatActivity {
         userSeancesListView.setAdapter(adapter);
         userSeancesListView.setEmptyView(findViewById(R.id.usercard_seances_nodata));
 
-        adapter.addAll(dbWorker.getSeances(user.id));
+        adapter.addAll(dbContext.getSeances(user.id));
     }
 
     @Override

@@ -15,9 +15,16 @@ public class User {
 
     public String birthDateStr;
 
-    private Date birthDate;
+    private Date birthDate = null;
 
-    private Date getBirthDate() {
+    public Date getBirthDate() {
+        if (birthDate == null)
+            try {
+                birthDate = dateFormat.parse(birthDateStr);
+            } catch (ParseException e) {
+                e.printStackTrace();
+                return null;
+            }
         return birthDate;
     }
 
@@ -29,7 +36,7 @@ public class User {
         this.birthDate = birthDate;
     }
 
-    public final DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd'T'HH:mm:ss");
+    public final DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
 
     private void setBirthDate(String dateToParse) {
         try {

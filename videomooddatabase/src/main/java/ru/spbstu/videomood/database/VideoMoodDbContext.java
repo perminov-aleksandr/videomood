@@ -9,11 +9,11 @@ import android.support.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class VideoMoodDbWorker {
+public final class VideoMoodDbContext {
 
     private final VideoMoodDbHelper helper;
 
-    public VideoMoodDbWorker(Context context) {
+    public VideoMoodDbContext(Context context) {
         helper = new VideoMoodDbHelper(context);
     }
 
@@ -33,12 +33,20 @@ public final class VideoMoodDbWorker {
         return user;
     }
 
-    private final String[] projection = {
+    private final String[] userProjection = {
             VideoMoodDataContract.UserEntry.COLUMN_NAME_ID,
             VideoMoodDataContract.UserEntry.COLUMN_NAME_FIRSTNAME,
             VideoMoodDataContract.UserEntry.COLUMN_NAME_LASTNAME,
             VideoMoodDataContract.UserEntry.COLUMN_NAME_BIRTHDATE,
             VideoMoodDataContract.UserEntry.COLUMN_NAME_SEX
+    };
+
+    private final String[] seanceProjection = {
+            VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID,
+            VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATESTART,
+            VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATEFINISH,
+            VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID,
+            VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATA
     };
 
     public User getUser(int id){
@@ -50,7 +58,7 @@ public final class VideoMoodDbWorker {
         String selection = VideoMoodDataContract.UserEntry.COLUMN_NAME_ID + "=?";
         Cursor cursor = db.query(
             VideoMoodDataContract.UserEntry.TABLE_NAME,
-            projection,
+                userProjection,
             selection,
             selectionArgs,
             null,
@@ -81,7 +89,7 @@ public final class VideoMoodDbWorker {
 
         Cursor cursor = db.query(
             VideoMoodDataContract.UserEntry.TABLE_NAME,
-            projection,
+                userProjection,
             null,
             null,
             null,
@@ -146,7 +154,7 @@ public final class VideoMoodDbWorker {
         String selection = VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID + "=?";
         Cursor cursor = db.query(
                 VideoMoodDataContract.SessionEntry.TABLE_NAME,
-                projection,
+                seanceProjection,
                 selection,
                 selectionArgs,
                 null,
@@ -165,13 +173,13 @@ public final class VideoMoodDbWorker {
         SQLiteDatabase db = helper.getWritableDatabase();
 
         Cursor cursor = db.query(
-                VideoMoodDataContract.SessionEntry.TABLE_NAME,
-                projection,
-                VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID + "=?",
-                new String[]{ Integer.toString(userId) },
-                null,
-                null,
-                null
+            VideoMoodDataContract.SessionEntry.TABLE_NAME,
+            seanceProjection,
+            VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID + "=?",
+            new String[]{ Integer.toString(userId) },
+            null,
+            null,
+            null
         );
 
         ArrayList<Seance> arrayList = new ArrayList<>(cursor.getCount());

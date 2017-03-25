@@ -31,8 +31,13 @@
 
             <TextView
                 style="@style/sideBlockText"
-                android:id="@+id/userName"
+                android:id="@+id/main_user_firstname"
                 android:text="@string/defaultUser_firstname" />
+
+            <TextView
+                style="@style/sideBlockText"
+                android:id="@+id/main_user_lastname"
+                android:text="@string/defaultUser_lastname" />
         </LinearLayout>
 
         <LinearLayout
@@ -93,6 +98,12 @@
             android:layout_height="150dp"
             android:layout_gravity="fill"
             android:padding="4dp" />
+
+        <Button
+            android:id="@+id/main_finishSeanceBtn"
+            android:text="@string/finish_session"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
     <ImageView

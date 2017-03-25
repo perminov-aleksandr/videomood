@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -34,6 +35,7 @@ import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -44,10 +46,17 @@ import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
 import ru.spbstu.videomood.btservice.VideoItem;
+import ru.spbstu.videomood.database.Seance;
+import ru.spbstu.videomood.database.SeanceDataEntry;
+import ru.spbstu.videomood.database.User;
+import ru.spbstu.videomood.database.VideoMoodDbContext;
+import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.HorseshoeView;
 import ru.spbstu.videomoodadmin.R;
+import ru.spbstu.videomoodadmin.UserViewModel;
 
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
+import static ru.spbstu.videomoodadmin.R.color.warningColor;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -141,38 +150,15 @@ public class MainActivity extends AppCompatActivity {
                 sendPacket(cp);
             }
         });
+
+        final Button finishSeance = (Button) findViewById(R.id.main_finishSeanceBtn);
+        finishSeance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finishSeance();
+            }
+        });
     }
-
-    /*private String initSensorsChart() {
-        sensorsChart = (PieChart) findViewById(R.id.deviceInfo);
-
-        int[] colors = new int[]{
-            Color.RED,
-            Color.BLUE,
-            Color.GREEN,
-            Color.YELLOW,
-            Color.CYAN
-        };
-
-        List<PieEntry> pieEntryList = new ArrayList<>();
-        pieEntryList.add(new PieEntry(20));
-        pieEntryList.add(new PieEntry(20));
-        pieEntryList.add(new PieEntry(20));
-        pieEntryList.add(new PieEntry(20));
-        pieEntryList.add(new PieEntry(20));
-        PieDataSet dataSet = new PieDataSet(pieEntryList, "");
-        dataSet.setColor(getResources().getColor(R.color.colorAccent));
-        dataSet.setSliceSpace(4);
-        dataSet.setDrawValues(false);
-        PieData data = new PieData(dataSet);
-        sensorsChart.setData(data);
-        sensorsChart.setTransparentCircleRadius(0);
-        sensorsChart.setTransparentCircleAlpha(1);
-        Description description = new Description();
-        description.setEnabled(false);
-        sensorsChart.setDescription(description);
-        return "";
-    }*/
 
     private void initChart() {
         chart = (BarChart) findViewById(R.id.plotView);
@@ -199,12 +185,20 @@ public class MainActivity extends AppCompatActivity {
         barData.addDataSet(betaSet);
     }
 
+    private UserViewModel user;
+
+    private VideoMoodDbContext dbContext;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        dbContext = new VideoMoodDbContext(this);
+
         setupUI();
+
+        setupUser();
 
         if (!IS_DEBUG) {
             mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -222,6 +216,17 @@ public class MainActivity extends AppCompatActivity {
             testDataPacket.setCurrentPosition(60);
             dataPacket = testDataPacket;
         }
+    }
+
+    private void setupUser() {
+        Intent prevIntent = this.getIntent();
+        int userId = prevIntent.getIntExtra(AdminConst.EXTRA_USER_ID, -1);
+        User user = dbContext.getUser(userId);
+        this.user = new UserViewModel(user);
+        TextView userFirstName = (TextView) findViewById(R.id.main_user_firstname);
+        userFirstName.setText(this.user.firstName);
+        TextView userLastName = (TextView) findViewById(R.id.main_user_lastname);
+        userLastName.setText(this.user.lastName);
     }
 
     @Override
@@ -289,6 +294,25 @@ public class MainActivity extends AppCompatActivity {
                 mBtService.stop();
             }
         }
+
+        if (user != null && user.data.size() > 0) {
+            finishSeance();
+        }
+    }
+
+    private void finishSeance() {
+        Seance seance = new Seance();
+        seance.setUserId(user.id);
+        seance.setDateFrom(user.getDateStart());
+        String dateTo = user.getDateFinish();
+        if (dateTo == null) {
+            user.setDateFinish(Calendar.getInstance().getTime());
+            dateTo = user.getDateFinish();
+        }
+        seance.setDateTo(dateTo);
+        seance.setData(user.data);
+        dbContext.createSeance(seance);
+        user = null;
     }
 
     /**
@@ -309,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void connectDevice(Intent connectionIntent, boolean secure) {
         // Get the device MAC address
-        String deviceAddress = connectionIntent.getStringExtra(Constants.EXTRA_DEVICE_ADDRESS);
+        String deviceAddress = connectionIntent.getStringExtra(AdminConst.EXTRA_DEVICE_ADDRESS);
 
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
@@ -439,14 +463,14 @@ public class MainActivity extends AppCompatActivity {
         setFont(font, R.id.videoSelect);
         setFont(font, pauseBtn);
 
-        TextView userIcon = (TextView) findViewById(R.id.userIcon);
+        /*TextView userIcon = (TextView) findViewById(R.id.userIcon);
         userIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, UsersActivity.class);
                 startActivity(intent);
             }
-        });
+        });*/
     }
 
     private int calcBatteryTextColor(int percents) {
@@ -462,8 +486,16 @@ public class MainActivity extends AppCompatActivity {
         Integer alphaPct = dataPacket.getAlphaPct();
         Integer betaPct = dataPacket.getBetaPct();
         Boolean isPanic = dataPacket.isPanic();
-        if (alphaPct != null && betaPct != null && isPanic != null)
+        if (alphaPct != null && betaPct != null && isPanic != null) {
             addEntry(alphaPct, betaPct, isPanic);
+
+            if (user != null) {
+                SeanceDataEntry seanceDataEntry = new SeanceDataEntry();
+                seanceDataEntry.betaValue = betaPct;
+                seanceDataEntry.isPanic = isPanic;
+                user.data.add(seanceDataEntry);
+            }
+        }
 
         Boolean isMuseConnected = dataPacket.getMuseState();
         if (isMuseConnected != null && isMuseConnected) {

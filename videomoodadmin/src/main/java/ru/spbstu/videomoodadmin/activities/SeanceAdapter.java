@@ -27,7 +27,7 @@ public class SeanceAdapter extends ArrayAdapter<Seance> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            convertView = LayoutInflater.from(this.getContext()).inflate(R.layout.user_item, parent, false);
+            convertView = LayoutInflater.from(this.getContext()).inflate(R.layout.seance_item, parent, false);
 
             viewHolder = new ViewHolder();
             viewHolder.dateTextView = (TextView) convertView.findViewById(R.id.seanceitem_date);

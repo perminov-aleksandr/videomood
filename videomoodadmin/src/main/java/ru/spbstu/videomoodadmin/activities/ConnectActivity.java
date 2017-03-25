@@ -14,6 +14,7 @@ import android.widget.TextView;
 import java.util.Set;
 
 import ru.spbstu.videomood.btservice.Constants;
+import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
 
 public class ConnectActivity extends AppCompatActivity {
@@ -70,12 +71,13 @@ public class ConnectActivity extends AppCompatActivity {
 
             // Create the result Intent and include the MAC address
             Intent intent = new Intent(ConnectActivity.this, MainActivity.class);
-            intent.putExtra(Constants.EXTRA_DEVICE_ADDRESS, address);
+            Intent prevIntent = ConnectActivity.this.getIntent();
+            intent.putExtras(prevIntent);
+            intent.putExtra(AdminConst.EXTRA_DEVICE_ADDRESS, address);
 
             // Set result and finish this Activity
             //setResult(Activity.RESULT_OK, intent);
             startActivity(intent);
-            finish();
         }
     };
 }

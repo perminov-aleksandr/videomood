@@ -46,4 +46,8 @@
     <string name="no_users">No users</string>
     <string name="user_create_error">Unable to create user</string>
     <string name="no_data">No items available</string>
+    <string name="start_session">Start Session</string>
+    <string name="deleteUserDialogTittle">Delete?</string>
+    <string name="deleteUserDialogMessage">Are you sure you want to delete user %s?</string>
+    <string name="finish_session">Finish Session</string>
 </resources>

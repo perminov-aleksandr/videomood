@@ -8,8 +8,5 @@ public interface Constants {
     // Message types sent from the BluetoothChatService Handler
     public static final int MESSAGE_STATE_CHANGE = 1;
     public static final int MESSAGE_PACKET = 2;
-
-    public static final String EXTRA_DEVICE_ADDRESS = "device_address";
-
     public static final String DEFAULT_CHARSET = "UTF-8";
 }

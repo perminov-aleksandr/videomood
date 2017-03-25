@@ -220,7 +220,6 @@
             android:id="@+id/usercard_seances"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
         </ListView>
 
         <TextView
@@ -231,6 +230,12 @@
             android:padding="5dp"
             android:visibility="gone"
             android:gravity="center" />
+
+        <Button
+            android:id="@+id/startSessionBtn"
+            android:text="@string/start_session"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

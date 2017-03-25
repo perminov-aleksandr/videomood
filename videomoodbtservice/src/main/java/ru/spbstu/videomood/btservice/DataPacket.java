@@ -47,7 +47,7 @@ public class DataPacket extends Packet {
 
     private Boolean videoState;
 
-    private int currentPosition;
+    private Integer currentPosition;
 
     private ArrayList<VideoItem> videoList;
 
@@ -175,7 +175,7 @@ public class DataPacket extends Packet {
         return null;
     }
 
-    public int getCurrentPosition() {
+    public Integer getCurrentPosition() {
         return currentPosition;
     }
 
