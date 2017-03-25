@@ -15,16 +15,16 @@ public abstract class BaseActivity extends Activity {
         if (doubleBackToExitPressedOnce) {
             super.onBackPressed();
             return;
+        } else {
+            this.doubleBackToExitPressedOnce = true;
+            Toast.makeText(this, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show();
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    doubleBackToExitPressedOnce = false;
+                }
+            }, 2000);
         }
-
-        this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show();
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
-            }
-        }, 2000);
     }
 }

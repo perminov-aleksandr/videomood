@@ -77,6 +77,7 @@ public class ConnectActivity extends AppCompatActivity {
 
             // Set result and finish this Activity
             //setResult(Activity.RESULT_OK, intent);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
         }
     };

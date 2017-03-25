@@ -16,6 +16,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.User;
 import ru.spbstu.videomood.database.VideoMoodDbContext;
 import ru.spbstu.videomoodadmin.AdminConst;
@@ -178,11 +179,27 @@ public class UsersActivity extends AppCompatActivity {
         sex.setText(user.sex);
 
         ListView userSeancesListView = (ListView) findViewById(R.id.usercard_seances);
-        SeanceAdapter adapter = new SeanceAdapter(this, R.layout.seance_item);
-        userSeancesListView.setAdapter(adapter);
+        final SeanceAdapter seancesAdapter = new SeanceAdapter(this, R.layout.seance_item);
+        userSeancesListView.setAdapter(seancesAdapter);
         userSeancesListView.setEmptyView(findViewById(R.id.usercard_seances_nodata));
+        userSeancesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Seance seance = seancesAdapter.getItem(position);
+                openSeanceCard(seance);
+            }
+        });
 
-        adapter.addAll(dbContext.getSeances(user.id));
+        seancesAdapter.addAll(dbContext.getSeances(user.id));
+    }
+
+    private void openSeanceCard(Seance seance) {
+        Intent intent = new Intent(this, SeanceActivity.class);
+        intent.putExtra(AdminConst.EXTRA_SEANCE_ID, seance.getId());
+        intent.putExtra(AdminConst.EXTRA_SEANCE_DATEFROM, seance.getDateFrom());
+        intent.putExtra(AdminConst.EXTRA_SEANCE_DATETO, seance.getDateTo());
+        intent.putExtra(AdminConst.EXTRA_SEANCE_DATA, seance.getDataStr());
+        startActivityForResult(intent, RESULT_OK);
     }
 
     @Override
