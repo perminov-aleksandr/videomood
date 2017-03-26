@@ -58,7 +58,7 @@
             <TextView
                 style="@style/sideBlockText"
                 android:id="@+id/headsetState"
-                android:text="@string/state_connected"/>
+                android:text="@string/state_not_connected"/>
 
             <TextView
                 style="@style/sideBlockText"
@@ -115,7 +115,8 @@
         android:minWidth="150dp"
         android:layout_gravity="fill"
         android:background="@color/colorPrimary"
-        android:contentDescription="@string/screenshot" />
+        android:contentDescription="@string/screenshot"
+        android:visibility="invisible" />
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/plotView"
@@ -165,17 +166,40 @@
         </LinearLayout>
 
 
-        <SeekBar
-            android:id="@+id/seekBar"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:max="100"
-            android:progress="50" />
+            android:layout_height="30dp">
+
+            <TextView
+                android:text="32:47"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/main_seekBarCurrentPosition"
+                android:layout_weight="0"
+                android:gravity="center" />
+
+            <SeekBar
+                android:id="@+id/seekBar"
+                android:layout_width="match_parent"
+                android:max="100"
+                android:progress="50"
+                android:layout_weight="1"
+                android:layout_height="match_parent" />
+
+            <TextView
+                android:text="50:16"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/main_seekBarDuration"
+                android:layout_weight="0"
+                android:gravity="center" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/videoControl"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:gravity="center"
             android:orientation="horizontal">
 

@@ -325,7 +325,11 @@ public class VideoActivity extends MuseActivity {
             case GET:
                 dataPacket.setAlphaPct(alphaPct);
                 dataPacket.setBetaPct(betaPct);
-                writeScreenshotTo(dataPacket);
+                //writeScreenshotTo(dataPacket);
+                dataPacket.setMuseSensorsState(sensorsStateBuffer);
+                dataPacket.setVideoState(videoView.isPlaying());
+                dataPacket.setDurationSec(videoView.getDuration() / 1000);
+                dataPacket.setCurrentPositionSec(videoView.getCurrentPosition() / 1000);
                 break;
             case LIST:
                 dataPacket.setVideoList(contentProvider.getContentList());
@@ -339,10 +343,9 @@ public class VideoActivity extends MuseActivity {
                 break;
             case PAUSE:
                 if (videoView.isPlaying())
-                    videoView.pause();
+                    pauseVideo();
                 else
-                    videoView.start();
-                dataPacket.setVideoState(videoView.isPlaying());
+                    playVideo();
                 break;
             case NEXT:
                 File nextVideo = contentProvider.getNext();
@@ -357,9 +360,7 @@ public class VideoActivity extends MuseActivity {
                 if (arguments.length > 0)
                 {
                     Double positionPct = (Double) arguments[0];
-                    int duration = videoView.getDuration();
-                    int seekingPosition = (int) (duration * (positionPct / 100.0));
-                    videoView.seekTo(seekingPosition);
+                    videoView.seekTo((int) (positionPct * 1000));
                 }
                 break;
         }
@@ -392,16 +393,24 @@ public class VideoActivity extends MuseActivity {
     private RelativeLayout calmScreen;
 
     private void displayCalmScreen() {
-        videoView.pause();
-        dataPacket.setVideoState(false);
-        mediaController.hide();
         calmScreen.setVisibility(View.VISIBLE);
+        pauseVideo();
+        mediaController.hide();
     }
 
     private void hideCalmScreen() {
         calmScreen.setVisibility(View.INVISIBLE);
+        playVideo();
+    }
+
+    private void playVideo(){
         videoView.start();
         dataPacket.setVideoState(true);
+    }
+
+    private void pauseVideo(){
+        videoView.pause();
+        dataPacket.setVideoState(false);
     }
 
     private void setupUI() {
@@ -414,7 +423,7 @@ public class VideoActivity extends MuseActivity {
         rhythmsBar = (LinearLayout) findViewById(R.id.rhythmsBar);
     }
 
-    public void setAdminDeviceStatus(int stringResId) {
+    private void setAdminDeviceStatus(int stringResId) {
         adminDeviceConnectionStatus.setText(stringResId);
     }
 
@@ -529,10 +538,8 @@ public class VideoActivity extends MuseActivity {
                 mp.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
                     @Override
                     public void onSeekComplete(MediaPlayer mp) {
-                        int currentPosMsec = mp.getCurrentPosition();
-                        int durationMsec = mp.getDuration();
-                        int currentPositionPct = 100 * currentPosMsec / durationMsec;
-                        dataPacket.setCurrentPosition(currentPositionPct);
+                    dataPacket.setCurrentPositionSec(mp.getCurrentPosition() / 1000);
+                    dataPacket.setDurationSec(mp.getDuration());
                     }
                 });
                 videoView.start();
@@ -558,10 +565,9 @@ public class VideoActivity extends MuseActivity {
 
     private void playVideoFile(File file) {
         dataPacket.setVideoName(file.getName());
-        dataPacket.setVideoState(true);
         currentVideoUri = Uri.fromFile(file);
         videoView.setVideoURI(currentVideoUri);
-        videoView.start();
+        playVideo();
     }
 
     @Override
@@ -594,8 +600,7 @@ public class VideoActivity extends MuseActivity {
     protected void onPause() {
         super.onPause();
 
-        videoView.pause();
-        dataPacket.setVideoState(false);
+        pauseVideo();
         currentPlayPosition = videoView.getCurrentPosition();
     }
 
@@ -606,8 +611,7 @@ public class VideoActivity extends MuseActivity {
         videoView.setVideoURI(currentVideoUri);
         if (currentPlayPosition != -1) {
             videoView.seekTo(currentPlayPosition);
-            videoView.pause();
-            dataPacket.setVideoState(false);
+            pauseVideo();
         }
 
         // Performing this check in onResume() covers the case in which BT was
@@ -631,6 +635,21 @@ public class VideoActivity extends MuseActivity {
         }
 
         unregisterReceiver(receiver);
+    }
+
+    public void processAdminDeviceState(int stateConnected) {
+        switch (stateConnected) {
+            case BluetoothService.STATE_CONNECTED:
+                setAdminDeviceStatus(R.string.state_connected);
+                break;
+            case BluetoothService.STATE_CONNECTING:
+                setAdminDeviceStatus(R.string.state_connecting);
+                break;
+            case BluetoothService.STATE_LISTEN:
+            case BluetoothService.STATE_NONE:
+                setAdminDeviceStatus(R.string.state_disconnected);
+                break;
+        }
     }
 }
 

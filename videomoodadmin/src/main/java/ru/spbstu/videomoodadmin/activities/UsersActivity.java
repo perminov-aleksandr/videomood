@@ -11,7 +11,6 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +21,8 @@ import ru.spbstu.videomood.database.User;
 import ru.spbstu.videomood.database.VideoMoodDbContext;
 import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
+import ru.spbstu.videomoodadmin.SeanceAdapter;
+import ru.spbstu.videomoodadmin.UserAdapter;
 
 public class UsersActivity extends AppCompatActivity {
 

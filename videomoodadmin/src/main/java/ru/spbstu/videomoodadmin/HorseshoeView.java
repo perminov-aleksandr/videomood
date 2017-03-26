@@ -9,6 +9,7 @@ import android.graphics.PixelFormat;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
 public class HorseshoeView extends SurfaceView {
 
@@ -35,25 +36,38 @@ public class HorseshoeView extends SurfaceView {
             true,true,true,true,true
         };
         surfaceHolder = getHolder();
-        setZOrderOnTop(true);
-        surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
-        surfaceHolder.addCallback(new SurfaceHolder.Callback(){
+        if (!this.isInEditMode()) {
+            setZOrderOnTop(true);
+            surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
+            surfaceHolder.addCallback(new SurfaceHolder.Callback(){
 
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                Canvas canvas = holder.lockCanvas(null);
-                drawHorseshoe(canvas);
-                holder.unlockCanvasAndPost(canvas);
-            }
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    Canvas canvas = holder.lockCanvas(null);
+                    drawHorseshoe(canvas);
+                    holder.unlockCanvasAndPost(canvas);
+                    setWillNotDraw(false);
+                }
 
-            @Override
-            public void surfaceChanged(SurfaceHolder holder,
-                                       int format, int width, int height) {
-            }
+                @Override
+                public void surfaceChanged(SurfaceHolder holder,
+                                           int format, int width, int height) {
+                }
 
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-            }});
+                @Override
+                public void surfaceDestroyed(SurfaceHolder holder) {
+                }});
+        }
+    }
+
+    @Override
+    public void draw(Canvas canvas) {
+        super.draw(canvas);
+        if (!isInEditMode()) {
+            Canvas c = surfaceHolder.lockCanvas();
+            drawHorseshoe(c);
+            surfaceHolder.unlockCanvasAndPost(c);
+        }
     }
 
     private Boolean[] circles;
@@ -77,6 +91,12 @@ public class HorseshoeView extends SurfaceView {
     }
 
     public void setCircles(Boolean[] circles) {
-        this.circles = circles;
+        if (circles.length == 4)
+            this.circles = new Boolean[]{
+                circles[0], circles[1], true, circles[2], circles[3]
+            };
+        else
+            this.circles = circles;
+        invalidate();
     }
 }

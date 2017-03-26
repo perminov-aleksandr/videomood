@@ -39,7 +39,7 @@ public class DataPacket extends Packet {
 
     private Integer betaPct;
 
-    private Boolean isPanic;
+    private boolean isPanic;
 
     private Integer headsetBatteryPercent;
 
@@ -49,7 +49,11 @@ public class DataPacket extends Packet {
 
     private Integer currentPosition;
 
+    private Integer duration;
+
     private ArrayList<VideoItem> videoList;
+
+    private String screenshot;
 
     public Boolean getMuseState() {
         return museState;
@@ -136,15 +140,13 @@ public class DataPacket extends Packet {
         return PacketType.DATA;
     }
 
-    public Boolean isPanic() {
+    public boolean isPanic() {
         return isPanic;
     }
 
-    public void setIsPanic(Boolean panic) {
+    public void setIsPanic(boolean panic) {
         isPanic = panic;
     }
-
-    private String screenshot;
 
     public void setScreenshot(byte[] screenshot) {
         if (screenshot != null)
@@ -175,11 +177,19 @@ public class DataPacket extends Packet {
         return null;
     }
 
-    public Integer getCurrentPosition() {
+    public Integer getCurrentPositionSec() {
         return currentPosition;
     }
 
-    public void setCurrentPosition(int currentPosition) {
+    public void setCurrentPositionSec(int currentPosition) {
         this.currentPosition = currentPosition;
+    }
+
+    public Integer getDurationSec() {
+        return duration;
+    }
+
+    public void setDurationSec(int duration) {
+        this.duration = duration;
     }
 }

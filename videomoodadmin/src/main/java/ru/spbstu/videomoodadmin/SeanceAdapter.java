@@ -1,4 +1,4 @@
-package ru.spbstu.videomoodadmin.activities;
+package ru.spbstu.videomoodadmin;
 
 import android.content.Context;
 import android.view.LayoutInflater;

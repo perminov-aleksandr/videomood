@@ -61,7 +61,7 @@ import static ru.spbstu.videomoodadmin.R.color.warningColor;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final boolean IS_DEBUG = true;
+    private final boolean IS_DEBUG = false;
 
     private DataPacket testDataPacket;
 
@@ -120,7 +120,9 @@ public class MainActivity extends AppCompatActivity {
             chart.notifyDataSetChanged();
 
             chart.moveViewToX(data.getEntryCount());
+            chart.setVisibleXRangeMinimum(60);
             chart.setVisibleXRangeMaximum(60);
+            chart.setVisibleYRange(100, 100, YAxis.AxisDependency.LEFT);
 
             // this automatically refreshes the chart (calls invalidate())
             // mChart.moveViewTo(data.getXValCount()-7, 55f,
@@ -214,7 +216,8 @@ public class MainActivity extends AppCompatActivity {
             testDataPacket.setVideoState(true);
             testDataPacket.setIsPanic(false);
             testDataPacket.setScreenshot(null);
-            testDataPacket.setCurrentPosition(60);
+            testDataPacket.setCurrentPositionSec(60);
+            testDataPacket.setDurationSec(100);
             testDataPacket.setMuseSensorsState(new Boolean[]{ true, true, true, true, true });
             dataPacket = testDataPacket;
         }
@@ -487,8 +490,8 @@ public class MainActivity extends AppCompatActivity {
     private void processPacketData() {
         Integer alphaPct = dataPacket.getAlphaPct();
         Integer betaPct = dataPacket.getBetaPct();
-        Boolean isPanic = dataPacket.isPanic();
-        if (alphaPct != null && betaPct != null && isPanic != null) {
+        boolean isPanic = dataPacket.isPanic();
+        if (alphaPct != null && betaPct != null) {
             addEntry(alphaPct, betaPct, isPanic);
 
             if (user != null) {
@@ -505,9 +508,11 @@ public class MainActivity extends AppCompatActivity {
             museStatusTextView.setTextColor(getResources().getColor(R.color.colorAccent));
 
             Integer museBatteryPercent = dataPacket.getMuseBatteryPercent();
-            museBatteryTextView.setTextColor(calcBatteryTextColor(museBatteryPercent));
-            museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, museBatteryPercent));
-            museBatteryTextView.setVisibility(View.VISIBLE);
+            if (museBatteryPercent != null) {
+                museBatteryTextView.setTextColor(calcBatteryTextColor(museBatteryPercent));
+                museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, museBatteryPercent));
+                museBatteryTextView.setVisibility(View.VISIBLE);
+            }
 
             Boolean[] sensorsState = dataPacket.getMuseSensorsState();
             if (sensorsState != null) {
@@ -526,12 +531,14 @@ public class MainActivity extends AppCompatActivity {
         Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
         if (headsetBatteryPercent != null)
         {
+            headsetStateTextView.setText(R.string.state_connected);
             headsetStateTextView.setTextColor(getResources().getColor(R.color.colorAccent));
             museBatteryTextView.setTextColor(calcBatteryTextColor(headsetBatteryPercent));
             headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, headsetBatteryPercent));
             headsetBatteryTextView.setVisibility(View.VISIBLE);
         }
         else {
+            headsetStateTextView.setText(R.string.state_not_connected);
             headsetStateTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
             headsetBatteryTextView.setVisibility(View.INVISIBLE);
         }
@@ -542,9 +549,18 @@ public class MainActivity extends AppCompatActivity {
             Boolean videoState = dataPacket.getVideoState();
             pauseBtn.setText(videoState != null && videoState ? R.string.fa_pause : R.string.fa_play);
 
-            Integer videoPosition = dataPacket.getCurrentPosition();
-            if (videoPosition != null)
+            Integer videoPosition = dataPacket.getCurrentPositionSec();
+            Integer videoDuration = dataPacket.getDurationSec();
+            if (videoPosition != null && videoDuration != null) {
                 seekBar.setProgress(videoPosition);
+                seekBar.setMax(videoDuration);
+
+                TextView currentPostionTv = (TextView)findViewById(R.id.main_seekBarCurrentPosition);
+                currentPostionTv.setText(String.format("%d:%02d", videoPosition / 60, videoPosition % 60));
+
+                TextView durationTv = (TextView)findViewById(R.id.main_seekBarDuration);
+                durationTv.setText(String.format("%d:%02d", videoDuration / 60, videoDuration % 60));
+            }
 
             videoControl.setVisibility(View.VISIBLE);
         }

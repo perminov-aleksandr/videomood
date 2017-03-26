@@ -29,18 +29,7 @@ public class AdminDeviceMessageHandler extends Handler {
 
         switch (msg.what) {
             case Constants.MESSAGE_STATE_CHANGE:
-                switch (msg.arg1) {
-                    case BluetoothService.STATE_CONNECTED:
-                        videoActivity.setAdminDeviceStatus(R.string.state_connected);
-                        break;
-                    case BluetoothService.STATE_CONNECTING:
-                        videoActivity.setAdminDeviceStatus(R.string.state_connecting);
-                        break;
-                    case BluetoothService.STATE_LISTEN:
-                    case BluetoothService.STATE_NONE:
-                        videoActivity.setAdminDeviceStatus(R.string.state_unknown);
-                        break;
-                }
+                videoActivity.processAdminDeviceState(msg.arg1);
                 break;
             case Constants.MESSAGE_PACKET:
                 try {
