@@ -14,18 +14,18 @@
         android:gravity="center" />
 
     <TextView
-        android:text="15:16"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/seanceitem_from"
         android:layout_weight="1"
-        android:gravity="center" />
+        android:gravity="right|center_vertical"
+        android:text="@string/default_timefrom" />
 
     <TextView
-        android:text="15:54"
+        android:text="@string/default_timeto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/seanceitem_to"
         android:layout_weight="1"
-        android:gravity="center" />
+        android:gravity="left|center_vertical" />
 </LinearLayout>

@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import ru.spbstu.videomood.database.Sex;
 import ru.spbstu.videomood.database.User;
 import ru.spbstu.videomoodadmin.R;
 
@@ -20,6 +21,8 @@ public class UserAdapter extends ArrayAdapter<User> {
     private static class ViewHolder {
         private TextView firstNameTextView;
         private TextView lastNameTextView;
+        private TextView sexTextView;
+        private TextView birthdateTextView;
     }
 
     public UserAdapter(Context context, int resource) {
@@ -35,6 +38,8 @@ public class UserAdapter extends ArrayAdapter<User> {
             viewHolder = new ViewHolder();
             viewHolder.firstNameTextView = (TextView) convertView.findViewById(R.id.user_firstname);
             viewHolder.lastNameTextView = (TextView) convertView.findViewById(R.id.user_lastname);
+            viewHolder.sexTextView = (TextView) convertView.findViewById(R.id.user_sex);
+            viewHolder.birthdateTextView = (TextView) convertView.findViewById(R.id.user_birthdate);
 
             convertView.setTag(viewHolder);
         } else {
@@ -45,6 +50,8 @@ public class UserAdapter extends ArrayAdapter<User> {
         if (user != null) {
             viewHolder.firstNameTextView.setText(user.firstName);
             viewHolder.lastNameTextView.setText(user.lastName);
+            viewHolder.sexTextView.setText(Sex.get(user.getSex()) == Sex.FEMALE ? R.string.female : R.string.male);
+            viewHolder.birthdateTextView.setText(user.getBirthDateFormatted());
         }
 
         return convertView;

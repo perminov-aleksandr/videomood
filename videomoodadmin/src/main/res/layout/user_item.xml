@@ -1,26 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:layout_height="wrap_content"
     android:layout_width="match_parent"
     android:padding="10dp">
 
 
     <TextView
-        android:text="Firstname"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/user_firstname"
         android:layout_weight="1"
-        android:padding="5dp" />
+        android:padding="5dp"
+        android:text="@string/defaultUser_firstname"
+        android:gravity="right|center" />
 
     <TextView
-        android:text="Lastname"
-        android:layout_width="match_parent"
+            android:text="@string/defaultUser_lastname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/user_lastname"
+            android:layout_weight="1"
+            android:padding="5dp"
+        android:gravity="left|center" />
+
+    <TextView
+        android:text="@string/default_birthdate"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/user_lastname"
+        android:id="@+id/user_birthdate"
         android:layout_weight="1"
-        android:padding="5dp" />
+        android:gravity="center" />
+
+    <TextView
+        android:text="@string/male"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/user_sex"
+        android:layout_weight="1"
+        android:gravity="center" />
 
 </LinearLayout>
 

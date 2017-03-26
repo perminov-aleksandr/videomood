@@ -40,7 +40,7 @@ public class UserViewModel {
         this.id = user.id;
         this.firstName = user.firstName;
         this.lastName = user.lastName;
-        this.sex = user.sex;
+        this.sex = user.getSex();
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(user.getBirthDate());

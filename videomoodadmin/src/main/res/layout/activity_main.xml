@@ -48,7 +48,7 @@
             <TextView
                 style="@style/sideBlockHeader"
                 android:text="@string/headset"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
             <View
                 android:layout_width="fill_parent"
@@ -73,7 +73,7 @@
             <TextView
                 style="@style/sideBlockHeader"
                 android:text="@string/muse"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
             <View
                 android:layout_width="fill_parent"
@@ -94,9 +94,9 @@
 
         <ru.spbstu.videomoodadmin.HorseshoeView
             android:id="@+id/deviceInfo"
-            android:layout_width="150dp"
             android:layout_height="150dp"
-            android:layout_gravity="fill"
+            android:layout_width="150dp"
+            android:layout_gravity="center"
             android:padding="4dp" />
 
         <Button
@@ -114,7 +114,8 @@
         android:minHeight="100dp"
         android:minWidth="150dp"
         android:layout_gravity="fill"
-        android:background="@color/colorPrimary"/>
+        android:background="@color/colorPrimary"
+        android:contentDescription="@string/screenshot" />
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/plotView"

@@ -35,6 +35,8 @@ public class HorseshoeView extends SurfaceView {
             true,true,true,true,true
         };
         surfaceHolder = getHolder();
+        setZOrderOnTop(true);
+        surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
         surfaceHolder.addCallback(new SurfaceHolder.Callback(){
 
             @Override
@@ -47,15 +49,11 @@ public class HorseshoeView extends SurfaceView {
             @Override
             public void surfaceChanged(SurfaceHolder holder,
                                        int format, int width, int height) {
-
             }
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
             }});
-
-        setZOrderOnTop(true);    // necessary
-        surfaceHolder.setFormat(PixelFormat.TRANSPARENT);
     }
 
     private Boolean[] circles;
@@ -76,10 +74,6 @@ public class HorseshoeView extends SurfaceView {
                 canvas.drawCircle(coordinates[i*2], coordinates[i*2 + 1], radius, p);
             }
         }
-    }
-
-    public Boolean[] getCircles() {
-        return circles;
     }
 
     public void setCircles(Boolean[] circles) {

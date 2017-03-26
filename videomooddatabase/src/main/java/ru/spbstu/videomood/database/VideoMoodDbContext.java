@@ -23,7 +23,7 @@ public final class VideoMoodDbContext {
         ContentValues values = new ContentValues();
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_FIRSTNAME, user.firstName);
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_LASTNAME, user.lastName);
-        values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_SEX, user.sex);
+        values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_SEX, user.getSex());
         values.put(VideoMoodDataContract.UserEntry.COLUMN_NAME_BIRTHDATE, user.birthDateStr);
 
         long newUserId = db.insert(VideoMoodDataContract.UserEntry.TABLE_NAME, null, values);
@@ -80,7 +80,7 @@ public final class VideoMoodDbContext {
         user.firstName = cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.UserEntry.COLUMN_NAME_FIRSTNAME));
         user.lastName = cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.UserEntry.COLUMN_NAME_LASTNAME));
         user.birthDateStr = cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.UserEntry.COLUMN_NAME_BIRTHDATE));
-        user.sex = cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.UserEntry.COLUMN_NAME_SEX));
+        user.setSex(cursor.getString(cursor.getColumnIndexOrThrow(VideoMoodDataContract.UserEntry.COLUMN_NAME_SEX)));
         return user;
     }
 
@@ -127,6 +127,11 @@ public final class VideoMoodDbContext {
         db.delete(VideoMoodDataContract.UserEntry.TABLE_NAME, VideoMoodDataContract.UserEntry.COLUMN_NAME_ID + "=?", whereArgs);
 
         db.close();
+
+        List<Seance> userSeances = getSeances(id);
+        for (Seance userSeance : userSeances) {
+            removeSeance(userSeance.getId());
+        }
     }
 
     public Seance createSeance(@NonNull Seance seance) {

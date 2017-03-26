@@ -1,58 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="10dp">
-
+    android:padding="20dp">
 
     <TextView
         android:text="@string/seance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/header" />
+        android:theme="@style/header"
+        android:textSize="40sp" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <TextView
+                android:text="@string/date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="5dp"
+                android:textSize="20sp"/>
+
+            <TextView
+                android:text="@string/default_birthdate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="5dp"
+                android:textSize="30sp"
+                android:textColor="@color/colorPrimaryDark"
+                android:id="@+id/seance_card_date" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <TextView
+                android:text="@string/from"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="5dp"
+                android:textSize="20sp"/>
+
+            <TextView
+                android:text="@string/default_timefrom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="5dp"
+                android:textSize="30sp"
+                android:textColor="@color/colorPrimaryDark"
+                android:id="@+id/seance_card_from" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <TextView
+                android:text="@string/to"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="5dp"
+                android:textSize="20sp"/>
+
+            <TextView
+                android:text="@string/default_timeto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="5dp"
+                android:textSize="30sp"
+                android:textColor="@color/colorPrimaryDark"
+                android:id="@+id/seance_card_to" />
+        </LinearLayout>
+    </LinearLayout>
 
     <TextView
-        android:text="@string/date"
+        android:text="@string/data"
+        android:textSize="20sp"
+        android:paddingTop="5dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:text="@string/default_birthdate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/seance_card_date" />
-
-    <TextView
-        android:text="@string/from"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:text="@string/default_timefrom"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/seance_card_from" />
-
-    <TextView
-        android:text="@string/to"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:text="@string/default_timeto"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/seance_card_to" />
+        android:layout_height="wrap_content"/>
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/seance_dataBarChart"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
     </com.github.mikephil.charting.charts.BarChart>
-
-    <Button
-        android:id="@+id/seance_backButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
 
 </LinearLayout>

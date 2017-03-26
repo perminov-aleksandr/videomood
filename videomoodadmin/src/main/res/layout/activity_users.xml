@@ -10,7 +10,8 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:padding="10dp">
 
         <TextView
             android:text="@string/users"
@@ -18,12 +19,13 @@
             android:layout_height="wrap_content"
             android:id="@+id/textView"
             android:theme="@style/header"
-            android:padding="10dp" />
+            android:padding="5dp" />
 
         <ListView
             android:id="@+id/usersListView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
+            android:layout_height="0dp"
+            android:layout_weight="1">
         </ListView>
 
         <TextView
@@ -37,9 +39,9 @@
 
         <Button
             android:id="@+id/createUserBtn"
-            android:text="@string/createUser"
+            android:text="@string/create_user"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -118,7 +120,7 @@
                 android:text="@string/male"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/maleRadioButton"
+                android:id="@+id/users_create_sex_male"
                 android:layout_weight="1"
                 android:checked="true" />
 
@@ -126,15 +128,16 @@
                 android:text="@string/female"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/femaleRadioButton"
+                android:id="@+id/users_create_sex_female"
                 android:layout_weight="1" />
         </RadioGroup>
 
         <Button
             android:id="@+id/confirmCreateUserBtn"
-            android:text="@string/confirm"
+            android:text="@string/create_user"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:theme="@style/accentButton" />
 
         <Button
             android:text="@string/cancel"
@@ -144,99 +147,108 @@
 
     </LinearLayout>
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:orientation="vertical"
+    <ScrollView
+        android:id="@+id/usercard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="4dp"
-        android:id="@+id/usercard"
         android:layout_weight="1">
 
-        <TextView
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/user_card"
-            android:padding="5dp"
-            android:theme="@style/header" />
+            android:padding="10dp">
 
-        <TextView
-            android:text="@string/first_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="5dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/user_card"
+                android:theme="@style/header"
+                android:padding="5dp" />
 
-        <TextView
-            android:text="@string/defaultUser_firstname"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/usercard_firstname"
-            android:padding="5dp" />
+            <TextView
+                android:text="@string/first_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:theme="@style/cardLabel" />
 
-        <TextView
-            android:text="@string/last_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="5dp" />
+            <TextView
+                android:text="@string/defaultUser_firstname"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/usercard_firstname"
+                android:theme="@style/cardValue" />
 
-        <TextView
-            android:text="@string/defaultUser_lastname"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/usercard_lastname"
-            android:padding="5dp" />
+            <TextView
+                android:text="@string/last_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:theme="@style/cardLabel" />
 
-        <TextView
-            android:text="@string/birthdate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="5dp" />
+            <TextView
+                android:text="@string/defaultUser_lastname"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/usercard_lastname"
+                android:theme="@style/cardValue" />
 
-        <TextView
-            android:text="@string/default_birthdate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/usercard_birthdate"
-            android:padding="5dp" />
+            <TextView
+                android:text="@string/birthdate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:theme="@style/cardLabel" />
 
-        <TextView
-            android:text="@string/sex"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="5dp" />
+            <TextView
+                android:text="@string/default_birthdate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/usercard_birthdate"
+                android:theme="@style/cardValue" />
 
-        <TextView
-            android:text="@string/male"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/usercard_sex"
-            android:padding="5dp" />
+            <TextView
+                android:text="@string/sex"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:theme="@style/cardLabel" />
 
-        <TextView
-            android:text="@string/seances"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <TextView
+                android:text="@string/male"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/usercard_sex"
+                android:theme="@style/cardValue" />
 
-        <ListView
-            android:id="@+id/usercard_seances"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </ListView>
+            <TextView
+                android:text="@string/seances"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:theme="@style/cardLabel" />
 
-        <TextView
-            android:id="@+id/usercard_seances_nodata"
-            android:text="@string/no_seances"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:visibility="gone"
-            android:gravity="center" />
+            <ListView
+                android:id="@+id/usercard_seances"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:padding="5dp">
+            </ListView>
 
-        <Button
-            android:id="@+id/startSessionBtn"
-            android:text="@string/start_session"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/usercard_seances_nodata"
+                android:text="@string/no_seances"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:theme="@style/cardValue"
+                android:gravity="center" />
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/startSessionBtn"
+                android:text="@string/start_session"
+                android:theme="@style/accentButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

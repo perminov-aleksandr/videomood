@@ -215,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
             testDataPacket.setIsPanic(false);
             testDataPacket.setScreenshot(null);
             testDataPacket.setCurrentPosition(60);
+            testDataPacket.setMuseSensorsState(new Boolean[]{ true, true, true, true, true });
             dataPacket = testDataPacket;
         }
     }
@@ -570,7 +571,7 @@ public class MainActivity extends AppCompatActivity {
             videoPreview.setImageBitmap(bitmap);
         }
     }
-    
+
     boolean doubleBackToExitPressedOnce = false;
 
     @Override

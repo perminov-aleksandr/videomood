@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">VideoMood Admin</string>
+    <string name="app_name" translatable="false">VideoMood Admin</string>
     <string name="connect">Connect</string>
-    <string name="select_device_to_connect">Select Device to Connect</string>
+    <string name="select_device_to_connect">Select device to connect</string>
     <string name="none_paired">No devices paired</string>
     <string name="scanning">Scanning</string>
     <string name="none_found">No devices found</string>
@@ -12,11 +12,11 @@
     <string name="state_connecting">Connecting</string>
     <string name="state_not_connected">Not connected</string>
     <string name="state_unknown">Unknown</string>
-    <string name="defaultPercentFormatString">%d%%</string>
+    <string name="defaultPercentFormatString" translatable="false">%d%%</string>
     <string name="videoNotPlayed"><![CDATA[<Video Not Playing>]]></string>
     <string name="headset">Headset</string>
     <string name="headset_on">Headset On</string>
-    <string name="muse">Muse</string>
+    <string name="muse" translatable="false">Muse</string>
     <string name="muse_on">Muse On</string>
     <string name="previous">Previous</string>
     <string name="play">Play</string>
@@ -27,34 +27,33 @@
     <string name="warning">Warning</string>
     <string name="users">Users</string>
     <string name="createUser">Create user</string>
-    <string name="first_name">First Name</string>
-    <string name="last_name">Last Name</string>
+    <string name="first_name">First name</string>
+    <string name="last_name">Last name</string>
     <string name="confirm">Confirm</string>
     <string name="sex">Sex</string>
     <string name="cancel">Cancel</string>
     <string name="male">Male</string>
     <string name="birthdate">Birth date</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="seances">Seances</string>
     <string name="female">Female</string>
-    <string name="default_birthdate">01.01.1999</string>
-    <string name="user_card">User Card</string>
-    <string name="create_user">Create User</string>
+    <string name="default_birthdate" translatable="false">01.01.1999</string>
+    <string name="user_card">User card</string>
+    <string name="create_user">Create</string>
     <string name="no_seances">No seances</string>
     <string name="no_users">No users</string>
     <string name="user_create_error">Unable to create user</string>
     <string name="no_data">No items available</string>
-    <string name="start_session">Start Session</string>
+    <string name="start_session">Start seance</string>
     <string name="deleteUserDialogTittle">Delete?</string>
     <string name="deleteUserDialogMessage">Are you sure you want to delete user %s?</string>
-    <string name="finish_session">Finish Session</string>
+    <string name="finish_session">Finish seance</string>
     <string name="seance">Seance</string>
     <string name="date">Date</string>
     <string name="from">From</string>
-    <string name="default_timefrom">15:10</string>
+    <string name="default_timefrom" translatable="false">15:10</string>
     <string name="to">To</string>
-    <string name="default_timeto">15:58</string>
-    <string name="press_back_again_to_exit">Press Back again to exit</string>
+    <string name="default_timeto" translatable="false">15:58</string>
+    <string name="press_back_again_to_exit">Press BACK again to exit</string>
+    <string name="data">Data</string>
+    <string name="screenshot">Screenshot</string>
 </resources>

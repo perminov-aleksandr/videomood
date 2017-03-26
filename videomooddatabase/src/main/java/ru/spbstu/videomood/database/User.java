@@ -28,7 +28,9 @@ public class User {
         return birthDate;
     }
 
-    private String getBirthDateStr() {
+    public String getBirthDateFormatted() {
+        if (birthDate == null)
+            getBirthDate();
         return dateFormat.format(birthDate);
     }
 
@@ -36,7 +38,7 @@ public class User {
         this.birthDate = birthDate;
     }
 
-    public final DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+    public final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     private void setBirthDate(String dateToParse) {
         try {
@@ -46,5 +48,13 @@ public class User {
         }
     }
 
-    public String sex;
+    private String sex;
+
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
 }

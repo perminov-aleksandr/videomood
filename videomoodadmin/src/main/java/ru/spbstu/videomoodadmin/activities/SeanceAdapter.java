@@ -7,6 +7,11 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomoodadmin.R;
 
@@ -41,10 +46,18 @@ public class SeanceAdapter extends ArrayAdapter<Seance> {
 
         Seance seance = getItem(position);
         if (seance != null) {
-            //todo: extract times and dates
-            viewHolder.dateTextView.setText(seance.getDateFrom());
-            viewHolder.fromTextView.setText(seance.getDateFrom());
-            viewHolder.toTextView.setText(seance.getDateTo());
+            try {
+                Date dateFrom = Seance.dateFormat.parse(seance.getDateFrom());
+                viewHolder.dateTextView.setText(new SimpleDateFormat("dd.MM.yyyy").format(dateFrom));
+
+                DateFormat timeFormat = new SimpleDateFormat("hh:mm");
+                viewHolder.fromTextView.setText(String.format("%s - ", timeFormat.format(dateFrom)));
+
+                Date dateTo = Seance.dateFormat.parse(seance.getDateTo());
+                viewHolder.toTextView.setText(timeFormat.format(dateTo));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
 
         return convertView;

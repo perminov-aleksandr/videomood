@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="fa_previous">&#xf049;</string>
-    <string name="fa_next">&#xf050;</string>
-    <string name="fa_play">&#xf04b;</string>
-    <string name="fa_pause">&#xf04c;</string>
-    <string name="fa_user">&#xf2be;</string>
-    <string name="fa_select_video">&#xf07c;</string>
-    <string name="fa_battery_full">&#xf240;</string>
-    <string name="fa_battery_half">&#xf242;</string>
-    <string name="fa_battery_empty">&#xf244;</string>
+    <string name="fa_previous" translatable="false">&#xf049;</string>
+    <string name="fa_next" translatable="false">&#xf050;</string>
+    <string name="fa_play" translatable="false">&#xf04b;</string>
+    <string name="fa_pause" translatable="false">&#xf04c;</string>
+    <string name="fa_user" translatable="false">&#xf2be;</string>
+    <string name="fa_select_video" translatable="false">&#xf07c;</string>
+    <string name="fa_battery_full" translatable="false">&#xf240;</string>
+    <string name="fa_battery_half" translatable="false">&#xf242;</string>
+    <string name="fa_battery_empty" translatable="false">&#xf244;</string>
 </resources>

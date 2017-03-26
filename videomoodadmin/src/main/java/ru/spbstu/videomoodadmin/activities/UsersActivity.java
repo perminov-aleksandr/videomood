@@ -17,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import ru.spbstu.videomood.database.Seance;
+import ru.spbstu.videomood.database.Sex;
 import ru.spbstu.videomood.database.User;
 import ru.spbstu.videomood.database.VideoMoodDbContext;
 import ru.spbstu.videomoodadmin.AdminConst;
@@ -101,8 +102,13 @@ public class UsersActivity extends AppCompatActivity {
         userToCreate.firstName = firstName;
         userToCreate.lastName = lastName;
         userToCreate.birthDateStr = birthdate;
-        RadioButton selectedSex = (RadioButton)sexRadioGroup.getChildAt(0);
-        userToCreate.sex = selectedSex.getText().toString();
+
+        String selectedSexStr;
+        if (sexRadioGroup.getCheckedRadioButtonId() == R.id.users_create_sex_male)
+            selectedSexStr = Sex.toString(Sex.MALE);
+        else
+            selectedSexStr = Sex.toString(Sex.FEMALE);
+        userToCreate.setSex(selectedSexStr);
 
         //try to create it with dbContext
         dbContext.createUser(userToCreate);
@@ -159,6 +165,7 @@ public class UsersActivity extends AppCompatActivity {
                 adb.setPositiveButton("Ok", new AlertDialog.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         dbContext.removeUser(userToRemove.id);
+                        userCard.setVisibility(View.GONE);
                         userAdapter.remove(userToRemove);
                         userAdapter.notifyDataSetChanged();
                     }});
@@ -176,7 +183,7 @@ public class UsersActivity extends AppCompatActivity {
         TextView birthdate = (TextView) findViewById(R.id.usercard_birthdate);
         birthdate.setText(user.birthDateStr);
         TextView sex = (TextView) findViewById(R.id.usercard_sex);
-        sex.setText(user.sex);
+        sex.setText(Sex.get(user.getSex()) == Sex.FEMALE ? R.string.female : R.string.male );
 
         ListView userSeancesListView = (ListView) findViewById(R.id.usercard_seances);
         final SeanceAdapter seancesAdapter = new SeanceAdapter(this, R.layout.seance_item);
