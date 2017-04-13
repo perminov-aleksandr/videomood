@@ -34,8 +34,7 @@
 			android:id="@+id/muses_spinner"
 			android:layout_width="match_parent"
 			android:layout_height="60dp"
-			android:popupTheme="@android:style/TextAppearance.Material.Widget.PopupMenu.Large"
-			app:popupTheme="@android:style/Widget.Material.PopupMenu" />
+			android:popupTheme="@android:style/Widget.Material.PopupMenu" />
 
 		<Button
 			android:id="@+id/refresh"

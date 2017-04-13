@@ -19,6 +19,10 @@ public class Seance{
 
     private int userId;
 
+    private String comment;
+
+    private String action;
+
     private String dataStr;
 
     public String getDataStr() {
@@ -75,5 +79,21 @@ public class Seance{
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
     }
 }

@@ -1,6 +1,7 @@
 package ru.spbstu.videomood;
 
 import android.annotation.TargetApi;
+import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.os.Environment;
 
@@ -50,9 +51,13 @@ public class ContentProvider {
     }
 
     public ArrayList<VideoItem> getContentList() {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         ArrayList<VideoItem> result = new ArrayList<>(videos.length);
         for (int i = 0; i < videos.length; i++) {
-            result.add(new VideoItem(i, videos[i].getName(), ""));
+            retriever.setDataSource(videos[i].getPath());
+            String timeStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            long time = Long.parseLong(timeStr) / 1000;
+            result.add(new VideoItem(i, videos[i].getName(), (int) time));
         }
         return result;
     }

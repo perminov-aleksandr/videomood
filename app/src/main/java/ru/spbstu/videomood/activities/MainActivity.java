@@ -74,6 +74,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
         // We need to set the context on MuseManagerAndroid before we can do anything.
         // This must come before other LibMuse API calls as it also loads the library.
@@ -153,8 +154,8 @@ public class MainActivity extends BaseActivity {
      */
     private void ensurePermissions() {
 
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // We don't have the ACCESS_COARSE_LOCATION permission so create the dialogs asking
             // the user to grant us the permission.
 
@@ -163,7 +164,7 @@ public class MainActivity extends BaseActivity {
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.dismiss();
                             ActivityCompat.requestPermissions(MainActivity.this,
-                                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
                                     0);
                         }
                     };
@@ -218,8 +219,6 @@ public class MainActivity extends BaseActivity {
      * Initializes the UI of the example application.
      */
     private void initUI() {
-        setContentView(R.layout.activity_main);
-
         spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
         musesSpinner = (Spinner) findViewById(R.id.muses_spinner);
         musesSpinner.setAdapter(spinnerAdapter);
