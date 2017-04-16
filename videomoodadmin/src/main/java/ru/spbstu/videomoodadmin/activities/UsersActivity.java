@@ -15,30 +15,40 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.j256.ormlite.dao.Dao;
+
+import java.sql.SQLException;
+import java.util.Collection;
+
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.Sex;
 import ru.spbstu.videomood.database.User;
-import ru.spbstu.videomood.database.VideoMoodDbContext;
+import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
 import ru.spbstu.videomoodadmin.SeanceAdapter;
 import ru.spbstu.videomoodadmin.UserAdapter;
 
-public class UsersActivity extends AppCompatActivity {
+public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
-    private VideoMoodDbContext dbContext;
     private View createUserForm;
     private View userCard;
     private RadioGroup sexRadioGroup;
     private UserAdapter userAdapter;
+    private Dao<User, Integer> userDao;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_users);
+        try {
+            userDao = getHelper().getUserDao();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-        dbContext = new VideoMoodDbContext(this);
+        setContentView(R.layout.activity_users);
 
         Button createButton = (Button) findViewById(R.id.createUserBtn);
         createButton.setOnClickListener(new View.OnClickListener() {
@@ -109,10 +119,14 @@ public class UsersActivity extends AppCompatActivity {
             selectedSexStr = Sex.toString(Sex.MALE);
         else
             selectedSexStr = Sex.toString(Sex.FEMALE);
-        userToCreate.setSex(selectedSexStr);
+        userToCreate.sex = selectedSexStr;
 
         //try to create it with dbContext
-        dbContext.createUser(userToCreate);
+        try {
+            userDao.create(userToCreate);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         if (userToCreate.id != -1)
             userAdapter.add(userToCreate);
@@ -140,7 +154,11 @@ public class UsersActivity extends AppCompatActivity {
         usersListView = (ListView) findViewById(R.id.usersListView);
         userAdapter = new UserAdapter(this, R.layout.user_item);
         usersListView.setAdapter(userAdapter);
-        userAdapter.addAll(dbContext.getUsers());
+        try {
+            userAdapter.addAll(userDao.queryForAll());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -165,7 +183,11 @@ public class UsersActivity extends AppCompatActivity {
                 adb.setNegativeButton("Cancel", null);
                 adb.setPositiveButton("Ok", new AlertDialog.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        dbContext.removeUser(userToRemove.id);
+                        try {
+                            userDao.delete(userToRemove);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
                         userCard.setVisibility(View.GONE);
                         userAdapter.remove(userToRemove);
                         userAdapter.notifyDataSetChanged();
@@ -184,7 +206,7 @@ public class UsersActivity extends AppCompatActivity {
         TextView birthdate = (TextView) findViewById(R.id.usercard_birthdate);
         birthdate.setText(user.birthDateStr);
         TextView sex = (TextView) findViewById(R.id.usercard_sex);
-        sex.setText(Sex.get(user.getSex()) == Sex.FEMALE ? R.string.female : R.string.male );
+        sex.setText(Sex.get(user.sex) == Sex.FEMALE ? R.string.female : R.string.male );
 
         ListView userSeancesListView = (ListView) findViewById(R.id.usercard_seances);
         final SeanceAdapter seancesAdapter = new SeanceAdapter(this, R.layout.seance_item);
@@ -198,7 +220,11 @@ public class UsersActivity extends AppCompatActivity {
             }
         });
 
-        seancesAdapter.addAll(dbContext.getSeances(user.id));
+        try {
+            seancesAdapter.addAll(getHelper().getDao(Seance.class).queryForAll());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private void openSeanceCard(Seance seance) {

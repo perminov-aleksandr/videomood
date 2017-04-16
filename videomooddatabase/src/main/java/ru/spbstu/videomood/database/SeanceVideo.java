@@ -1,14 +1,23 @@
 package ru.spbstu.videomood.database;
 
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
+@DatabaseTable(tableName = "seancevideos")
 public class SeanceVideo {
+    @DatabaseField(generatedId = true)
     private int id;
 
-    private int videoId;
+    @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+    public Video video;
 
-    private int seanceId;
+    @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+    public Seance seance;
 
+    @DatabaseField(canBeNull = false)
     private int startTimeSec;
 
+    @DatabaseField(canBeNull = false)
     private int endTimeSec;
 
     public int getId() {
@@ -17,22 +26,6 @@ public class SeanceVideo {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public int getVideoId() {
-        return videoId;
-    }
-
-    public void setVideoId(int videoId) {
-        this.videoId = videoId;
-    }
-
-    public int getSeanceId() {
-        return seanceId;
-    }
-
-    public void setSeanceId(int seanceId) {
-        this.seanceId = seanceId;
     }
 
     public int getStartTimeSec() {

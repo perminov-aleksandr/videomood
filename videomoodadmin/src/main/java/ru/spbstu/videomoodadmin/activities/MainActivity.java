@@ -33,8 +33,11 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
+import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.j256.ormlite.dao.Dao;
 
 import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -50,7 +53,7 @@ import ru.spbstu.videomood.btservice.VideoItem;
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.SeanceDataEntry;
 import ru.spbstu.videomood.database.User;
-import ru.spbstu.videomood.database.VideoMoodDbContext;
+import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.HorseshoeView;
 import ru.spbstu.videomoodadmin.R;
@@ -59,7 +62,7 @@ import ru.spbstu.videomoodadmin.UserViewModel;
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 import static ru.spbstu.videomoodadmin.R.color.warningColor;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private final boolean IS_DEBUG = false;
 
@@ -190,14 +193,19 @@ public class MainActivity extends AppCompatActivity {
 
     private UserViewModel user;
 
-    private VideoMoodDbContext dbContext;
+    private Dao<User, Integer> userDao;
+    private Dao<Seance, Integer> seanceDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        dbContext = new VideoMoodDbContext(this);
+        try {
+            userDao = getHelper().getUserDao();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         setupUI();
 
@@ -226,7 +234,12 @@ public class MainActivity extends AppCompatActivity {
     private void setupUser() {
         Intent prevIntent = this.getIntent();
         int userId = prevIntent.getIntExtra(AdminConst.EXTRA_USER_ID, -1);
-        User user = dbContext.getUser(userId);
+        User user = null;
+        try {
+            user = userDao.queryForId(userId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         this.user = new UserViewModel(user);
         TextView userFirstName = (TextView) findViewById(R.id.main_user_firstname);
         userFirstName.setText(this.user.firstName);
@@ -307,7 +320,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void finishSeance() {
         Seance seance = new Seance();
-        seance.setUserId(user.id);
+        try {
+            seance.user = userDao.queryForId(user.id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            //todo: process
+        }
         seance.setDateFrom(user.getDateStart());
         String dateTo = user.getDateFinish();
         if (dateTo == null) {
@@ -316,7 +334,11 @@ public class MainActivity extends AppCompatActivity {
         }
         seance.setDateTo(dateTo);
         seance.setData(user.data);
-        dbContext.createSeance(seance);
+        try {
+            seanceDao.create(seance);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         user = null;
     }
 

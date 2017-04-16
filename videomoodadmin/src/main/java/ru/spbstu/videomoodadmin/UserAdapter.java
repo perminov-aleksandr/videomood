@@ -50,7 +50,7 @@ public class UserAdapter extends ArrayAdapter<User> {
         if (user != null) {
             viewHolder.firstNameTextView.setText(user.firstName);
             viewHolder.lastNameTextView.setText(user.lastName);
-            viewHolder.sexTextView.setText(Sex.get(user.getSex()) == Sex.FEMALE ? R.string.female : R.string.male);
+            viewHolder.sexTextView.setText(Sex.get(user.sex) == Sex.FEMALE ? R.string.female : R.string.male);
             viewHolder.birthdateTextView.setText(user.getBirthDateFormatted());
         }
 

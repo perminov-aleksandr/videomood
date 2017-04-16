@@ -1,22 +1,40 @@
 package ru.spbstu.videomood.database;
 
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
+@DatabaseTable(tableName = "videotags")
 public class VideoTag {
-    private int videoId;
-    private int tagId;
+    @DatabaseField(generatedId = true)
+    private int id;
 
-    public int getVideoId() {
-        return videoId;
+    @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+    private Video video;
+
+    @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+    private Tag tag;
+
+    public int getId() {
+        return id;
     }
 
-    public void setVideoId(int videoId) {
-        this.videoId = videoId;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public int getTagId() {
-        return tagId;
+    public Video getVideo() {
+        return video;
     }
 
-    public void setTagId(int tagId) {
-        this.tagId = tagId;
+    public void setVideo(Video video) {
+        this.video = video;
+    }
+
+    public Tag getTag() {
+        return tag;
+    }
+
+    public void setTag(Tag tag) {
+        this.tag = tag;
     }
 }

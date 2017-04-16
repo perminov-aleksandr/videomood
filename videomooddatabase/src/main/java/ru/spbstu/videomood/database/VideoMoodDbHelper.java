@@ -3,52 +3,75 @@ package ru.spbstu.videomood.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
-public class VideoMoodDbHelper extends SQLiteOpenHelper {
-    public static final int DATABASE_VERSION = 3;
-    public static final String DATABASE_NAME = "VideoMood.db";
+import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
 
-    private static final String TEXT_TYPE = " TEXT";
-    private static final String COMMA_SEP = ",";
-    private static final String SQL_CREATE_USERS =
-            "CREATE TABLE " + VideoMoodDataContract.UserEntry.TABLE_NAME + " (" +
-                    VideoMoodDataContract.UserEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    VideoMoodDataContract.UserEntry.COLUMN_NAME_FIRSTNAME + TEXT_TYPE + COMMA_SEP +
-                    VideoMoodDataContract.UserEntry.COLUMN_NAME_LASTNAME + TEXT_TYPE + COMMA_SEP +
-                    VideoMoodDataContract.UserEntry.COLUMN_NAME_BIRTHDATE + TEXT_TYPE + COMMA_SEP +
-                    VideoMoodDataContract.UserEntry.COLUMN_NAME_SEX + TEXT_TYPE +
-            " )";
+import java.sql.SQLException;
 
-    private static final String SQL_CREATE_SEANCES =
-            "CREATE TABLE " + VideoMoodDataContract.SessionEntry.TABLE_NAME + " (" +
-                    VideoMoodDataContract.SessionEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID + TEXT_TYPE + COMMA_SEP +
-                    VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATESTART + TEXT_TYPE + COMMA_SEP +
-                    VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATEFINISH + TEXT_TYPE + COMMA_SEP +
-                    VideoMoodDataContract.SessionEntry.COLUMN_NAME_DATA + TEXT_TYPE + COMMA_SEP +
-                    "FOREIGN KEY(" + VideoMoodDataContract.SessionEntry.COLUMN_NAME_USER_ID + ") REFERENCES "
-                    + VideoMoodDataContract.UserEntry.TABLE_NAME + "(" + VideoMoodDataContract.UserEntry.COLUMN_NAME_ID + ")" +
-                    " )";
+public class VideoMoodDbHelper extends OrmLiteSqliteOpenHelper {
 
-    private static final String SQL_DELETE_USERS =
-            "DROP TABLE IF EXISTS " + VideoMoodDataContract.UserEntry.TABLE_NAME;
-    private static final String SQL_DELETE_SEANCES =
-            "DROP TABLE IF EXISTS " + VideoMoodDataContract.SessionEntry.TABLE_NAME;
+    private static final String DATABASE_NAME = "videomood.db";
 
+    private static final int DATABASE_VERSION = 1;
 
     public VideoMoodDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL(SQL_CREATE_USERS);
-        db.execSQL(SQL_CREATE_SEANCES);
+
+    private static final Class[] entityClasses = new Class[]{
+        AgeCategory.class,
+        Tag.class,
+        User.class,
+        Video.class,
+        VideoTag.class,
+        VideoAgeCategory.class,
+        Seance.class,
+        SeanceVideo.class
+    };
+
+    @Override
+    public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
+        try {
+            Log.i(VideoMoodDbHelper.class.getName(), "onCreate");
+            for (int i = 0; i < entityClasses.length; i++) {
+                Class entityClass = entityClasses[i];
+                TableUtils.createTable(connectionSource, entityClass);
+            }
+        } catch (SQLException e) {
+            Log.e(VideoMoodDbHelper.class.getName(), "Can't create database", e);
+            throw new RuntimeException(e);
+        }
     }
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL(SQL_DELETE_USERS);
-        db.execSQL(SQL_DELETE_SEANCES);
-        onCreate(db);
+
+    @Override
+    public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion) {
+        try {
+            Log.i(VideoMoodDbHelper.class.getName(), "onUpgrade");
+            for (int i = 0; i < entityClasses.length; i++) {
+                TableUtils.dropTable(connectionSource, entityClasses[i], true);
+            }
+            // after we drop the old databases, we create the new ones
+            onCreate(database, connectionSource);
+        } catch (SQLException e) {
+            Log.e(VideoMoodDbHelper.class.getName(), "Can't drop databases", e);
+            throw new RuntimeException(e);
+        }
     }
-    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        onUpgrade(db, oldVersion, newVersion);
+
+    private Dao<User, Integer> userDao = null;
+
+    /**
+     * Returns the Database Access Object (DAO) for our SimpleData class. It will create it or just give the cached
+     * value.
+     */
+    public Dao<User, Integer> getUserDao() throws SQLException {
+        if (userDao == null) {
+            userDao = getDao(User.class);
+        }
+        return userDao;
     }
 }

@@ -1,6 +1,10 @@
 package ru.spbstu.videomood.database;
 
 import com.google.gson.Gson;
+import com.j256.ormlite.dao.ForeignCollection;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
+import com.j256.ormlite.table.DatabaseTable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -8,21 +12,32 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Seance{
+@DatabaseTable(tableName = "seances")
+public class Seance {
+    @DatabaseField(generatedId = true)
     private int id;
+
+    @DatabaseField(canBeNull = false, foreign = true, foreignAutoRefresh = true)
+    public User user;
 
     public static final DateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd'T'HH:mm:ss");
 
+    @DatabaseField
     private String dateFrom;
 
+    @DatabaseField
     private String dateTo;
 
-    private int userId;
-
+    @DatabaseField
     private String comment;
 
+    @DatabaseField
     private String action;
 
+    @ForeignCollectionField
+    private ForeignCollection<SeanceVideo> seanceVideos;
+
+    @DatabaseField
     private String dataStr;
 
     public String getDataStr() {
@@ -65,14 +80,6 @@ public class Seance{
         this.dateTo = dateTo;
     }
 
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
     public int getId() {
         return id;
     }
@@ -95,5 +102,13 @@ public class Seance{
 
     public void setAction(String action) {
         this.action = action;
+    }
+
+    public ForeignCollection<SeanceVideo> getSeanceVideos() {
+        return seanceVideos;
+    }
+
+    public void setSeanceVideos(ForeignCollection<SeanceVideo> seanceVideos) {
+        this.seanceVideos = seanceVideos;
     }
 }
