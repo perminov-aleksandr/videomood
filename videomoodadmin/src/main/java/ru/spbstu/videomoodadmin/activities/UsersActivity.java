@@ -121,17 +121,16 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             selectedSexStr = Sex.toString(Sex.FEMALE);
         userToCreate.sex = selectedSexStr;
 
-        //try to create it with dbContext
         try {
-            userDao.create(userToCreate);
-        } catch (SQLException e) {
+            if (userDao.create(userToCreate) == 0)
+                throw new Exception("No user created");
+            if (userToCreate.id != -1)
+                userAdapter.add(userToCreate);
+            else
+                throw new Exception("No user created");
+        } catch (Exception e) {
             e.printStackTrace();
-        }
-
-        if (userToCreate.id != -1)
-            userAdapter.add(userToCreate);
-        else {
-            Toast.makeText(this, R.string.user_create_error, Toast.LENGTH_LONG);
+            Toast.makeText(UsersActivity.this, R.string.user_create_error, Toast.LENGTH_LONG);
         }
     }
 
@@ -230,14 +229,6 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private void openSeanceCard(Seance seance) {
         Intent intent = new Intent(this, SeanceActivity.class);
         intent.putExtra(AdminConst.EXTRA_SEANCE_ID, seance.getId());
-        intent.putExtra(AdminConst.EXTRA_SEANCE_DATEFROM, seance.getDateFrom());
-        intent.putExtra(AdminConst.EXTRA_SEANCE_DATETO, seance.getDateTo());
-        intent.putExtra(AdminConst.EXTRA_SEANCE_DATA, seance.getDataStr());
         startActivityForResult(intent, RESULT_OK);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 }

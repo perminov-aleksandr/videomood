@@ -5,27 +5,32 @@
     android:padding="10dp">
 
     <TextView
-        android:text="@string/default_birthdate"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
         android:id="@+id/seanceitem_date"
-        android:layout_weight="1"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
         android:padding="5dp"
-        android:gravity="center" />
+        android:text="@string/default_birthdate" />
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
         android:id="@+id/seanceitem_from"
-        android:layout_weight="1"
-        android:gravity="right|center_vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
         android:text="@string/default_timefrom" />
 
     <TextView
-        android:text="@string/default_timeto"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
         android:id="@+id/seanceitem_to"
-        android:layout_weight="1"
-        android:gravity="left|center_vertical" />
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/default_timeto" />
+
+    <TextView
+        android:text="@string/default_action"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:id="@+id/seanceitem_action"
+        android:padding="5dp"
+        android:gravity="center" />
 </LinearLayout>

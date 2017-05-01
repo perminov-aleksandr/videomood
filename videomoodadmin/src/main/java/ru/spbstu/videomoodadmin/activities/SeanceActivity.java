@@ -3,6 +3,9 @@ package ru.spbstu.videomoodadmin.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -16,7 +19,10 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.j256.ormlite.dao.Dao;
 
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -26,12 +32,22 @@ import java.util.List;
 
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.SeanceDataEntry;
+import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
 
-public class SeanceActivity extends Activity {
+public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
+
+    private EditText actionEditor;
+    private TextView actionTv;
+    private EditText commentEditor;
+    private TextView commentTv;
+
+    private Button editButton;
 
     private Seance seance;
+
+    private Dao<Seance, Integer> seanceDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,15 +56,13 @@ public class SeanceActivity extends Activity {
 
         Intent prevIntent = getIntent();
         int seanceId = prevIntent.getIntExtra(AdminConst.EXTRA_SEANCE_ID, -1);
-        String seanceDataStr = prevIntent.getStringExtra(AdminConst.EXTRA_SEANCE_DATA);
-        String seanceDateFrom = prevIntent.getStringExtra(AdminConst.EXTRA_SEANCE_DATEFROM);
-        String seanceDateTo = prevIntent.getStringExtra(AdminConst.EXTRA_SEANCE_DATETO);
 
-        seance = new Seance();
-        seance.setId(seanceId);
-        seance.setDateFrom(seanceDateFrom);
-        seance.setDateTo(seanceDateTo);
-        seance.setData(seanceDataStr);
+        try {
+            seanceDao = getHelper().getDao(Seance.class);
+            seance = seanceDao.queryForId(seanceId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         try {
             TextView dateTv = (TextView) findViewById(R.id.seance_card_date);
@@ -62,11 +76,27 @@ public class SeanceActivity extends Activity {
             TextView to = (TextView) findViewById(R.id.seance_card_to);
             Date dateTo = Seance.dateFormat.parse(seance.getDateTo());
             to.setText(timeFormat.format(dateTo));
+
+            actionEditor = (EditText) findViewById(R.id.seance_card_action_edit);
+            actionTv = (TextView) findViewById(R.id.seance_card_action);
+            actionTv.setText(seance.getAction());
+
+            commentEditor = (EditText) findViewById(R.id.seance_card_comment_edit);
+            commentTv = (TextView) findViewById(R.id.seance_card_comment);
+            commentTv.setText(seance.getComment());
         } catch (ParseException e) {
             e.printStackTrace();
         }
 
         initChart();
+
+        editButton = (Button) findViewById(R.id.seance_card_editBtn);
+        editButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                edit();
+            }
+        });
     }
 
     @Override
@@ -81,13 +111,15 @@ public class SeanceActivity extends Activity {
         List<BarEntry> alphaEntries = new ArrayList<>();
         List<BarEntry> betaEntries = new ArrayList<>();
         int time = 0;
-        for (SeanceDataEntry seanceDataEntry : seance.getData()) {
-            BarEntry barEntry = new BarEntry(time++, seanceDataEntry.betaValue);
-            if (seanceDataEntry.isPanic)
-                betaEntries.add(barEntry);
-            else
-                alphaEntries.add(barEntry);
-        }
+        List<SeanceDataEntry> seanceData = seance.getData();
+        if (seanceData != null && !seanceData.isEmpty())
+            for (SeanceDataEntry seanceDataEntry : seanceData) {
+                BarEntry barEntry = new BarEntry(time++, seanceDataEntry.betaValue);
+                if (seanceDataEntry.isPanic)
+                    betaEntries.add(barEntry);
+                else
+                    alphaEntries.add(barEntry);
+            }
 
         BarDataSet alphaSet = new BarDataSet(alphaEntries, getString(R.string.calm));
         alphaSet.setColor(getResources().getColor(R.color.calmColor));
@@ -124,5 +156,48 @@ public class SeanceActivity extends Activity {
         seanceBarChart.setDrawGridBackground(false); //no grid
         seanceBarChart.setDescription(null); //no description
         seanceBarChart.setBorderWidth(0f);
+    }
+
+    private boolean isEditMode = false;
+
+    private void edit() {
+        if (isEditMode)
+            saveChanges();
+        isEditMode = !isEditMode;
+        toggleEditBoxes();
+    }
+
+    private void saveChanges() {
+        seance.setAction(actionEditor.getText().toString());
+        seance.setComment(commentEditor.getText().toString());
+
+        try {
+            seanceDao.update(seance);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void toggleEditBoxes() {
+        editButton.setText(isEditMode ? R.string.save : R.string.edit);
+
+        if (isEditMode) {
+            actionTv.setVisibility(View.GONE);
+            actionEditor.setText(seance.getAction());
+            actionEditor.setVisibility(View.VISIBLE);
+
+            commentTv.setVisibility(View.GONE);
+            commentEditor.setText(seance.getComment());
+            commentEditor.setVisibility(View.VISIBLE);
+        }
+        else {
+            actionEditor.setVisibility(View.GONE);
+            actionTv.setText(seance.getAction());
+            actionTv.setVisibility(View.VISIBLE);
+
+            commentEditor.setVisibility(View.GONE);
+            commentTv.setText(seance.getComment());
+            commentTv.setVisibility(View.VISIBLE);
+        }
     }
 }

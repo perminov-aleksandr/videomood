@@ -1,7 +1,5 @@
 package ru.spbstu.videomoodadmin;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -18,12 +16,12 @@ public class UserViewModel {
     public String sex;
     public int age;
 
-    private String dateStart = null;
-    public void setDateStart(Date time) {
-        this.dateStart = Seance.dateFormat.format(time);
+    private String seanceDateStart = null;
+    public void setSeanceDateStart(Date time) {
+        this.seanceDateStart = Seance.dateFormat.format(time);
     }
-    public String getDateStart() {
-        return dateStart;
+    public String getSeanceDateStart() {
+        return seanceDateStart;
     }
 
     private String dateFinish = null;
@@ -34,7 +32,7 @@ public class UserViewModel {
         return dateFinish;
     }
 
-    public List<SeanceDataEntry> data = new ArrayList<>();
+    public List<SeanceDataEntry> seanceData = new ArrayList<>();
 
     public UserViewModel(User user) {
         this.id = user.id;
@@ -48,6 +46,6 @@ public class UserViewModel {
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         this.age = currentYear - birthYear;
 
-        this.dateStart = Seance.dateFormat.format(Calendar.getInstance().getTime());
+        this.seanceDateStart = Seance.dateFormat.format(Calendar.getInstance().getTime());
     }
 }

@@ -1,44 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
-    android:layout_height="wrap_content"
     android:layout_width="match_parent"
-    android:padding="10dp">
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:baselineAligned="false">
 
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/user_firstname"
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:padding="5dp"
-        android:text="@string/defaultUser_firstname"
-        android:gravity="right|center" />
+        android:gravity="center"
+        android:orientation="horizontal">
 
-    <TextView
-            android:text="@string/defaultUser_lastname"
+        <TextView
+            android:id="@+id/user_firstname"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:text="@string/defaultUser_firstname" />
+
+        <TextView
             android:id="@+id/user_lastname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:text="@string/defaultUser_lastname" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/user_birthdate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:padding="5dp"
-        android:gravity="left|center" />
+            android:text="@string/default_birthdate" />
 
-    <TextView
-        android:text="@string/default_birthdate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/user_birthdate"
-        android:layout_weight="1"
-        android:gravity="center" />
+        <TextView
+            android:id="@+id/user_sex"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:text="@string/male" />
 
-    <TextView
-        android:text="@string/male"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/user_sex"
-        android:layout_weight="1"
-        android:gravity="center" />
+    </LinearLayout>
 
 </LinearLayout>
 

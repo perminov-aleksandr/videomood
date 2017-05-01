@@ -1,18 +1,10 @@
 package ru.spbstu.videomood;
 
-import android.annotation.TargetApi;
 import android.media.MediaMetadataRetriever;
-import android.os.Build;
 import android.os.Environment;
 
 import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 import ru.spbstu.videomood.btservice.VideoItem;
 
@@ -20,13 +12,15 @@ public class ContentProvider {
 
     private File[] videos;
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public ContentProvider() throws Exception {
+        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
+            throw new Exception("External storage not available");
+
         File videoDirectory = new File(Environment.getExternalStorageDirectory(), "Video");
 
         videos = videoDirectory.listFiles();
 
-        if (videos.length <= 0)
+        if (videos == null || videos.length == 0)
             throw new Exception(String.format("video directory \"%s\" is empty", videoDirectory));
     }
 

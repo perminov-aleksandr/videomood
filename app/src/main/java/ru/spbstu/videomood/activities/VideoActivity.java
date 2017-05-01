@@ -38,7 +38,6 @@ import ru.spbstu.videomood.AdminDeviceMessageHandler;
 import ru.spbstu.videomood.Const;
 import ru.spbstu.videomood.ContentProvider;
 import ru.spbstu.videomood.R;
-import ru.spbstu.videomood.User;
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.ControlPacket;
@@ -282,7 +281,7 @@ public class VideoActivity extends MuseActivity {
             currentVideoUri = Uri.fromFile(videoFile);
             dataPacket.setVideoName(videoFile.getName());
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage(), e);
             displayErrorDialog();
             return;
         }
@@ -312,7 +311,7 @@ public class VideoActivity extends MuseActivity {
     private BluetoothService mBtService = null;
 
     private void setupBtService() {
-        mBtService = new BluetoothService(this, mAdminDeviceMessageHandler);
+        mBtService = new BluetoothService(mAdminDeviceMessageHandler);
     }
 
     private final DataPacket dataPacket = new DataPacket();
@@ -620,7 +619,7 @@ public class VideoActivity extends MuseActivity {
         if (mBtService != null) {
             // Only if the state is STATE_NONE, do we know that we haven't started already
             if (mBtService.getState() == BluetoothService.STATE_NONE) {
-                // Start the Bluetooth chat services
+                // Start the Bluetooth service
                 mBtService.start();
             }
         }

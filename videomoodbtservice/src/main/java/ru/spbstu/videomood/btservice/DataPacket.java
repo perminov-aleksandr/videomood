@@ -53,8 +53,6 @@ public class DataPacket extends Packet {
 
     private ArrayList<VideoItem> videoList;
 
-    private String screenshot;
-
     public Boolean getMuseState() {
         return museState;
     }
@@ -146,18 +144,6 @@ public class DataPacket extends Packet {
 
     public void setIsPanic(boolean panic) {
         isPanic = panic;
-    }
-
-    public void setScreenshot(byte[] screenshot) {
-        if (screenshot != null)
-            this.screenshot = Base64.encodeToString(screenshot, Base64.DEFAULT);
-    }
-
-    public byte[] getScreenshot() {
-        if (this.screenshot != null)
-            return Base64.decode(this.screenshot, Base64.DEFAULT);
-        else
-            return null;
     }
 
     private static final Gson gson = new GsonBuilder().setLenient().create();

@@ -1,21 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<LinearLayout
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="20dp">
 
-    <TextView
-        android:text="@string/seance"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/header"
-        android:textSize="40sp" />
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:padding="5dp"
+            android:text="@string/seance"
+            android:textSize="40sp"
+            style="@style/header" />
+
+        <Button
+            android:id="@+id/seance_card_editBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="right|center_horizontal"
+            android:text="Edit" />
+    </LinearLayout>
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:baselineAligned="false">
 
         <LinearLayout
             android:orientation="vertical"
@@ -88,11 +109,61 @@
     </LinearLayout>
 
     <TextView
-        android:text="@string/data"
-        android:textSize="20sp"
-        android:paddingTop="5dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:text="@string/action"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/seance_card_action"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="5dp"
+        android:text="@string/default_action"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="30sp" />
+
+    <EditText
+        android:id="@+id/seance_card_action_edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text"
+        android:text="@string/action"
+        android:visibility="gone" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:text="@string/comment"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/seance_card_comment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="5dp"
+        android:text="@string/default_comment"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="30sp" />
+
+    <EditText
+        android:id="@+id/seance_card_comment_edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text"
+        android:text="@string/comment"
+        android:visibility="gone" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="5dp"
+        android:text="@string/data"
+        android:textSize="20sp" />
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/seance_dataBarChart"
@@ -101,3 +172,4 @@
     </com.github.mikephil.charting.charts.BarChart>
 
 </LinearLayout>
+</ScrollView>

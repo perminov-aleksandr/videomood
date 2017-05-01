@@ -56,4 +56,10 @@
     <string name="press_back_again_to_exit">Press BACK again to exit</string>
     <string name="data">Data</string>
     <string name="screenshot">Screenshot</string>
+    <string name="default_action">No action</string>
+    <string name="action" >Action</string>
+    <string name="comment">Comment</string>
+    <string name="default_comment">No comment</string>
+    <string name="save">Save</string>
+    <string name="edit">Edit</string>
 </resources>

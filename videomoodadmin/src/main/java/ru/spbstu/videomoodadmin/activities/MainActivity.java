@@ -10,7 +10,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -20,27 +20,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.DataSet;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
-import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 
-import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -60,7 +51,6 @@ import ru.spbstu.videomoodadmin.R;
 import ru.spbstu.videomoodadmin.UserViewModel;
 
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
-import static ru.spbstu.videomoodadmin.R.color.warningColor;
 
 public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
@@ -203,6 +193,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         try {
             userDao = getHelper().getUserDao();
+            seanceDao = getHelper().getDao(Seance.class);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -223,7 +214,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             testDataPacket.setHeadsetBatteryPercent(68);
             testDataPacket.setVideoState(true);
             testDataPacket.setIsPanic(false);
-            testDataPacket.setScreenshot(null);
             testDataPacket.setCurrentPositionSec(60);
             testDataPacket.setDurationSec(100);
             testDataPacket.setMuseSensorsState(new Boolean[]{ true, true, true, true, true });
@@ -258,7 +248,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
             } else if (mBtService == null) {
                 setupBtService();
-                connectDevice(getIntent(), true);
+                connectDevice(getIntent());
+                user.setSeanceDateStart(Calendar.getInstance().getTime());
             }
         } else {
             Timer timer = new Timer();
@@ -282,7 +273,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     private void setupBtService() {
-        mBtService = new BluetoothService(this, mHandler);
+        mBtService = new BluetoothService(mHandler);
     }
 
     @Override
@@ -313,7 +304,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             }
         }
 
-        if (user != null && user.data.size() > 0) {
+        if (user != null && user.seanceData.size() > 0) {
             finishSeance();
         }
     }
@@ -326,20 +317,21 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             e.printStackTrace();
             //todo: process
         }
-        seance.setDateFrom(user.getDateStart());
+        seance.setDateFrom(user.getSeanceDateStart());
         String dateTo = user.getDateFinish();
         if (dateTo == null) {
             user.setDateFinish(Calendar.getInstance().getTime());
             dateTo = user.getDateFinish();
         }
         seance.setDateTo(dateTo);
-        seance.setData(user.data);
+        seance.setData(user.seanceData);
         try {
             seanceDao.create(seance);
+            user = null;
         } catch (SQLException e) {
             e.printStackTrace();
+            Toast.makeText(MainActivity.this, "Unable to save seance data", Toast.LENGTH_LONG);
         }
-        user = null;
     }
 
     /**
@@ -356,16 +348,17 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
      * Establish connection with other device
      *
      * @param connectionIntent   An {@link Intent} with extra.
-     * @param secure Socket Security type - Secure (true) , Insecure (false)
      */
-    private void connectDevice(Intent connectionIntent, boolean secure) {
+    private void connectDevice(Intent connectionIntent) {
         // Get the device MAC address
         String deviceAddress = connectionIntent.getStringExtra(AdminConst.EXTRA_DEVICE_ADDRESS);
 
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
+
+        Log.i(TAG, String.format("Attempt to connect to %s(%s)", device.getName(), deviceAddress));
         // Attempt to connect to the device
-        mBtService.connect(device, secure);
+        mBtService.connect(device);
     }
 
     /**
@@ -464,6 +457,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private TextView headsetBatteryTextView;
     private TextView videoNameTextView;
     private TextView pauseBtn;
+    private TextView userIcon;
 
     private void setFont(Typeface font, int id) {
         TextView item = (TextView) findViewById(id);
@@ -481,6 +475,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         headsetBatteryTextView = (TextView) findViewById(R.id.headsetBattery);
         videoNameTextView = (TextView) findViewById(R.id.videoName);
         pauseBtn = (TextView) findViewById(R.id.playBtn);
+        userIcon = (TextView) findViewById(R.id.userIcon);
 
         Typeface font = Typeface.createFromAsset( getAssets(), "fonts/fontawesome.ttf" );
 
@@ -502,10 +497,10 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private int calcBatteryTextColor(int percents) {
         if (percents < 20) {
-            return getResources().getColor(R.color.warningColor);
+            return getResources().getColor(R.color.batteryLowColor);
         }
         else {
-            return getResources().getColor(R.color.colorPrimary);
+            return getResources().getColor(R.color.batteryHighColor);
         }
     }
 
@@ -520,14 +515,16 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 SeanceDataEntry seanceDataEntry = new SeanceDataEntry();
                 seanceDataEntry.betaValue = betaPct;
                 seanceDataEntry.isPanic = isPanic;
-                user.data.add(seanceDataEntry);
+                user.seanceData.add(seanceDataEntry);
             }
         }
+        userIcon.setText(isPanic ? R.string.fa_frown_o : R.string.fa_smile_o);
+        userIcon.setTextColor(getResources().getColor(isPanic ? R.color.warningColor : R.color.calmColor));
 
         Boolean isMuseConnected = dataPacket.getMuseState();
         if (isMuseConnected != null && isMuseConnected) {
             museStatusTextView.setText(R.string.state_connected);
-            museStatusTextView.setTextColor(getResources().getColor(R.color.colorAccent));
+            museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
 
             Integer museBatteryPercent = dataPacket.getMuseBatteryPercent();
             if (museBatteryPercent != null) {
@@ -546,7 +543,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
         else {
             museStatusTextView.setText(R.string.state_not_connected);
-            museStatusTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
+            museStatusTextView.setTextColor(getResources().getColor(R.color.disconnectedColor));
             museBatteryTextView.setVisibility(View.INVISIBLE);
         }
 
@@ -554,14 +551,14 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         if (headsetBatteryPercent != null)
         {
             headsetStateTextView.setText(R.string.state_connected);
-            headsetStateTextView.setTextColor(getResources().getColor(R.color.colorAccent));
+            headsetStateTextView.setTextColor(getResources().getColor(R.color.connectedColor));
             museBatteryTextView.setTextColor(calcBatteryTextColor(headsetBatteryPercent));
             headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, headsetBatteryPercent));
             headsetBatteryTextView.setVisibility(View.VISIBLE);
         }
         else {
             headsetStateTextView.setText(R.string.state_not_connected);
-            headsetStateTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
+            headsetStateTextView.setTextColor(getResources().getColor(R.color.disconnectedColor));
             headsetBatteryTextView.setVisibility(View.INVISIBLE);
         }
 
@@ -600,13 +597,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             Intent intent = new Intent(this, SelectVideoActivity.class);
             intent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivityForResult(intent, SELECT_VIDEO_REQUEST);
-        }
-
-        byte[] screenshot = dataPacket.getScreenshot();
-        if (screenshot != null) {
-            Bitmap bitmap = BitmapFactory.decodeByteArray(screenshot, 0, screenshot.length);
-            ImageView videoPreview = (ImageView)findViewById(R.id.videoPreview);
-            videoPreview.setImageBitmap(bitmap);
         }
     }
 

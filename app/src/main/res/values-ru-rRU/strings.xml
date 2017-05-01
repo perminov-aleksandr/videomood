@@ -42,5 +42,4 @@
     <string name="title_other_devices">Другие устройства</string>
     <string name="title_paired_devices">Подключенные устройства</string>
     <string name="app_name">VideoMood</string>
-    <string name="title_activity_video" translatable="false">VideoActivity</string>
 </resources>

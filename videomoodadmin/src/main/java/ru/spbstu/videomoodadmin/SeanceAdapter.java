@@ -23,6 +23,7 @@ public class SeanceAdapter extends ArrayAdapter<Seance> {
         private TextView dateTextView;
         private TextView fromTextView;
         private TextView toTextView;
+        private TextView actionTextView;
     }
 
     public SeanceAdapter(Context context, int resource) {
@@ -38,6 +39,7 @@ public class SeanceAdapter extends ArrayAdapter<Seance> {
             viewHolder.dateTextView = (TextView) convertView.findViewById(R.id.seanceitem_date);
             viewHolder.fromTextView = (TextView) convertView.findViewById(R.id.seanceitem_from);
             viewHolder.toTextView = (TextView) convertView.findViewById(R.id.seanceitem_to);
+            viewHolder.actionTextView = (TextView) convertView.findViewById(R.id.seanceitem_action);
 
             convertView.setTag(viewHolder);
         } else {
@@ -55,6 +57,8 @@ public class SeanceAdapter extends ArrayAdapter<Seance> {
 
                 Date dateTo = Seance.dateFormat.parse(seance.getDateTo());
                 viewHolder.toTextView.setText(timeFormat.format(dateTo));
+
+                viewHolder.actionTextView.setText(seance.getAction());
             } catch (ParseException e) {
                 e.printStackTrace();
             }

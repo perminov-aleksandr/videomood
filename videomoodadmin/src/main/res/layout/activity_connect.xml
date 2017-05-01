@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/selectDeviceLabel"
         android:padding="10dp"
-        android:theme="@style/header" />
+        style="@style/header" />
 
     <TextView
         android:text="@string/title_paired_devices"
@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/paired_devices_label"
         android:padding="10dp"
-        android:theme="@style/subheader" />
+        style="@style/subheader" />
 
     <ListView
         android:id="@+id/paired_devices"

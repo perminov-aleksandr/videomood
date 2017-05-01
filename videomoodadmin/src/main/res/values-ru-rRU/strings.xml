@@ -51,4 +51,8 @@
     <string name="press_back_again_to_exit">Нажмите НАЗАД еще раз, чтобы выйти</string>
     <string name="data">Данные</string>
     <string name="screenshot">Скриншот</string>
+    <string name="action">Действие</string>
+    <string name="default_action">Не указано</string>
+    <string name="comment">Комментарий</string>
+    <string name="default_comment">Отсутствует</string>
 </resources>

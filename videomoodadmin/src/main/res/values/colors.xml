@@ -3,8 +3,12 @@
     <color name="colorPrimary">#636466</color>
     <color name="colorPrimaryDark">#333436</color>
     <color name="colorAccent">#fd8017</color>
-    <color name="warningColor">#d7452e</color>
-    <color name="calmColor">#fd8017</color>
-    <color name="calmColor2">#1267e7</color>
+    <color name="warningColor">#AA0000</color>
+    <color name="warningColorBackUp">#d7452e</color>
+    <color name="calmColor">#00AA00</color>
     <color name="almostBackground">#eeeeee</color>
+    <color name="connectedColor">#00AA00</color>
+    <color name="disconnectedColor">#AA0000</color>
+    <color name="batteryLowColor">#AA0000</color>
+    <color name="batteryHighColor">#00AA00</color>
 </resources>
