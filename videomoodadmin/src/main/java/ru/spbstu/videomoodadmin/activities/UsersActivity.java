@@ -162,10 +162,16 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                createUserForm.setVisibility(View.GONE);
                 User user = (User) usersListView.getItemAtPosition(position);
                 selectedUserId = user.id;
-                initUserCard(user);
+                try {
+                    User userFromDb = userDao.queryForId(selectedUserId);
+                    initUserCard(userFromDb);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return;
+                }
+                createUserForm.setVisibility(View.GONE);
                 userCard.setVisibility(View.VISIBLE);
                 usersListView.setEmptyView(findViewById(R.id.users_nodata));
             }
@@ -219,11 +225,7 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             }
         });
 
-        try {
-            seancesAdapter.addAll(getHelper().getDao(Seance.class).queryForAll());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        seancesAdapter.addAll(user.seances);
     }
 
     private void openSeanceCard(Seance seance) {

@@ -1,12 +1,15 @@
 package ru.spbstu.videomoodadmin.activities;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -54,14 +57,11 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_seance);
 
-        Intent prevIntent = getIntent();
-        int seanceId = prevIntent.getIntExtra(AdminConst.EXTRA_SEANCE_ID, -1);
-
-        try {
-            seanceDao = getHelper().getDao(Seance.class);
-            seance = seanceDao.queryForId(seanceId);
-        } catch (SQLException e) {
-            e.printStackTrace();
+        seance = findSeance();
+        if (seance == null) {
+            Toast.makeText(SeanceActivity.this, R.string.seanceNotFoundError, Toast.LENGTH_LONG);
+            finish();
+            return;
         }
 
         try {
@@ -88,8 +88,6 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             e.printStackTrace();
         }
 
-        initChart();
-
         editButton = (Button) findViewById(R.id.seance_card_editBtn);
         editButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,6 +95,23 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 edit();
             }
         });
+
+        initChart();
+    }
+
+    @Nullable
+    private Seance findSeance() {
+        Intent prevIntent = getIntent();
+        int seanceId = prevIntent.getIntExtra(AdminConst.EXTRA_SEANCE_ID, -1);
+
+        try {
+            seanceDao = getHelper().getDao(Seance.class);
+            Seance seance = seanceDao.queryForId(seanceId);
+            return seance;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -106,20 +121,20 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     public void initChart() {
-        BarChart seanceBarChart = (BarChart) findViewById(R.id.seance_dataBarChart);
+        List<SeanceDataEntry> seanceData = seance.getData();
+        if (seanceData == null || seanceData.isEmpty())
+            return;
 
         List<BarEntry> alphaEntries = new ArrayList<>();
         List<BarEntry> betaEntries = new ArrayList<>();
         int time = 0;
-        List<SeanceDataEntry> seanceData = seance.getData();
-        if (seanceData != null && !seanceData.isEmpty())
-            for (SeanceDataEntry seanceDataEntry : seanceData) {
-                BarEntry barEntry = new BarEntry(time++, seanceDataEntry.betaValue);
-                if (seanceDataEntry.isPanic)
-                    betaEntries.add(barEntry);
-                else
-                    alphaEntries.add(barEntry);
-            }
+        for (SeanceDataEntry seanceDataEntry : seanceData) {
+            BarEntry barEntry = new BarEntry(time++, seanceDataEntry.betaValue);
+            if (seanceDataEntry.isPanic)
+                betaEntries.add(barEntry);
+            else
+                alphaEntries.add(barEntry);
+        }
 
         BarDataSet alphaSet = new BarDataSet(alphaEntries, getString(R.string.calm));
         alphaSet.setColor(getResources().getColor(R.color.calmColor));
@@ -130,6 +145,8 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         BarData data = new BarData();
         data.addDataSet(alphaSet);
         data.addDataSet(betaSet);
+
+        BarChart seanceBarChart = (BarChart) findViewById(R.id.seance_dataBarChart);
         seanceBarChart.setData(data);
 
         data.setDrawValues(false);

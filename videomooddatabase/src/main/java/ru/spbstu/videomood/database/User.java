@@ -28,7 +28,7 @@ public class User {
     @DatabaseField(canBeNull = false)
     public String birthDateStr;
 
-    @ForeignCollectionField
+    @ForeignCollectionField()
     public ForeignCollection<Seance> seances;
 
     private Date birthDate = null;

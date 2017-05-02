@@ -314,9 +314,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         try {
             seance.user = userDao.queryForId(user.id);
         } catch (SQLException e) {
-            e.printStackTrace();
-            //todo: process
+            Log.e(TAG, e.getMessage(), e);
+            Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG);
+            return;
         }
+
         seance.setDateFrom(user.getSeanceDateStart());
         String dateTo = user.getDateFinish();
         if (dateTo == null) {
@@ -325,13 +327,25 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
         seance.setDateTo(dateTo);
         seance.setData(user.seanceData);
+
         try {
-            seanceDao.create(seance);
+            if (seanceDao.create(seance) != 1)
+                throw new SQLException("No seance created");
             user = null;
         } catch (SQLException e) {
-            e.printStackTrace();
-            Toast.makeText(MainActivity.this, "Unable to save seance data", Toast.LENGTH_LONG);
+            Log.e(TAG, e.getMessage(), e);
+            Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG);
+            return;
         }
+
+        goToSeance(seance);
+        finishActivity(RESULT_OK);
+    }
+
+    private void goToSeance(Seance seance) {
+        Intent intent = new Intent(MainActivity.this, SeanceActivity.class);
+        intent.putExtra(AdminConst.EXTRA_SEANCE_ID, seance.getId());
+        startActivity(intent);
     }
 
     /**
@@ -484,15 +498,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         setFont(font, R.id.userIcon);
         setFont(font, R.id.videoSelect);
         setFont(font, pauseBtn);
-
-        /*TextView userIcon = (TextView) findViewById(R.id.userIcon);
-        userIcon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, UsersActivity.class);
-                startActivity(intent);
-            }
-        });*/
     }
 
     private int calcBatteryTextColor(int percents) {

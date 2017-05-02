@@ -62,4 +62,6 @@
     <string name="default_comment">No comment</string>
     <string name="save">Save</string>
     <string name="edit">Edit</string>
+    <string name="seanceCreateError">Unable to save seance data</string>
+    <string name="seanceNotFoundError">Unable to find seance</string>
 </resources>

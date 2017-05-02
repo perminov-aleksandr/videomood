@@ -47,6 +47,9 @@ public class Seance {
     private List<SeanceDataEntry> data;
 
     public List<SeanceDataEntry> getData() {
+        if (data == null || data.isEmpty() && dataStr != "" && dataStr!= null)
+            setData(dataStr);
+
         return data;
     }
 

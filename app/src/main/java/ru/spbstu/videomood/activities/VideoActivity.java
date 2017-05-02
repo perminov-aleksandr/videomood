@@ -252,16 +252,6 @@ public class VideoActivity extends MuseActivity {
         isConnectionStatusStale = false;
     }
 
-    private Bitmap takeScreenshot() {
-        View view = getWindow().getDecorView().getRootView();
-        view.setDrawingCacheEnabled(true);
-        Bitmap bitmap = Bitmap.createBitmap(view.getDrawingCache());
-        view.setDrawingCacheEnabled(false);
-        Canvas canvas = new Canvas(bitmap);
-        view.draw(canvas);
-        return bitmap;
-    }
-
     private ContentProvider contentProvider;
 
     /**
@@ -324,7 +314,6 @@ public class VideoActivity extends MuseActivity {
             case GET:
                 dataPacket.setAlphaPct(alphaPct);
                 dataPacket.setBetaPct(betaPct);
-                //writeScreenshotTo(dataPacket);
                 dataPacket.setMuseSensorsState(sensorsStateBuffer);
                 dataPacket.setVideoState(videoView.isPlaying());
                 dataPacket.setDurationSec(videoView.getDuration() / 1000);
@@ -366,21 +355,6 @@ public class VideoActivity extends MuseActivity {
         reply();
         dataPacket.setAlphaPct(null);
         dataPacket.setBetaPct(null);
-    }
-
-    private static final int screenshotWidth = 100;
-    private static final int screenshotHeight = 100;
-    private static final int compressQuality = 100;
-
-    private void writeScreenshotTo(DataPacket dataPacket) {
-        Bitmap screenshot = takeScreenshot();
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Bitmap scaledBitmap = Bitmap.createScaledBitmap(screenshot, screenshotWidth, screenshotHeight, false);
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, out);
-            dataPacket.setScreenshot(out.toByteArray());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void reply() {

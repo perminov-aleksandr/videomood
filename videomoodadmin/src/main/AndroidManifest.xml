@@ -27,6 +27,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize">
         </activity>
         <activity
+            android:noHistory="true"
             android:name=".activities.MainActivity"
             android:screenOrientation="landscape"
             android:configChanges="keyboardHidden|orientation|screenSize">
