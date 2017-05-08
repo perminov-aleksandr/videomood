@@ -51,12 +51,20 @@ public class ContentProvider {
             retriever.setDataSource(videos[i].getPath());
             String timeStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
             long time = Long.parseLong(timeStr) / 1000;
-            result.add(new VideoItem(i, videos[i].getName(), (int) time));
+            result.add(new VideoItem(videos[i].getName(), (int) time));
         }
         return result;
     }
 
     public File get(Integer videoIndex) {
         return videos[videoIndex];
+    }
+
+    public File get(String path) {
+        for (File video : videos) {
+            if (video.getName().equals(path))
+                return video;
+        }
+        return null;
     }
 }

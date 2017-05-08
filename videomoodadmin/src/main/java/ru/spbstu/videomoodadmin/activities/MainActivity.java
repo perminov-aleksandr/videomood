@@ -3,8 +3,6 @@ package ru.spbstu.videomoodadmin.activities;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -13,7 +11,6 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -32,6 +29,8 @@ import com.j256.ormlite.dao.Dao;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -44,17 +43,20 @@ import ru.spbstu.videomood.btservice.VideoItem;
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.SeanceDataEntry;
 import ru.spbstu.videomood.database.User;
+import ru.spbstu.videomood.database.Video;
 import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.HorseshoeView;
 import ru.spbstu.videomoodadmin.R;
 import ru.spbstu.videomoodadmin.UserViewModel;
 
+import static android.content.Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
 
 public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private final boolean IS_DEBUG = false;
+    private VideoMoodDbHelper dbHelper;
 
     private DataPacket testDataPacket;
 
@@ -70,7 +72,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private int time = 0;
 
     private final int chartSize = 60;
-    public static ArrayList<String> videoItems = new ArrayList<>();
+    //public static ArrayList<String> videoItems = new ArrayList<>();
 
     private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> vals = new ArrayList<>();
@@ -192,8 +194,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         setContentView(R.layout.activity_main);
 
         try {
-            userDao = getHelper().getUserDao();
-            seanceDao = getHelper().getDao(Seance.class);
+            dbHelper = getHelper();
+            userDao = dbHelper.getUserDao();
+            seanceDao = dbHelper.getDao(Seance.class);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -339,6 +342,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
 
         goToSeance(seance);
+
         finishActivity(RESULT_OK);
     }
 
@@ -380,14 +384,15 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
      */
     private final Handler mHandler = new MessageHandler();
 
-    private static final int SELECT_VIDEO_REQUEST = 1;
+    public static final int SELECT_VIDEO_REQUEST = 1;
 
     private SeekBar seekBar;
 
     public static final String EXTRA_SELECTED_VIDEO = "selected_video";
 
     public void selectVideo(View view) {
-        sendPacket(new ControlPacket(Command.LIST));
+        Intent selectVideoIntent = new Intent(MainActivity.this, SelectVideoActivity.class);
+        startActivityForResult(selectVideoIntent, SELECT_VIDEO_REQUEST);
     }
 
     public void pause(View view) { sendPacket(new ControlPacket(Command.PAUSE)); }
@@ -404,8 +409,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == SELECT_VIDEO_REQUEST) {
             if (resultCode == RESULT_OK) {
-                long videoIndex = data.getLongExtra(EXTRA_SELECTED_VIDEO, -1);
-                sendPacket(new ControlPacket(Command.PLAY, videoIndex));
+                String videoPath = data.getStringExtra(EXTRA_SELECTED_VIDEO);
+                sendPacket(new ControlPacket(Command.PLAY, videoPath));
             }
         }
     }
@@ -440,12 +445,12 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             switch (msg.what) {
                 case Constants.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
-                        case BluetoothService.STATE_CONNECTED:
-                            setStatus(R.string.state_connected);
-                            sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
-                            break;
                         case BluetoothService.STATE_CONNECTING:
                             setStatus(R.string.state_connecting);
+                            break;
+                        case BluetoothService.STATE_CONNECTED:
+                            setStatus(R.string.state_connected);
+                            sendPacket(new ControlPacket(Command.LIST));
                             break;
                         case BluetoothService.STATE_LISTEN:
                         case BluetoothService.STATE_NONE:
@@ -593,15 +598,45 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             videoControl.setVisibility(View.INVISIBLE);
         }
 
-        ArrayList<VideoItem> lVideoItems = dataPacket.getVideoList();
-        if (lVideoItems != null) {
-            videoItems.clear();
-            for (VideoItem videoItem : lVideoItems)
-                videoItems.add(videoItem.getName());
+        ArrayList<VideoItem> videoItems = dataPacket.getVideoList();
+        if (videoItems != null) {
+            syncVideosWithDb(videoItems);
+            dataPacket.setVideoList(null);
+            sendMessageHandler.removeCallbacks(sendMessageRunnable);
+            sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
+        }
+    }
 
-            Intent intent = new Intent(this, SelectVideoActivity.class);
-            intent.setFlags(FLAG_ACTIVITY_REORDER_TO_FRONT);
-            startActivityForResult(intent, SELECT_VIDEO_REQUEST);
+    private void syncVideosWithDb(ArrayList<VideoItem> existingVideos) {
+        List<Video> videoEntities;
+        Dao<Video, Integer> videoDao;
+
+        try {
+            videoDao = dbHelper.getDao(Video.class);
+            videoEntities = videoDao.queryForAll();
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage(), e);
+            return;
+        }
+
+        HashSet<String> videoEntitiesNames = new HashSet<>();
+        for (Video videoEntity : videoEntities)
+            videoEntitiesNames.add(videoEntity.getName());
+
+        for (VideoItem existingVideo : existingVideos) {
+            String videoName = existingVideo.getName();
+            if (videoEntitiesNames.contains(videoName))
+                continue;
+
+            Video video = new Video();
+            video.setName(existingVideo.getName());
+            video.setPath(existingVideo.getName());
+            video.setDuration(existingVideo.getDuration());
+            try {
+                videoDao.create(video);
+            } catch (SQLException e) {
+                Log.e(TAG, e.getMessage(), e);
+            }
         }
     }
 

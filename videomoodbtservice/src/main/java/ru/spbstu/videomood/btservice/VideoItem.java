@@ -1,19 +1,19 @@
 package ru.spbstu.videomood.btservice;
 
 public class VideoItem {
-    private int id;
+    //private int id;
     private String name;
     private int duration;
 
-    public VideoItem(int id, String name, int duration) {
-        this.id = id;
+    public VideoItem(String name, int duration) {
+        //this.id = id;
         this.name = name;
         this.duration = duration;
     }
 
-    public int getId() {
+    /*public int getId() {
         return id;
-    }
+    }*/
 
     public String getName() {
         return name;

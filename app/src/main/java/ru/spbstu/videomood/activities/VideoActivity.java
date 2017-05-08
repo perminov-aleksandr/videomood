@@ -324,9 +324,10 @@ public class VideoActivity extends MuseActivity {
                 break;
             case PLAY:
                 if (arguments.length > 0) {
-                    Integer videoIndex = ((Double) arguments[0]).intValue();
-                    File videoToPlay = contentProvider.get(videoIndex);
-                    playVideoFile(videoToPlay);
+                    String videoPath = (String)arguments[0];
+                    File videoToPlay = contentProvider.get(videoPath);
+                    if (videoToPlay != null)
+                        playVideoFile(videoToPlay);
                 }
                 break;
             case PAUSE:

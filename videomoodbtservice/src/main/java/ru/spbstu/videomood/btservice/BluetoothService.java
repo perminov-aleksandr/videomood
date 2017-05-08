@@ -416,7 +416,7 @@ public class BluetoothService {
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             byte[] buffer = new byte[1024*1024];
-            String prev = "";
+            String prevMessage = "";
 
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
@@ -424,13 +424,13 @@ public class BluetoothService {
                     // Read from the InputStream
                     int bytes = mmInStream.read(buffer);
                     byte[] actualBytes = Arrays.copyOf(buffer, bytes);
-                    String messageString = new String(actualBytes, Constants.DEFAULT_CHARSET);
-                    prev = prev.concat(messageString);
-                    if (messageString.endsWith("}")) {
-                        Log.i(TAG, String.format("RECIEVING: %s", prev));
-                        mHandler.obtainMessage(Constants.MESSAGE_PACKET, -1, -1, prev)
+                    String currentMessage = new String(actualBytes, Constants.DEFAULT_CHARSET);
+                    prevMessage = prevMessage.concat(currentMessage);
+                    Log.i(TAG, String.format("RECIEVING: %s", prevMessage));
+                    if (prevMessage.endsWith("}")) {
+                        mHandler.obtainMessage(Constants.MESSAGE_PACKET, -1, -1, prevMessage)
                                 .sendToTarget();
-                        prev = "";
+                        prevMessage = "";
                     }
 
                     // Read file in stream mode
