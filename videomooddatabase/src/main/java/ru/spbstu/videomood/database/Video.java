@@ -13,11 +13,14 @@ public class Video {
     @DatabaseField(canBeNull = false)
     private String name;
 
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = false, index = true)
     private String path;
 
     @DatabaseField(canBeNull = false)
     private int duration;
+
+    @DatabaseField
+    private boolean isAbsent;
 
     @ForeignCollectionField
     public ForeignCollection<VideoTag> tags;
@@ -51,6 +54,12 @@ public class Video {
 
     public int getDuration() {
         return duration;
+    }
+
+    public static String getDurationDisplayString(int duration) {
+        int mins = duration / 60;
+        int secs = duration % 60;
+        return String.format("%d:%02d", mins, secs);
     }
 
     public void setDuration(int duration) {

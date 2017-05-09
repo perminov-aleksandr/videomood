@@ -8,6 +8,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -29,6 +30,7 @@ import com.j256.ormlite.dao.Dao;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Timer;
@@ -42,6 +44,7 @@ import ru.spbstu.videomood.btservice.DataPacket;
 import ru.spbstu.videomood.btservice.VideoItem;
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.SeanceDataEntry;
+import ru.spbstu.videomood.database.SeanceVideo;
 import ru.spbstu.videomood.database.User;
 import ru.spbstu.videomood.database.Video;
 import ru.spbstu.videomood.database.VideoMoodDbHelper;
@@ -50,21 +53,22 @@ import ru.spbstu.videomoodadmin.HorseshoeView;
 import ru.spbstu.videomoodadmin.R;
 import ru.spbstu.videomoodadmin.UserViewModel;
 
-import static android.content.Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP;
-import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
-
 public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private final boolean IS_DEBUG = false;
+
+    private static final String TAG = "MainActivity";
+
     private VideoMoodDbHelper dbHelper;
+    private Dao<User, Integer> userDao;
+    private Dao<Seance, Integer> seanceDao;
 
     private DataPacket testDataPacket;
 
     // Intent request codes
+    public static final int REQUEST_SELECT_VIDEO = 1;
     private static final int REQUEST_ENABLE_BT = 3;
-    private static final String TAG = "MainActivity";
 
-    private TextView connectionStatus;
     private BarChart chart;
     private HorseshoeView sensorsChart;
     private LinearLayout videoControl;
@@ -72,7 +76,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private int time = 0;
 
     private final int chartSize = 60;
-    //public static ArrayList<String> videoItems = new ArrayList<>();
 
     private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> vals = new ArrayList<>();
@@ -95,7 +98,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     BarData barData;
 
-    //todo: extract init chart and update data
     private void addEntry(int alphaValue, int betaValue, boolean isPanic) {
         BarData data = chart.getData();
 
@@ -115,8 +117,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             chart.notifyDataSetChanged();
 
             chart.moveViewToX(data.getEntryCount());
-            chart.setVisibleXRangeMinimum(60);
-            chart.setVisibleXRangeMaximum(60);
+            chart.setVisibleXRangeMinimum(chartSize);
+            chart.setVisibleXRangeMaximum(chartSize);
             chart.setVisibleYRange(100, 100, YAxis.AxisDependency.LEFT);
 
             // this automatically refreshes the chart (calls invalidate())
@@ -183,10 +185,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         barData.addDataSet(betaSet);
     }
 
-    private UserViewModel user;
-
-    private Dao<User, Integer> userDao;
-    private Dao<Seance, Integer> seanceDao;
+    private UserViewModel userViewModel;
+    private Seance seance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -233,11 +233,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        this.user = new UserViewModel(user);
+        userViewModel = new UserViewModel(user);
         TextView userFirstName = (TextView) findViewById(R.id.main_user_firstname);
-        userFirstName.setText(this.user.firstName);
+        userFirstName.setText(userViewModel.firstName);
         TextView userLastName = (TextView) findViewById(R.id.main_user_lastname);
-        userLastName.setText(this.user.lastName);
+        userLastName.setText(userViewModel.lastName);
     }
 
     @Override
@@ -252,7 +252,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             } else if (mBtService == null) {
                 setupBtService();
                 connectDevice(getIntent());
-                user.setSeanceDateStart(Calendar.getInstance().getTime());
+                seance = createSeance();
+                saveSeance();
             }
         } else {
             Timer timer = new Timer();
@@ -306,44 +307,48 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 mBtService.stop();
             }
         }
-
-        if (user != null && user.seanceData.size() > 0) {
-            finishSeance();
-        }
     }
 
     private void finishSeance() {
+        try {
+            saveSeanceDataChunk();
+            userViewModel.setDateFinish(Calendar.getInstance().getTime());
+            seance.setDateTo(userViewModel.getDateFinish());
+            seanceDao.update(seance);
+            finishActivity(RESULT_OK);
+            goToSeance(seance);
+        }
+        catch (SQLException e) {
+            Log.e(TAG, e.getMessage(), e);
+        }
+    }
+
+    @Nullable
+    private Seance createSeance() {
         Seance seance = new Seance();
         try {
-            seance.user = userDao.queryForId(user.id);
+            seance.user = userDao.queryForId(userViewModel.id);
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
             Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG);
-            return;
+            return null;
         }
 
-        seance.setDateFrom(user.getSeanceDateStart());
-        String dateTo = user.getDateFinish();
-        if (dateTo == null) {
-            user.setDateFinish(Calendar.getInstance().getTime());
-            dateTo = user.getDateFinish();
-        }
-        seance.setDateTo(dateTo);
-        seance.setData(user.seanceData);
+        userViewModel.setSeanceDateStart(Calendar.getInstance().getTime());
+        seance.setDateFrom(userViewModel.getSeanceDateStartStr());
+        return seance;
+    }
 
+    private void saveSeance() {
         try {
             if (seanceDao.create(seance) != 1)
                 throw new SQLException("No seance created");
-            user = null;
+            //userViewModel = null;
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
             Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG);
             return;
         }
-
-        goToSeance(seance);
-
-        finishActivity(RESULT_OK);
     }
 
     private void goToSeance(Seance seance) {
@@ -384,15 +389,13 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
      */
     private final Handler mHandler = new MessageHandler();
 
-    public static final int SELECT_VIDEO_REQUEST = 1;
-
     private SeekBar seekBar;
 
     public static final String EXTRA_SELECTED_VIDEO = "selected_video";
 
     public void selectVideo(View view) {
         Intent selectVideoIntent = new Intent(MainActivity.this, SelectVideoActivity.class);
-        startActivityForResult(selectVideoIntent, SELECT_VIDEO_REQUEST);
+        startActivityForResult(selectVideoIntent, REQUEST_SELECT_VIDEO);
     }
 
     public void pause(View view) { sendPacket(new ControlPacket(Command.PAUSE)); }
@@ -407,7 +410,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == SELECT_VIDEO_REQUEST) {
+        if (requestCode == REQUEST_SELECT_VIDEO) {
             if (resultCode == RESULT_OK) {
                 String videoPath = data.getStringExtra(EXTRA_SELECTED_VIDEO);
                 sendPacket(new ControlPacket(Command.PLAY, videoPath));
@@ -461,7 +464,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                     break;
                 case Constants.MESSAGE_PACKET:
                     if (!IS_DEBUG) {
-                        dataPacket = DataPacket.createFrom((String)msg.obj);
+                        try {
+                            dataPacket = DataPacket.createFrom((String)msg.obj);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error packet creation from " + msg.obj, e);
+                        }
                     }
                     if (dataPacket != null)
                         processPacketData();
@@ -521,11 +528,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         if (alphaPct != null && betaPct != null) {
             addEntry(alphaPct, betaPct, isPanic);
 
-            if (user != null) {
+            if (userViewModel != null) {
                 SeanceDataEntry seanceDataEntry = new SeanceDataEntry();
                 seanceDataEntry.betaValue = betaPct;
                 seanceDataEntry.isPanic = isPanic;
-                user.seanceData.add(seanceDataEntry);
+                userViewModel.seanceData.add(seanceDataEntry);
             }
         }
         userIcon.setText(isPanic ? R.string.fa_frown_o : R.string.fa_smile_o);
@@ -574,6 +581,12 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         String videoname = dataPacket.getVideoName();
         if (videoname != null && !videoname.equals("")) {
+            String currentVideoName = userViewModel.getCurrentVideoName();
+            if (!videoname.equals(currentVideoName)) {
+                saveSeanceDataChunk();
+                userViewModel.setCurrentVideoName(videoname);
+            }
+
             videoNameTextView.setText(videoname);
             Boolean videoState = dataPacket.getVideoState();
             pauseBtn.setText(videoState != null && videoState ? R.string.fa_pause : R.string.fa_play);
@@ -604,6 +617,36 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             dataPacket.setVideoList(null);
             sendMessageHandler.removeCallbacks(sendMessageRunnable);
             sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
+        }
+    }
+
+    private int lastDataChunkTimestamp = 0;
+
+    private void saveSeanceDataChunk() {
+        try {
+            Dao<Video, Integer> videoDao = dbHelper.getDao(Video.class);
+            List<Video> videoEntities = videoDao.queryForEq("path", userViewModel.getCurrentVideoName());
+            if (videoEntities.isEmpty())
+                return;
+
+            Video currentVideo = videoEntities.get(0);
+
+            Dao<SeanceVideo, Integer> seanceVideoDao = dbHelper.getDao(SeanceVideo.class);
+            SeanceVideo seanceVideo = new SeanceVideo();
+            seanceVideo.video = currentVideo;
+            seanceVideo.seance = this.seance;
+            seanceVideo.setTimestamp(lastDataChunkTimestamp);
+
+            Calendar seanceStart = Calendar.getInstance();
+            seanceStart.setTime(userViewModel.getSeanceDateStart());
+            lastDataChunkTimestamp = (int) (Calendar.getInstance().getTimeInMillis() - seanceStart.getTimeInMillis());
+
+            seanceVideo.setData(userViewModel.seanceData);
+            userViewModel.seanceData.clear();
+
+            seanceVideoDao.create(seanceVideo);
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage(), e);
         }
     }
 

@@ -1,5 +1,8 @@
 package ru.spbstu.videomoodadmin;
 
+import android.util.Log;
+
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -10,6 +13,8 @@ import ru.spbstu.videomood.database.SeanceDataEntry;
 import ru.spbstu.videomood.database.User;
 
 public class UserViewModel {
+    private static final String TAG = "UserViewModel";
+
     public int id;
     public String firstName;
     public String lastName;
@@ -20,7 +25,16 @@ public class UserViewModel {
     public void setSeanceDateStart(Date time) {
         this.seanceDateStart = Seance.dateFormat.format(time);
     }
-    public String getSeanceDateStart() {
+    public Date getSeanceDateStart() {
+        try {
+            return Seance.dateFormat.parse(seanceDateStart);
+        } catch (ParseException e) {
+            Log.e(TAG, e.getMessage(), e);
+        }
+        return null;
+    }
+
+    public String getSeanceDateStartStr() {
         return seanceDateStart;
     }
 
@@ -33,6 +47,8 @@ public class UserViewModel {
     }
 
     public List<SeanceDataEntry> seanceData = new ArrayList<>();
+
+    private String currentVideoName = "";
 
     public UserViewModel(User user) {
         this.id = user.id;
@@ -47,5 +63,13 @@ public class UserViewModel {
         this.age = currentYear - birthYear;
 
         this.seanceDateStart = Seance.dateFormat.format(Calendar.getInstance().getTime());
+    }
+
+    public String getCurrentVideoName() {
+        return currentVideoName == null ? "" : currentVideoName;
+    }
+
+    public void setCurrentVideoName(String currentVideoName) {
+        this.currentVideoName = currentVideoName;
     }
 }

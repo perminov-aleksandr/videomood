@@ -1,7 +1,12 @@
 package ru.spbstu.videomood.database;
 
+import com.google.gson.Gson;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @DatabaseTable(tableName = "seancevideos")
 public class SeanceVideo {
@@ -15,10 +20,37 @@ public class SeanceVideo {
     public Seance seance;
 
     @DatabaseField(canBeNull = false)
-    private int startTimeSec;
+    private int timestamp;
 
-    @DatabaseField(canBeNull = false)
-    private int endTimeSec;
+    @DatabaseField
+    private String dataStr;
+
+    public String getDataStr() {
+        return dataStr;
+    }
+
+    private List<SeanceDataEntry> data;
+
+    public List<SeanceDataEntry> getData() {
+        if (data == null || data.isEmpty() && dataStr != "" && dataStr!= null)
+            setData(dataStr);
+
+        return data;
+    }
+
+    public void setData(List<SeanceDataEntry> data) {
+        this.data = data;
+
+        this.dataStr = new Gson().toJson(data.toArray(), SeanceDataEntry[].class);
+    }
+
+    public void setData(String dataStr) {
+        this.dataStr = dataStr;
+
+        SeanceDataEntry[] data = new Gson().fromJson(dataStr, SeanceDataEntry[].class);
+        this.data = new ArrayList<>();
+        Collections.addAll(this.data, data);
+    }
 
     public int getId() {
         return id;
@@ -28,19 +60,11 @@ public class SeanceVideo {
         this.id = id;
     }
 
-    public int getStartTimeSec() {
-        return startTimeSec;
+    public int getTimestamp() {
+        return timestamp;
     }
 
-    public void setStartTimeSec(int startTimeSec) {
-        this.startTimeSec = startTimeSec;
-    }
-
-    public int getEndTimeSec() {
-        return endTimeSec;
-    }
-
-    public void setEndTimeSec(int endTimeSec) {
-        this.endTimeSec = endTimeSec;
+    public void setTimestamp(int timestamp) {
+        this.timestamp = timestamp;
     }
 }

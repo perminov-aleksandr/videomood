@@ -37,36 +37,6 @@ public class Seance {
     @ForeignCollectionField
     private ForeignCollection<SeanceVideo> seanceVideos;
 
-    @DatabaseField
-    private String dataStr;
-
-    public String getDataStr() {
-        return dataStr;
-    }
-
-    private List<SeanceDataEntry> data;
-
-    public List<SeanceDataEntry> getData() {
-        if (data == null || data.isEmpty() && dataStr != "" && dataStr!= null)
-            setData(dataStr);
-
-        return data;
-    }
-
-    public void setData(List<SeanceDataEntry> data) {
-        this.data = data;
-
-        this.dataStr = new Gson().toJson(data.toArray(), SeanceDataEntry[].class);
-    }
-
-    public void setData(String dataStr) {
-        this.dataStr = dataStr;
-
-        SeanceDataEntry[] data = new Gson().fromJson(dataStr, SeanceDataEntry[].class);
-        this.data = new ArrayList<>();
-        Collections.addAll(this.data, data);
-    }
-
     public String getDateFrom() {
         return dateFrom;
     }

@@ -64,4 +64,6 @@
     <string name="edit">Edit</string>
     <string name="seanceCreateError">Unable to save seance data</string>
     <string name="seanceNotFoundError">Unable to find seance</string>
+    <string name="videos">Videos</string>
+    <string name="remove">Remove</string>
 </resources>

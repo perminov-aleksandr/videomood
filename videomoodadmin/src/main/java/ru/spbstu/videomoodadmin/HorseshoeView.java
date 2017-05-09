@@ -43,10 +43,12 @@ public class HorseshoeView extends SurfaceView {
 
                 @Override
                 public void surfaceCreated(SurfaceHolder holder) {
-                    Canvas canvas = holder.lockCanvas(null);
-                    drawHorseshoe(canvas);
-                    holder.unlockCanvasAndPost(canvas);
-                    setWillNotDraw(false);
+                    /*Canvas canvas = holder.lockCanvas();
+                    if (canvas != null) {
+                        drawHorseshoe(canvas);
+                        holder.unlockCanvasAndPost(canvas);
+                    }
+                    setWillNotDraw(false);*/
                 }
 
                 @Override
@@ -60,15 +62,15 @@ public class HorseshoeView extends SurfaceView {
         }
     }
 
-    @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
-        if (!isInEditMode()) {
-            Canvas c = surfaceHolder.lockCanvas();
-            drawHorseshoe(c);
-            surfaceHolder.unlockCanvasAndPost(c);
-        }
-    }
+//    @Override
+//    public void draw(Canvas canvas) {
+//        super.draw(canvas);
+//        if (!isInEditMode()) {
+//            Canvas c = surfaceHolder.lockCanvas();
+//            drawHorseshoe(c);
+//            surfaceHolder.unlockCanvasAndPost(c);
+//        }
+//    }
 
     private Boolean[] circles;
 

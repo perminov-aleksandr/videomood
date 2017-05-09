@@ -5,9 +5,12 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +27,7 @@ import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.ForeignCollection;
 
 import java.sql.SQLException;
 import java.text.DateFormat;
@@ -35,16 +39,20 @@ import java.util.List;
 
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.SeanceDataEntry;
+import ru.spbstu.videomood.database.SeanceVideo;
 import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
 
 public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
+    private static final String TAG = "SeanceActivity";
     private EditText actionEditor;
     private TextView actionTv;
     private EditText commentEditor;
     private TextView commentTv;
+
+    private ListView videosListView;
 
     private Button editButton;
 
@@ -74,8 +82,11 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             from.setText(timeFormat.format(dateFrom));
 
             TextView to = (TextView) findViewById(R.id.seance_card_to);
-            Date dateTo = Seance.dateFormat.parse(seance.getDateTo());
-            to.setText(timeFormat.format(dateTo));
+            String dateToStr = seance.getDateTo();
+            if (dateToStr != null) {
+                Date dateTo = Seance.dateFormat.parse(dateToStr);
+                to.setText(timeFormat.format(dateTo));
+            }
 
             actionEditor = (EditText) findViewById(R.id.seance_card_action_edit);
             actionTv = (TextView) findViewById(R.id.seance_card_action);
@@ -88,6 +99,12 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             e.printStackTrace();
         }
 
+        videosListView = (ListView) findViewById(R.id.seance_card_videos);
+        ArrayAdapter<String> videosAdapter = new ArrayAdapter<>(SeanceActivity.this, android.R.layout.simple_list_item_1);
+        for (SeanceVideo seanceVideo : seance.getSeanceVideos())
+            videosAdapter.add(seanceVideo.video.getName());
+        videosListView.setAdapter(videosAdapter);
+
         editButton = (Button) findViewById(R.id.seance_card_editBtn);
         editButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,7 +113,25 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             }
         });
 
+        Button removeButton = (Button) findViewById(R.id.seance_card_deleteBtn);
+        removeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                remove();
+            }
+        });
+
         initChart();
+    }
+
+    private void remove() {
+        try {
+            seanceDao.delete(seance);
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage(), e);
+        }
+
+        finish();
     }
 
     @Nullable
@@ -121,8 +156,13 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     public void initChart() {
-        List<SeanceDataEntry> seanceData = seance.getData();
-        if (seanceData == null || seanceData.isEmpty())
+        List<SeanceDataEntry> seanceData = new ArrayList<>();
+        ForeignCollection<SeanceVideo> seanceVideos = seance.getSeanceVideos();
+        for (SeanceVideo seanceVideo : seanceVideos) {
+            seanceData.addAll(seanceVideo.getData());
+        }
+
+        if (seanceData.isEmpty())
             return;
 
         List<BarEntry> alphaEntries = new ArrayList<>();

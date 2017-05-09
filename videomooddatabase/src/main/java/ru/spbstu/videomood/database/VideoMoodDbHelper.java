@@ -16,7 +16,7 @@ public class VideoMoodDbHelper extends OrmLiteSqliteOpenHelper {
 
     private static final String DATABASE_NAME = "videomood.db";
 
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     public VideoMoodDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -51,7 +51,7 @@ public class VideoMoodDbHelper extends OrmLiteSqliteOpenHelper {
     public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion) {
         try {
             Log.i(VideoMoodDbHelper.class.getName(), "onUpgrade");
-            for (int i = entityClasses.length-1; i >= 0; i++) {
+            for (int i = entityClasses.length-1; i >= 0; i--) {
                 TableUtils.dropTable(connectionSource, entityClasses[i], true);
             }
             // after we drop the old databases, we create the new ones
