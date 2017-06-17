@@ -18,7 +18,7 @@ import ru.spbstu.videomood.MuseManager;
 
 public abstract class MuseActivity extends BaseActivity {
     /**
-     * A Muse refers to a Muse headband.  Use this to connect/disconnect from the
+     * A Muse refers to a Muse headband.  Use this to connectToServer/disconnect from the
      * headband, register listeners to receive EEG data and get headband
      * configuration and version information.
      */
@@ -49,7 +49,7 @@ public abstract class MuseActivity extends BaseActivity {
 
         // Cache the Muse that the user has selected.
         muse = MuseManager.getMuse();
-        //start receiving muse packets
+        //startServer receiving muse packets
         muse.runAsynchronously();
     }
 

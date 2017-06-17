@@ -21,13 +21,14 @@
             </intent-filter>
         </activity>
         <activity
-            android:noHistory="true"
             android:name=".activities.ConnectActivity"
+            android:noHistory="true"
             android:screenOrientation="landscape"
             android:configChanges="keyboardHidden|orientation|screenSize">
         </activity>
         <activity
             android:name=".activities.MainActivity"
+            android:noHistory="true"
             android:screenOrientation="landscape"
             android:configChanges="keyboardHidden|orientation|screenSize">
         </activity>

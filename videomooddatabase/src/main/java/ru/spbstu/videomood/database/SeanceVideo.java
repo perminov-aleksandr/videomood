@@ -61,6 +61,9 @@ public class SeanceVideo {
     }
 
     public int getTimestamp() {
+        if (timestamp == 0)
+            timestamp = getData().size();
+
         return timestamp;
     }
 

@@ -36,6 +36,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.SeanceDataEntry;
@@ -43,6 +44,7 @@ import ru.spbstu.videomood.database.SeanceVideo;
 import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
+import ru.spbstu.videomoodadmin.Timeline;
 
 public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
@@ -101,9 +103,18 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         videosListView = (ListView) findViewById(R.id.seance_card_videos);
         ArrayAdapter<String> videosAdapter = new ArrayAdapter<>(SeanceActivity.this, android.R.layout.simple_list_item_1);
-        for (SeanceVideo seanceVideo : seance.getSeanceVideos())
+        ForeignCollection<SeanceVideo> seanceVideos = seance.getSeanceVideos();
+        for (SeanceVideo seanceVideo : seanceVideos)
             videosAdapter.add(seanceVideo.video.getName());
         videosListView.setAdapter(videosAdapter);
+
+        ArrayList<Timeline.TimeLineEvent> timelineEvents = new ArrayList<>(seanceVideos.size());
+        for (SeanceVideo seanceVideo : seanceVideos) {
+            timelineEvents.add(new Timeline.TimeLineEvent(seanceVideo.video.getName(), seanceVideo.getTimestamp()));
+        }
+
+        Timeline timeline = (Timeline) findViewById(R.id.seance_timeline);
+        timeline.setTimelineEvents(timelineEvents);
 
         editButton = (Button) findViewById(R.id.seance_card_editBtn);
         editButton.setOnClickListener(new View.OnClickListener() {
@@ -141,8 +152,7 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         try {
             seanceDao = getHelper().getDao(Seance.class);
-            Seance seance = seanceDao.queryForId(seanceId);
-            return seance;
+            return seanceDao.queryForId(seanceId);
         } catch (SQLException e) {
             e.printStackTrace();
         }

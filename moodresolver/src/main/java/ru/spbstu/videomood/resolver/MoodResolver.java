@@ -4,6 +4,9 @@ import java.util.HashMap;
 
 public class MoodResolver {
 
+    public static int minY = 0;
+    public static int maxY = 1700;
+
     public static double[] normalEquations2d(double[] y, double[] x) {
         // x^t * x
         double[][] xtx = new double[2][2];
@@ -42,119 +45,81 @@ public class MoodResolver {
         return theta;
     }
 
-    private static boolean isBlackPixel(float[] arr, int x, int y) {
-        return arr[x] == y;
+    private static boolean isInRange(float value, int left, int right) {
+        return value > left && value <= right;
     }
 
-    /// <summary>
-    /// Box-counting algorithm
-    /// </summary>
-    /// <param name="bw">black-white bitmap</param>
-    /// <param name="startSize">initial size of square of grid</param>
-    /// <param name="finishSize">final size of square of grid</param>
-    /// <param name="step">step of changing of the grid</param>
-    /// <returns>baList.Add(Math.Log(1d/b), Math.Log(a)), where b is swuare length size, a is the number of intersection of image with grid squares</returns>
-    public static HashMap<Double, Double> boxCountingDimension(float[] bwPlot, int startSize, int finishSize, int step)
+    /**
+     * Box-counting algorithm
+     * @param plot - timeline of values
+     * @param startSize - initial size of square of grid
+     * @param finishSize - final size of square of grid
+     * @param step - step of changing of the grid
+     * @return map Math.Log(1/b) to Math.Log(a) where b is square length size, a is the number of intersection of image with grid squares
+     */
+    public static HashMap<Double, Double> boxCountingDimension(float[] plot, int startSize, int finishSize, int step)
     {
         //length size - number of boxes
         HashMap<Double, Double> baList = new HashMap<>();
 
-        float minWidth = Float.MAX_VALUE;
-        float maxWidth = 0f;
-        for (int i = 0; i < bwPlot.length; i++) {
-            if (maxWidth < bwPlot[i])
-                maxWidth = bwPlot[i];
-            if (minWidth > bwPlot[i])
-                minWidth = bwPlot[i];
-        }
+        int bwHeight = maxY - minY;
 
-        int bwWidth = Math.round(maxWidth) - Math.round(minWidth);
-        int bwHeight = bwPlot.length;
-
-        for (int b = startSize; b <= finishSize; b += step)
+        for (int boxSize = startSize; boxSize <= finishSize; boxSize += step)
         {
-            int hCount = bwHeight/b;
-            int wCount = bwWidth/b;
-            boolean[][] filledBoxes = new boolean[wCount + (bwWidth > wCount*b ? 1 : 0)][hCount + (bwHeight > hCount*b ? 1 : 0)];
-
-            for (int x = 0; x < bwWidth; x++)
-            {
-                for (int y = 0; y < bwHeight; y++)
-                {
-                    if (isBlackPixel(bwPlot, x, y))
-                    {
-                        int xBox = x/b;
-                        int yBox = y/b;
-                        filledBoxes[xBox][yBox] = true;
-                    }
-                }
-            }
+            boolean[][] filledBoxes = fillBoxes(plot, boxSize, bwHeight);
 
             int a = 0;
             for (int i = 0; i < filledBoxes.length; i++)
-            {
                 for (int j = 0; j < filledBoxes[0].length; j++)
-                {
                     if (filledBoxes[i][j])
-                    {
                         a++;
-                    }
-                }
-            }
 
-            baList.put(Math.log(1d/b), Math.log(a));
-
-            /*if (dataPath.Length > 0)
-            {
-                if (dataPath[dataPath.Length - 1] != '\\')
-                {
-                    dataPath += '\\';
-                }
-                if (Directory.Exists(dataPath))
-                {
-                    XBitmap bmp = new XBitmap(bw);
-                    for (int i = 0; i < filledBoxes.GetLength(0); i++)
-                    {
-                        bmp.DrawLine(i * b, 0, i * b, bmp.Height, Color.HotPink);
-                    }
-                    for (int j = 0; j < filledBoxes.GetLength(1); j++)
-                    {
-                        bmp.DrawLine(0, j * b, bmp.Width, j * b, Color.HotPink);
-                    }
-                    for (int i = 0; i < filledBoxes.GetLength(0); i++)
-                    {
-                        for (int j = 0; j < filledBoxes.GetLength(1); j++)
-                        {
-                            if (filledBoxes[i, j])
-                            {
-                                bmp.FillRectangle(i * b, j * b, i * b + b, j * b + b, Color.Red, 2);
-                            }
-                        }
-                    }
-                    bmp.ConvertToNativeBitmap().Save(dataPath + b + ".bmp");
-                }
-            }
-
-            Logger.Instance.Log("BoxCounting: b is " + b + " of " + finishSize);*/
-
+            baList.put(Math.log(1d/boxSize), Math.log(a));
         }
-
-        /*if (dataPath.Length > 0)
-        {
-            using (StreamWriter sw = new StreamWriter(dataPath + "ba.csv"))
-            {
-                sw.WriteLine("NumberOfBoxes,LengthOfSideInv");
-                foreach (double bInv in baList.Keys)
-                {
-                    sw.WriteLine(baList[bInv] + "," + bInv);
-                }
-                sw.Close();
-            }
-        }*/
 
         return baList;
     }
 
+    /**
+     * create array of boxes depend on timeline plot size and box size, mark boxes where values of plot are presented
+     * @param plot - array of timeline plot values
+     * @param boxSize - size of box to divide plot
+     * @param plotHeight - plot height
+     * @return array of marked boxes
+     */
+    private static boolean[][] fillBoxes(float[] plot, int boxSize, int plotHeight) {
+        int plotWidth = plot.length;
+
+        int hCount = plotHeight/boxSize;
+        int wCount = plotWidth/boxSize;
+
+        if (plotWidth > wCount*boxSize)
+            wCount += 1;
+        if (plotHeight > hCount*boxSize)
+            hCount += 1;
+
+        boolean[][] filledBoxes = new boolean[wCount][hCount];
+        for (int i = 0; i < plot.length; i++) {
+            float value = plot[i];
+            int yBox = (int) (value/boxSize);
+            int left = yBox*boxSize;
+            int right = left + boxSize;
+            if (isInRange(value, left, right)) {
+                int xBox = i/boxSize;
+                filledBoxes[xBox][yBox] = true;
+            }
+        }
+        return filledBoxes;
+    }
+
+    /**
+     *
+     * @param curve
+     * @param startSize
+     * @param endSize
+     * @param step
+     * @return vector of two values: first value is angular coeff (Minkowski–Bouligand dimension) while second value — offset.
+     */
     public static double[] getThetaValues(float[] curve, int startSize, int endSize, int step) {
         HashMap<Double, Double> baList = boxCountingDimension(curve, startSize, endSize, step);
         double[] y = new double[baList.size()];

@@ -167,12 +167,14 @@
         android:layout_height="wrap_content"
         android:paddingTop="5dp"
         android:text="@string/videos"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        />
 
     <ListView
         android:id="@+id/seance_card_videos"
         android:layout_width="match_parent"
-        android:layout_height="100dp" />
+        android:layout_height="100dp"
+        />
 
     <TextView
         android:layout_width="match_parent"
@@ -181,11 +183,26 @@
         android:text="@string/data"
         android:textSize="20sp" />
 
-    <com.github.mikephil.charting.charts.BarChart
-        android:id="@+id/seance_dataBarChart"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:minHeight="250dp" />
+        android:orientation="vertical">
+
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/seance_dataBarChart"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            />
+
+        <ru.spbstu.videomoodadmin.Timeline
+            android:id="@+id/seance_timeline"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"/>
+
+
+
+    </LinearLayout>
 
 </LinearLayout>

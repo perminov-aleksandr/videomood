@@ -2,6 +2,7 @@ package ru.spbstu.videomood.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -9,8 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.BatteryManager;
@@ -27,9 +26,7 @@ import android.widget.VideoView;
 
 import com.choosemuse.libmuse.ConnectionState;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -301,7 +298,7 @@ public class VideoActivity extends MuseActivity {
     private BluetoothService mBtService = null;
 
     private void setupBtService() {
-        mBtService = new BluetoothService(mAdminDeviceMessageHandler);
+        mBtService = new BluetoothService(mAdminDeviceMessageHandler, BluetoothAdapter.getDefaultAdapter());
     }
 
     private final DataPacket dataPacket = new DataPacket();
@@ -595,7 +592,7 @@ public class VideoActivity extends MuseActivity {
             // Only if the state is STATE_NONE, do we know that we haven't started already
             if (mBtService.getState() == BluetoothService.STATE_NONE) {
                 // Start the Bluetooth service
-                mBtService.start();
+                mBtService.startServer();
             }
         }
     }

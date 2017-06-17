@@ -30,7 +30,6 @@ import com.j256.ormlite.dao.Dao;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Timer;
@@ -277,7 +276,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     private void setupBtService() {
-        mBtService = new BluetoothService(mHandler);
+        mBtService = new BluetoothService(mHandler, BluetoothAdapter.getDefaultAdapter());
     }
 
     @Override
@@ -292,7 +291,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 // Only if the state is STATE_NONE, do we know that we haven't started already
                 if (mBtService.getState() == BluetoothService.STATE_NONE) {
                     // Start the Bluetooth chat services
-                    mBtService.start();
+                    mBtService.startServer();
                 }
             }
         }
@@ -379,9 +378,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
 
-        Log.i(TAG, String.format("Attempt to connect to %s(%s)", device.getName(), deviceAddress));
-        // Attempt to connect to the device
-        mBtService.connect(device);
+        Log.i(TAG, String.format("Attempt to connectToServer to %s(%s)", device.getName(), deviceAddress));
+        // Attempt to connectToServer to the device
+        mBtService.connectToServer(device);
     }
 
     /**

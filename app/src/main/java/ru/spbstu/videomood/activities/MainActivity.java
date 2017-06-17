@@ -52,7 +52,7 @@ public class MainActivity extends BaseActivity {
     //private MuseManagerAndroid manager;
 
     /**
-     * In the UI, the list of Muses you can connect to is displayed in a Spinner object for this example.
+     * In the UI, the list of Muses you can connectToServer to is displayed in a Spinner object for this example.
      * This spinner adapter contains the MAC addresses of all of the headbands we have discovered.
      */
     private ArrayAdapter<String> spinnerAdapter;
@@ -84,7 +84,7 @@ public class MainActivity extends BaseActivity {
 
         WeakReference<MainActivity> weakActivity = new WeakReference<>(this);
         // Register a listener to receive notifications of what Muse headbands
-        // we can connect to.
+        // we can connectToServer to.
         MuseManager.getManager().setMuseListener(new MuseL(weakActivity));
 
         // Muse 2016 (MU-02) headbands use Bluetooth Low Energy technology to
@@ -121,7 +121,7 @@ public class MainActivity extends BaseActivity {
         int selectedMuseIndex = musesSpinner.getSelectedItemPosition();
         ArrayList<Muse> availableMuses = MuseManager.getMuses();
         if (availableMuses.size() == 0) {
-            Log.i(TAG, "There is nothing to connect to");
+            Log.i(TAG, "There is nothing to connectToServer to");
             return;
         }
         Muse muse = availableMuses.get(selectedMuseIndex);
@@ -241,7 +241,7 @@ public class MainActivity extends BaseActivity {
             final File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
             final File file = new File(dir, "new_muse_file.muse");
             // MuseFileWriter will append to an existing file.
-            // In this case, we want to start fresh so the file
+            // In this case, we want to startServer fresh so the file
             // if it exists.
             if (file.exists()) {
                 file.delete();

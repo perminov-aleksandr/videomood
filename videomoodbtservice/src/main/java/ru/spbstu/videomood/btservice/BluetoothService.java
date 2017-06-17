@@ -24,10 +24,10 @@ public class BluetoothService {
     private static final String TAG = "BluetoothService";
 
     // Name for the SDP record when creating server socket
-    private static final String NAME_SECURE = "BluetoothSecure";
+    public static final String NAME_SECURE = "BluetoothSecure";
 
     // Unique UUID for this application
-    private static final UUID MY_UUID_SECURE =
+    public static final UUID VIDEOMOOD_BTSERVICE_UUID =
             UUID.nameUUIDFromBytes("video_mood".getBytes());
 
     // Member fields
@@ -49,8 +49,8 @@ public class BluetoothService {
      *
      * @param handler A Handler to send messages back to the UI Activity
      */
-    public BluetoothService(Handler handler) {
-        mAdapter = BluetoothAdapter.getDefaultAdapter();
+    public BluetoothService(Handler handler, BluetoothAdapter btAdapter) {
+        mAdapter = btAdapter;
         mState = STATE_NONE;
         mHandler = handler;
     }
@@ -76,11 +76,11 @@ public class BluetoothService {
     }
 
     /**
-     * Start the chat service. Specifically start AcceptThread to begin a
+     * Start the chat service. Specifically startServer AcceptThread to begin a
      * session in listening (server) mode. Called by the Activity onResume()
      */
-    public synchronized void start() {
-        Log.d(TAG, "start");
+    public synchronized void startServer() {
+        Log.d(TAG, "startServer");
 
         // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {
@@ -106,10 +106,10 @@ public class BluetoothService {
     /**
      * Start the ConnectThread to initiate a connection to a remote device.
      *
-     * @param device The BluetoothDevice to connect
+     * @param device The BluetoothDevice to connectToServer
      */
-    public synchronized void connect(BluetoothDevice device) {
-        Log.d(TAG, "connect to: " + device);
+    public synchronized void connectToServer(BluetoothDevice device) {
+        Log.d(TAG, "connectToServer to: " + device);
 
         // Cancel any thread attempting to make a connection
         if (mState == STATE_CONNECTING) {
@@ -125,7 +125,7 @@ public class BluetoothService {
             mConnectedThread = null;
         }
 
-        // Start the thread to connect with the given device
+        // Start the thread to connectToServer with the given device
         mConnectThread = new ConnectThread(device);
         mConnectThread.start();
         setState(STATE_CONNECTING);
@@ -152,7 +152,7 @@ public class BluetoothService {
             mConnectedThread = null;
         }
 
-        // Cancel the accept thread because we only want to connect to one device
+        // Cancel the accept thread because we only want to connectToServer to one device
         if (mSecureAcceptThread != null) {
             mSecureAcceptThread.cancel();
             mSecureAcceptThread = null;
@@ -221,12 +221,12 @@ public class BluetoothService {
         // Send a failure message back to the Activity
         /*Message msg = mHandler.obtainMessage(Constants.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
-        bundle.putString(Constants.TOAST, "Unable to connect device");
+        bundle.putString(Constants.TOAST, "Unable to connectToServer device");
         msg.setData(bundle);
         mHandler.sendMessage(msg);*/
 
         // Start the service over to restart listening mode
-        BluetoothService.this.start();
+        BluetoothService.this.startServer();
     }
 
     /**
@@ -241,7 +241,7 @@ public class BluetoothService {
         mHandler.sendMessage(msg);*/
 
         // Start the service over to restart listening mode
-        BluetoothService.this.start();
+        BluetoothService.this.startServer();
     }
 
     /**
@@ -259,7 +259,7 @@ public class BluetoothService {
             // Create a new listening server socket
             try {
                 tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME_SECURE,
-                            MY_UUID_SECURE);
+                        VIDEOMOOD_BTSERVICE_UUID);
             } catch (IOException e) {
                 Log.e(TAG, "listen() failed", e);
             }
@@ -337,7 +337,7 @@ public class BluetoothService {
             // Get a BluetoothSocket for a connection with the
             // given BluetoothDevice
             try {
-                tmp = device.createRfcommSocketToServiceRecord(MY_UUID_SECURE);
+                tmp = device.createRfcommSocketToServiceRecord(VIDEOMOOD_BTSERVICE_UUID);
             } catch (IOException e) {
                 Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
             }
@@ -381,7 +381,7 @@ public class BluetoothService {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                Log.e(TAG, "close() of connect " + mSocketType + " socket failed", e);
+                Log.e(TAG, "close() of connectToServer " + mSocketType + " socket failed", e);
             }
         }
     }
@@ -473,7 +473,7 @@ public class BluetoothService {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                Log.e(TAG, "close() of connect socket failed", e);
+                Log.e(TAG, "close() of connectToServer socket failed", e);
             }
         }
     }
