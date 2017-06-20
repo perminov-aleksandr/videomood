@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -24,6 +25,8 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.listener.ChartTouchListener;
+import com.github.mikephil.charting.listener.OnChartGestureListener;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
@@ -44,6 +47,7 @@ import ru.spbstu.videomood.database.SeanceVideo;
 import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
+import ru.spbstu.videomoodadmin.SeanceVideoAdapter;
 import ru.spbstu.videomoodadmin.Timeline;
 
 public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
@@ -61,6 +65,7 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private Seance seance;
 
     private Dao<Seance, Integer> seanceDao;
+    private Timeline timeline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,10 +107,10 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
 
         videosListView = (ListView) findViewById(R.id.seance_card_videos);
-        ArrayAdapter<String> videosAdapter = new ArrayAdapter<>(SeanceActivity.this, android.R.layout.simple_list_item_1);
+        SeanceVideoAdapter videosAdapter = new SeanceVideoAdapter(SeanceActivity.this, R.layout.seance_video_item);
         ForeignCollection<SeanceVideo> seanceVideos = seance.getSeanceVideos();
         for (SeanceVideo seanceVideo : seanceVideos)
-            videosAdapter.add(String.format("%s (%d)", seanceVideo.video.getName(), seanceVideo.getTimestamp()));
+            videosAdapter.add(seanceVideo);
         videosListView.setAdapter(videosAdapter);
 
         ArrayList<Timeline.TimeLineEvent> timelineEvents = new ArrayList<>(seanceVideos.size());
@@ -113,7 +118,7 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             timelineEvents.add(new Timeline.TimeLineEvent(seanceVideo.video.getName(), seanceVideo.getTimestamp()));
         }
 
-        Timeline timeline = (Timeline) findViewById(R.id.seance_timeline);
+        timeline = (Timeline) findViewById(R.id.seance_timeline);
         timeline.setTimelineEvents(timelineEvents);
 
         editButton = (Button) findViewById(R.id.seance_card_editBtn);
@@ -162,8 +167,8 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Intent intent = new Intent(SeanceActivity.this, UsersActivity.class);
-        startActivity(intent);
+        /*Intent intent = new Intent(SeanceActivity.this, UsersActivity.class);
+        startActivity(intent);*/
         finish();
     }
 
@@ -225,6 +230,48 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         seanceBarChart.setDrawGridBackground(false); //no grid
         seanceBarChart.setDescription(null); //no description
         seanceBarChart.setBorderWidth(0f);
+
+        seanceBarChart.setOnChartGestureListener(new OnChartGestureListener() {
+            @Override
+            public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+
+            }
+
+            @Override
+            public void onChartLongPressed(MotionEvent me) {
+
+            }
+
+            @Override
+            public void onChartDoubleTapped(MotionEvent me) {
+
+            }
+
+            @Override
+            public void onChartSingleTapped(MotionEvent me) {
+
+            }
+
+            @Override
+            public void onChartFling(MotionEvent me1, MotionEvent me2, float velocityX, float velocityY) {
+
+            }
+
+            @Override
+            public void onChartScale(MotionEvent me, float scaleX, float scaleY) {
+                timeline.setScaleFactor(scaleX);
+            }
+
+            @Override
+            public void onChartTranslate(MotionEvent me, float dX, float dY) {
+                //timeline.scrollBy((int) dX, 0);
+            }
+        });
     }
 
     private boolean isEditMode = false;

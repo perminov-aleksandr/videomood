@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.List;
 
 public class Timeline extends View
 {
+    private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
 
     private int leftBorder = 0;
@@ -30,6 +32,8 @@ public class Timeline extends View
     private final int textSize = 25;
     private final int durationSize = 15;
 
+    private float scaleFactor = 1;
+
     public Timeline(Context context)
     {
         super(context);
@@ -43,6 +47,7 @@ public class Timeline extends View
 
     private void init(Context context, AttributeSet attrs) {
         gestureDetector = new GestureDetector(context, new MyGestureListener());
+        scaleGestureDetector = new ScaleGestureDetector(context, new MyScaleGestureListener());
 
         timelineEvents = new ArrayList<>();
         timelineEvents.add(new TimeLineEvent("First Event", 300));
@@ -76,10 +81,11 @@ public class Timeline extends View
     public void onDraw(Canvas canvas) {
         int prevLeft = 0;
         for (TimeLineEvent event : timelineEvents) {
-            canvas.drawRect(prevLeft, 0, prevLeft + event.duration - rectPadding, height, rectPaint);
+            int eventWidth = (int) (event.duration * scaleFactor);
+            canvas.drawRect(prevLeft, 0, prevLeft + eventWidth - rectPadding, height, rectPaint);
             canvas.drawText(event.displayName, prevLeft + rectPadding, (height + textSize)/2, textPaint);
-            canvas.drawText(event.durationStr(), prevLeft + event.duration - rectPadding*2, (height + durationSize)/2, durationPaint);
-            prevLeft += event.duration;
+            canvas.drawText(event.durationStr(), prevLeft + eventWidth - rectPadding*2, (height + durationSize)/2, durationPaint);
+            prevLeft += eventWidth;
         }
         rightBorder = prevLeft > width ? prevLeft - width + rectPadding : leftBorder;
     }
@@ -88,12 +94,17 @@ public class Timeline extends View
     public boolean onTouchEvent(MotionEvent event)
     {
         if (gestureDetector.onTouchEvent(event)) return true;
+        if (scaleGestureDetector.onTouchEvent(event)) return true;
         return true;
+    }
+
+    public void setScaleFactor(float scaleFactor) {
+        this.scaleFactor *= scaleFactor;
+        invalidate();
     }
 
     private class MyGestureListener extends GestureDetector.SimpleOnGestureListener
     {
-
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
         {
@@ -131,6 +142,30 @@ public class Timeline extends View
             this.displayName = displayName;
             this.duration = duration;
             this.weight = duration;
+        }
+    }
+
+    private class MyScaleGestureListener implements ScaleGestureDetector.OnScaleGestureListener {
+
+        public boolean onScale(ScaleGestureDetector detector)
+        {
+            scaleFactor *= detector.getScaleFactor();
+
+            int newScrollX = (int)((getScrollX() + detector.getFocusX()) * detector.getScaleFactor() - detector.getFocusX());
+            scrollTo(newScrollX, 0);
+
+            invalidate();
+
+            return true;
+        }
+
+        public boolean onScaleBegin(ScaleGestureDetector detector)
+        {
+            return true;
+        }
+
+        public void onScaleEnd(ScaleGestureDetector detector)
+        {
         }
     }
 }
