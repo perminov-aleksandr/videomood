@@ -108,11 +108,18 @@
             android:layout_gravity="center"
             android:padding="4dp" />
 
-        <Button
+        <TextView
             android:id="@+id/main_finishSeanceBtn"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/finish_session" />
+            android:layout_height="70dp"
+            android:layout_marginTop="10dp"
+            android:width="0dip"
+            android:background="@drawable/rounded_corner"
+            android:padding="5dp"
+            android:text="@string/finish_session"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            style="@style/sideBlockHeader"/>
     </LinearLayout>
 
     <LinearLayout
@@ -214,8 +221,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:onClick="pause"
-                    android:text="@string/fa_play"
-                    android:textAlignment="gravity" />
+                    android:text="@string/fa_pause"
+                    android:textAlignment="gravity"/>
 
                 <Button
                     android:id="@+id/nextBtn"

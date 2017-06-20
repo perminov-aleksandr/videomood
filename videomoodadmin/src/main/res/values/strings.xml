@@ -46,7 +46,7 @@
     <string name="start_session">Start seance</string>
     <string name="deleteUserDialogTittle">Delete?</string>
     <string name="deleteUserDialogMessage">Are you sure you want to delete user %s?</string>
-    <string name="finish_session">Finish seance</string>
+    <string name="finish_session">Finish\nSeance</string>
     <string name="seance">Seance</string>
     <string name="date">Date</string>
     <string name="from">From</string>

@@ -67,7 +67,7 @@ public class SeanceVideo {
         return timestamp;
     }
 
-    public void setTimestamp(int timestamp) {
+    /*public void setTimestamp(int timestamp) {
         this.timestamp = timestamp;
-    }
+    }*/
 }

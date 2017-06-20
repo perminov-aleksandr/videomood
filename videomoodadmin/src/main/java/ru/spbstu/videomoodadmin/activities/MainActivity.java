@@ -1,17 +1,20 @@
 package ru.spbstu.videomoodadmin.activities;
 
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -52,9 +55,12 @@ import ru.spbstu.videomoodadmin.HorseshoeView;
 import ru.spbstu.videomoodadmin.R;
 import ru.spbstu.videomoodadmin.UserViewModel;
 
+@SuppressWarnings("ConstantConditions")
 public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private final boolean IS_DEBUG = false;
+
+    private Timer debugTimerPacketSender;
 
     private static final String TAG = "MainActivity";
 
@@ -150,7 +156,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             }
         });
 
-        final Button finishSeance = (Button) findViewById(R.id.main_finishSeanceBtn);
+        final TextView finishSeance = (TextView) findViewById(R.id.main_finishSeanceBtn);
         finishSeance.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -255,8 +261,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 saveSeance();
             }
         } else {
-            Timer timer = new Timer();
-            timer.schedule(new TimerTask() {
+            debugTimerPacketSender = new Timer();
+            debugTimerPacketSender.schedule(new TimerTask() {
                 private double time;
                 private long panicTicks = 0;
 
@@ -298,6 +304,16 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     @Override
+    public void onStop() {
+        super.onStop();
+
+        if (IS_DEBUG)
+            debugTimerPacketSender.cancel();
+
+        sendMessageHandler.removeCallbacks(sendMessageRunnable);
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
 
@@ -314,8 +330,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             userViewModel.setDateFinish(Calendar.getInstance().getTime());
             seance.setDateTo(userViewModel.getDateFinish());
             seanceDao.update(seance);
-            finishActivity(RESULT_OK);
             goToSeance(seance);
+            finish();
         }
         catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
@@ -329,7 +345,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             seance.user = userDao.queryForId(userViewModel.id);
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
-            Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG);
+            Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG).show();
             return null;
         }
 
@@ -342,17 +358,16 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         try {
             if (seanceDao.create(seance) != 1)
                 throw new SQLException("No seance created");
-            //userViewModel = null;
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
-            Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG);
-            return;
+            Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG).show();
         }
     }
 
     private void goToSeance(Seance seance) {
         Intent intent = new Intent(MainActivity.this, SeanceActivity.class);
         intent.putExtra(AdminConst.EXTRA_SEANCE_ID, seance.getId());
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
     }
 
@@ -453,6 +468,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                         case BluetoothService.STATE_CONNECTED:
                             setStatus(R.string.state_connected);
                             sendPacket(new ControlPacket(Command.LIST));
+                            showProgressDialog();
                             break;
                         case BluetoothService.STATE_LISTEN:
                         case BluetoothService.STATE_NONE:
@@ -474,6 +490,20 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                     break;
             }
         }
+    }
+
+    private ProgressDialog pd;
+
+    private void showProgressDialog() {
+        pd = new ProgressDialog(MainActivity.this);
+        pd.setTitle("Выполняется подключение");
+        pd.setMessage("Обновление списка видео файлов");
+        // меняем стиль на индикатор
+        pd.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        // включаем анимацию ожидания
+        pd.setIndeterminate(true);
+        pd.setCancelable(false);
+        pd.show();
     }
 
     private TextView museStatusTextView;
@@ -502,6 +532,13 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         pauseBtn = (TextView) findViewById(R.id.playBtn);
         userIcon = (TextView) findViewById(R.id.userIcon);
 
+        userIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playNotification();
+            }
+        });
+
         Typeface font = Typeface.createFromAsset( getAssets(), "fonts/fontawesome.ttf" );
 
         setFont(font, R.id.prevBtn);
@@ -520,6 +557,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
+    private boolean prevIsPanic = false;
+
     private void processPacketData() {
         Integer alphaPct = dataPacket.getAlphaPct();
         Integer betaPct = dataPacket.getBetaPct();
@@ -536,6 +575,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
         userIcon.setText(isPanic ? R.string.fa_frown_o : R.string.fa_smile_o);
         userIcon.setTextColor(getResources().getColor(isPanic ? R.color.warningColor : R.color.calmColor));
+
+        if (!prevIsPanic && isPanic)
+            playNotification();
+
+        prevIsPanic = isPanic;
 
         Boolean isMuseConnected = dataPacket.getMuseState();
         if (isMuseConnected != null && isMuseConnected) {
@@ -588,7 +632,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
             videoNameTextView.setText(videoname);
             Boolean videoState = dataPacket.getVideoState();
-            pauseBtn.setText(videoState != null && videoState ? R.string.fa_pause : R.string.fa_play);
+            pauseBtn.setText(videoState == true ? R.string.fa_play : R.string.fa_pause);
 
             Integer videoPosition = dataPacket.getCurrentPositionSec();
             Integer videoDuration = dataPacket.getDurationSec();
@@ -596,8 +640,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 seekBar.setProgress(videoPosition);
                 seekBar.setMax(videoDuration);
 
-                TextView currentPostionTv = (TextView)findViewById(R.id.main_seekBarCurrentPosition);
-                currentPostionTv.setText(String.format("%d:%02d", videoPosition / 60, videoPosition % 60));
+                TextView currentPositionTv = (TextView)findViewById(R.id.main_seekBarCurrentPosition);
+                currentPositionTv.setText(String.format("%d:%02d", videoPosition / 60, videoPosition % 60));
 
                 TextView durationTv = (TextView)findViewById(R.id.main_seekBarDuration);
                 durationTv.setText(String.format("%d:%02d", videoDuration / 60, videoDuration % 60));
@@ -614,12 +658,22 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         if (videoItems != null) {
             syncVideosWithDb(videoItems);
             dataPacket.setVideoList(null);
+            pd.setIndeterminate(false);
+            pd.dismiss();
             sendMessageHandler.removeCallbacks(sendMessageRunnable);
             sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
         }
     }
 
-    private int lastDataChunkTimestamp = 0;
+    private void playNotification() {
+        try {
+            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+            r.play();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private void saveSeanceDataChunk() {
         try {
@@ -634,11 +688,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             SeanceVideo seanceVideo = new SeanceVideo();
             seanceVideo.video = currentVideo;
             seanceVideo.seance = this.seance;
-            seanceVideo.setTimestamp(lastDataChunkTimestamp);
 
             Calendar seanceStart = Calendar.getInstance();
             seanceStart.setTime(userViewModel.getSeanceDateStart());
-            lastDataChunkTimestamp = (int) (Calendar.getInstance().getTimeInMillis() - seanceStart.getTimeInMillis());
 
             seanceVideo.setData(userViewModel.seanceData);
             userViewModel.seanceData.clear();
@@ -649,31 +701,49 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
-    private void syncVideosWithDb(ArrayList<VideoItem> existingVideos) {
-        List<Video> videoEntities;
+    private void syncVideosWithDb(ArrayList<VideoItem> remoteVideoList) {
+        List<Video> dbVideoList;
         Dao<Video, Integer> videoDao;
 
         try {
             videoDao = dbHelper.getDao(Video.class);
-            videoEntities = videoDao.queryForAll();
+            dbVideoList = videoDao.queryForAll();
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
             return;
         }
 
-        HashSet<String> videoEntitiesNames = new HashSet<>();
-        for (Video videoEntity : videoEntities)
-            videoEntitiesNames.add(videoEntity.getName());
+        //fill the set of remote video names
+        HashSet<String> remoteVideosNames = new HashSet<>();
+        for (VideoItem remoteVideo : remoteVideoList)
+            remoteVideosNames.add(remoteVideo.getName());
 
-        for (VideoItem existingVideo : existingVideos) {
-            String videoName = existingVideo.getName();
-            if (videoEntitiesNames.contains(videoName))
+        HashSet<String> dbVideosNames = new HashSet<>();
+        for (Video dbVideo : dbVideoList) {
+            String dbVideoName = dbVideo.getName();
+            if (remoteVideosNames.contains(dbVideoName))
+                //fill the set of db video names
+                dbVideosNames.add(dbVideoName);
+            else
+                //remove absent videos from db
+                try {
+                    videoDao.delete(dbVideo);
+                } catch (SQLException e) {
+                    Log.e(TAG, e.getMessage(), e);
+                }
+        }
+
+        for (VideoItem remoteVideo : remoteVideoList) {
+            String remoteVideoName = remoteVideo.getName();
+            //skip existing db videos
+            if (dbVideosNames.contains(remoteVideoName))
                 continue;
 
+            //add absent remote videos to db
             Video video = new Video();
-            video.setName(existingVideo.getName());
-            video.setPath(existingVideo.getName());
-            video.setDuration(existingVideo.getDuration());
+            video.setName(remoteVideo.getName());
+            video.setPath(remoteVideo.getName());
+            video.setDuration(remoteVideo.getDuration());
             try {
                 videoDao.create(video);
             } catch (SQLException e) {

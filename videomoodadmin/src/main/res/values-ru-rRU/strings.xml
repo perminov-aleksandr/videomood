@@ -43,7 +43,7 @@
     <string name="start_session">Начать сеанс</string>
     <string name="deleteUserDialogTittle">Удалить?</string>
     <string name="deleteUserDialogMessage">Вы действительно хотите удалить пользователя %s?</string>
-    <string name="finish_session">Завершить сеанс</string>
+    <string name="finish_session">Завершить\nсеанс</string>
     <string name="seance">Сеанс</string>
     <string name="date">Дата</string>
     <string name="from">С</string>
@@ -55,4 +55,10 @@
     <string name="default_action">Не указано</string>
     <string name="comment">Комментарий</string>
     <string name="default_comment">Отсутствует</string>
+    <string name="edit">Изменить</string>
+    <string name="remove">Удалить</string>
+    <string name="save">Сохранить</string>
+    <string name="seanceCreateError">Невозможно сохранить данные сеанса</string>
+    <string name="seanceNotFoundError">Сеанс не найден</string>
+    <string name="videos">Видео</string>
 </resources>

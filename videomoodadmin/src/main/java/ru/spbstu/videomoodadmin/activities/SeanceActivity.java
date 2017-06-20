@@ -105,7 +105,7 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         ArrayAdapter<String> videosAdapter = new ArrayAdapter<>(SeanceActivity.this, android.R.layout.simple_list_item_1);
         ForeignCollection<SeanceVideo> seanceVideos = seance.getSeanceVideos();
         for (SeanceVideo seanceVideo : seanceVideos)
-            videosAdapter.add(seanceVideo.video.getName());
+            videosAdapter.add(String.format("%s (%d)", seanceVideo.video.getName(), seanceVideo.getTimestamp()));
         videosListView.setAdapter(videosAdapter);
 
         ArrayList<Timeline.TimeLineEvent> timelineEvents = new ArrayList<>(seanceVideos.size());
@@ -162,7 +162,9 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        finishActivity(RESULT_OK);
+        Intent intent = new Intent(SeanceActivity.this, UsersActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     public void initChart() {
