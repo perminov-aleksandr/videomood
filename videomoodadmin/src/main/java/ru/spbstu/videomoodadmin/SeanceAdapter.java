@@ -53,13 +53,15 @@ public class SeanceAdapter extends ArrayAdapter<Seance> {
                 viewHolder.dateTextView.setText(new SimpleDateFormat("dd.MM.yyyy").format(dateFrom));
 
                 DateFormat timeFormat = new SimpleDateFormat("hh:mm");
-                viewHolder.fromTextView.setText(String.format("%s - ", timeFormat.format(dateFrom)));
-
-
                 String dateToStr = seance.getDateTo();
                 if (dateToStr != null) {
+                    viewHolder.fromTextView.setText(String.format("%s - ", timeFormat.format(dateFrom)));
+
                     Date dateTo = Seance.dateFormat.parse(dateToStr);
                     viewHolder.toTextView.setText(timeFormat.format(dateTo));
+                } else {
+                    viewHolder.fromTextView.setText(String.format("%s", timeFormat.format(dateFrom)));
+                    viewHolder.toTextView.setText("");
                 }
 
                 viewHolder.actionTextView.setText(seance.getAction());

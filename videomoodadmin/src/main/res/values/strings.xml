@@ -66,4 +66,6 @@
     <string name="seanceNotFoundError">Unable to find seance</string>
     <string name="videos">Videos</string>
     <string name="remove">Remove</string>
+    <string name="deleteSeanceDialogTittle">Delete Seance</string>
+    <string name="deleteSeanceDialogMessage">Delete seance data %s?</string>
 </resources>

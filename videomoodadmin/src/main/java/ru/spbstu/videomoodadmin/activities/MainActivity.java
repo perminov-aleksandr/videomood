@@ -582,7 +582,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         prevIsPanic = isPanic;
 
         Boolean isMuseConnected = dataPacket.getMuseState();
-        if (isMuseConnected != null && isMuseConnected) {
+        if (isMuseConnected) {
             museStatusTextView.setText(R.string.state_connected);
             museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
 
@@ -597,14 +597,13 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             if (sensorsState != null) {
                 sensorsChart.setCircles(sensorsState);
                 sensorsChart.setVisibility(View.VISIBLE);
-            } else {
-                sensorsChart.setVisibility(View.INVISIBLE);
             }
         }
         else {
             museStatusTextView.setText(R.string.state_not_connected);
             museStatusTextView.setTextColor(getResources().getColor(R.color.disconnectedColor));
             museBatteryTextView.setVisibility(View.INVISIBLE);
+            sensorsChart.setVisibility(View.INVISIBLE);
         }
 
         Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
@@ -632,7 +631,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
             videoNameTextView.setText(videoname);
             Boolean videoState = dataPacket.getVideoState();
-            pauseBtn.setText(videoState == true ? R.string.fa_play : R.string.fa_pause);
+            pauseBtn.setText(videoState ? R.string.fa_play : R.string.fa_pause);
 
             Integer videoPosition = dataPacket.getCurrentPositionSec();
             Integer videoDuration = dataPacket.getDurationSec();

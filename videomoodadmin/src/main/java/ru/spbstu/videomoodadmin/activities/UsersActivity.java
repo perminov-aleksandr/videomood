@@ -224,6 +224,28 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 openSeanceCard(seance);
             }
         });
+        userSeancesListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                AlertDialog.Builder adb = new AlertDialog.Builder(UsersActivity.this);
+                final Seance seanceToRemove = seancesAdapter.getItem(position);
+                adb.setTitle(R.string.deleteSeanceDialogTittle);
+                adb.setMessage(getString(R.string.deleteSeanceDialogMessage, seanceToRemove.getDateFrom()));
+                adb.setNegativeButton(R.string.cancel, null);
+                adb.setPositiveButton("Ok", new AlertDialog.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            getHelper().getDao(Seance.class).delete(seanceToRemove);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                        seancesAdapter.remove(seanceToRemove);
+                        seancesAdapter.notifyDataSetChanged();
+                    }});
+                adb.show();
+                return true;
+            }
+        });
 
         seancesAdapter.addAll(user.seances);
     }
