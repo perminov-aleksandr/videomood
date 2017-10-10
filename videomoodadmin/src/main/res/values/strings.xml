@@ -68,4 +68,6 @@
     <string name="remove">Remove</string>
     <string name="deleteSeanceDialogTittle">Delete Seance</string>
     <string name="deleteSeanceDialogMessage">Delete seance data %s?</string>
+    <string name="connectingProgressTitle">Connecting in progress</string>
+    <string name="connectionProgressMessage">Video list refreshing</string>
 </resources>

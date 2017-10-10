@@ -109,8 +109,9 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         videosListView = (ListView) findViewById(R.id.seance_card_videos);
         SeanceVideoAdapter videosAdapter = new SeanceVideoAdapter(SeanceActivity.this, R.layout.seance_video_item);
         ForeignCollection<SeanceVideo> seanceVideos = seance.getSeanceVideos();
-        for (SeanceVideo seanceVideo : seanceVideos)
+        for (SeanceVideo seanceVideo : seanceVideos) {
             videosAdapter.add(seanceVideo);
+        }
         videosListView.setAdapter(videosAdapter);
 
         ArrayList<Timeline.TimeLineEvent> timelineEvents = new ArrayList<>(seanceVideos.size());
@@ -118,8 +119,8 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             timelineEvents.add(new Timeline.TimeLineEvent(seanceVideo.video.getName(), seanceVideo.getTimestamp()));
         }
 
-        timeline = (Timeline) findViewById(R.id.seance_timeline);
-        timeline.setTimelineEvents(timelineEvents);
+        /*timeline = (Timeline) findViewById(R.id.seance_timeline);
+        timeline.setTimelineEvents(timelineEvents);*/
 
         editButton = (Button) findViewById(R.id.seance_card_editBtn);
         editButton.setOnClickListener(new View.OnClickListener() {
@@ -167,8 +168,6 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        /*Intent intent = new Intent(SeanceActivity.this, UsersActivity.class);
-        startActivity(intent);*/
         finish();
     }
 
@@ -231,7 +230,7 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         seanceBarChart.setDescription(null); //no description
         seanceBarChart.setBorderWidth(0f);
 
-        seanceBarChart.setOnChartGestureListener(new OnChartGestureListener() {
+        /*seanceBarChart.setOnChartGestureListener(new OnChartGestureListener() {
             @Override
             public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
 
@@ -271,7 +270,7 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             public void onChartTranslate(MotionEvent me, float dX, float dY) {
                 //timeline.scrollBy((int) dX, 0);
             }
-        });
+        });*/
     }
 
     private boolean isEditMode = false;

@@ -61,4 +61,6 @@
     <string name="seanceCreateError">Невозможно сохранить данные сеанса</string>
     <string name="seanceNotFoundError">Сеанс не найден</string>
     <string name="videos">Видео</string>
+    <string name="connectingProgressTitle">Выполняется подключение</string>
+    <string name="connectionProgressMessage">Обновление списка видео файлов</string>
 </resources>

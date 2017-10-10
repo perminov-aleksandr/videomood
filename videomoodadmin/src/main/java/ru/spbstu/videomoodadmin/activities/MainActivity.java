@@ -304,24 +304,17 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-
-        if (IS_DEBUG)
-            debugTimerPacketSender.cancel();
-
-        sendMessageHandler.removeCallbacks(sendMessageRunnable);
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
+
+        sendMessageHandler.removeCallbacks(sendMessageRunnable);
 
         if (!IS_DEBUG) {
             if (mBtService != null) {
                 mBtService.stop();
             }
-        }
+        } else
+            debugTimerPacketSender.cancel();
     }
 
     private void finishSeance() {
@@ -496,8 +489,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private void showProgressDialog() {
         pd = new ProgressDialog(MainActivity.this);
-        pd.setTitle("Выполняется подключение");
-        pd.setMessage("Обновление списка видео файлов");
+        pd.setTitle(getString(R.string.connectingProgressTitle));
+        pd.setMessage(getString(R.string.connectionProgressMessage));
         // меняем стиль на индикатор
         pd.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         // включаем анимацию ожидания
@@ -631,7 +624,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
             videoNameTextView.setText(videoname);
             Boolean videoState = dataPacket.getVideoState();
-            pauseBtn.setText(videoState ? R.string.fa_play : R.string.fa_pause);
+            pauseBtn.setText(videoState != null && videoState ? R.string.fa_pause : R.string.fa_play);
 
             Integer videoPosition = dataPacket.getCurrentPositionSec();
             Integer videoDuration = dataPacket.getDurationSec();
