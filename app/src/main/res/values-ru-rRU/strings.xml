@@ -42,4 +42,7 @@
     <string name="title_other_devices">Другие устройства</string>
     <string name="title_paired_devices">Подключенные устройства</string>
     <string name="app_name">VideoMood</string>
+    <string name="error">Ошибка</string>
+    <string name="error_no_videofiles">Подходящих для воспроизведения файлов не найдено. Приложение будет закрыто</string>
+    <string name="ok">Хорошо</string>
 </resources>

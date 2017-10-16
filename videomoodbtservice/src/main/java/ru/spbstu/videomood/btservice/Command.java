@@ -26,7 +26,6 @@ public enum Command {
      */
     PREV,
 
-
     /**
      * Get data request
      */
@@ -35,5 +34,10 @@ public enum Command {
     /**
      * Change current video position
      */
-    REWIND
+    REWIND,
+
+    /**
+     * Try to connect to Muse
+     */
+    RECONNECT_MUSE
 }

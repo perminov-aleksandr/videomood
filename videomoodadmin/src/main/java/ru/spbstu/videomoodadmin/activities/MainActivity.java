@@ -1,9 +1,12 @@
 package ru.spbstu.videomoodadmin.activities;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.media.Ringtone;
@@ -81,6 +84,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private int time = 0;
 
     private final int chartSize = 60;
+    private Boolean isMuseConnected = false;
 
     private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> vals = new ArrayList<>();
@@ -574,8 +578,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         prevIsPanic = isPanic;
 
-        Boolean isMuseConnected = dataPacket.getMuseState();
-        if (isMuseConnected) {
+        Boolean _isMuseConnected = dataPacket.getMuseState();
+        if (_isMuseConnected) {
             museStatusTextView.setText(R.string.state_connected);
             museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
 
@@ -597,7 +601,12 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             museStatusTextView.setTextColor(getResources().getColor(R.color.disconnectedColor));
             museBatteryTextView.setVisibility(View.INVISIBLE);
             sensorsChart.setVisibility(View.INVISIBLE);
+
+            if (isMuseConnected)
+                showReconnectDialog();
         }
+
+        isMuseConnected = _isMuseConnected;
 
         Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
         if (headsetBatteryPercent != null)
@@ -655,6 +664,27 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             sendMessageHandler.removeCallbacks(sendMessageRunnable);
             sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
         }
+    }
+
+    private void showReconnectDialog() {
+        Resources resources = getResources();
+        new AlertDialog.Builder(this)
+                .setTitle(resources.getString(R.string.reconnect_muse_header))
+                .setMessage(resources.getString(R.string.reconnect_muse_message))
+                .setNegativeButton(resources.getString(R.string.no), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .setPositiveButton(resources.getString(R.string.reconnect), new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        sendPacket(new ControlPacket(Command.RECONNECT_MUSE));
+                    }
+                })
+                .show();
     }
 
     private void playNotification() {

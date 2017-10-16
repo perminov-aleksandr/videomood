@@ -41,6 +41,9 @@ import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
 
 public class VideoActivity extends MuseActivity {
+
+    private final UI UI = new UI();
+
     private static final String TAG = "VideoMood:VideoActivity";
 
     private long alphaPercentSum;
@@ -48,14 +51,6 @@ public class VideoActivity extends MuseActivity {
 
     private final int timeArrayLength = 60*10;
     private final Queue<Long[]> percentTimeQueue = new ArrayDeque<>(timeArrayLength);
-
-    private TextView foreheadTouch;
-
-    private TextView[] isGoodIndicators;
-
-    private TextView batteryTextView;
-
-    private TextView adminDeviceConnectionStatus;
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -65,24 +60,10 @@ public class VideoActivity extends MuseActivity {
         }
     };
 
-    private void updateMuseSensors() {
-        for (int i = 0; i < sensorsStateBuffer.length; i++)
-            isGoodIndicators[i].setVisibility(sensorsStateBuffer[i] ? View.VISIBLE : View.INVISIBLE);
-
-        int visibility = isForeheadTouch ? View.VISIBLE : View.INVISIBLE;
-
-        foreheadTouch.setVisibility(visibility);
-        rhythmsBar.setVisibility(visibility);
-    }
-
     private void updateBattery() {
-        batteryTextView.setText(String.format("%d%%", (int)batteryValue));
+        UI.batteryTextView.setText(String.format("%d%%", (int)batteryValue));
         batteryStale = false;
     }
-
-    private LinearLayout rhythmsBar;
-    private TextView alphaBar;
-    private TextView betaBar;
 
     private int alphaPct;
     private int betaPct;
@@ -103,16 +84,11 @@ public class VideoActivity extends MuseActivity {
         percentArr[Const.Rhythms.BETA] = betaPercent;
         percentTimeQueue.add(percentArr);
 
-        alphaPct = new Long(alphaPercent).intValue();
-        betaPct = new Long(betaPercent).intValue();
+        alphaPct = Long.valueOf(alphaPercent).intValue();
+        betaPct = Long.valueOf(betaPercent).intValue();
 
-        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
-        params.weight = (float)alphaPercent;
-        alphaBar.setLayoutParams(params);
-
-        params = (LinearLayout.LayoutParams) betaBar.getLayoutParams();
-        params.weight = (float)betaPercent;
-        betaBar.setLayoutParams(params);
+        UI.updateAlphaBar(alphaPercent);
+        UI.updateBetaBar(betaPercent);
     }
 
     private final long second = 1000;
@@ -217,7 +193,7 @@ public class VideoActivity extends MuseActivity {
                 relativeStale = false;
             }
             if (sensorsStale) {
-                updateMuseSensors();
+                UI.updateMuseSensors(sensorsStateBuffer, isForeheadTouch);
                 dataPacket.setMuseSensorsState(sensorsStateBuffer);
                 sensorsStale = false;
             }
@@ -260,7 +236,10 @@ public class VideoActivity extends MuseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setupUI();
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.activity_video);
+
+        UI.setup();
 
         try {
             contentProvider = new ContentProvider();
@@ -312,9 +291,9 @@ public class VideoActivity extends MuseActivity {
                 dataPacket.setAlphaPct(alphaPct);
                 dataPacket.setBetaPct(betaPct);
                 dataPacket.setMuseSensorsState(sensorsStateBuffer);
-                dataPacket.setVideoState(videoView.isPlaying());
-                dataPacket.setDurationSec(videoView.getDuration() / 1000);
-                dataPacket.setCurrentPositionSec(videoView.getCurrentPosition() / 1000);
+                dataPacket.setVideoState(UI.videoView.isPlaying());
+                dataPacket.setDurationSec(UI.videoView.getDuration() / 1000);
+                dataPacket.setCurrentPositionSec(UI.videoView.getCurrentPosition() / 1000);
                 break;
             case LIST:
                 dataPacket.setVideoList(contentProvider.getContentList());
@@ -328,7 +307,7 @@ public class VideoActivity extends MuseActivity {
                 }
                 break;
             case PAUSE:
-                if (videoView.isPlaying())
+                if (UI.videoView.isPlaying())
                     pauseVideo();
                 else
                     playVideo();
@@ -346,8 +325,11 @@ public class VideoActivity extends MuseActivity {
                 if (arguments.length > 0)
                 {
                     Double positionPct = (Double) arguments[0];
-                    videoView.seekTo((int) (positionPct * 1000));
+                    UI.videoView.seekTo((int) (positionPct * 1000));
                 }
+                break;
+            case RECONNECT_MUSE:
+                connectMuse();
                 break;
         }
         reply();
@@ -361,69 +343,40 @@ public class VideoActivity extends MuseActivity {
         dataPacket.setVideoList(null);
     }
 
-    private RelativeLayout calmScreen;
+
 
     private void displayCalmScreen() {
-        calmScreen.setVisibility(View.VISIBLE);
+        UI.calmScreen.setVisibility(View.VISIBLE);
         pauseVideo();
-        mediaController.hide();
+        UI.mediaController.hide();
     }
 
     private void hideCalmScreen() {
-        calmScreen.setVisibility(View.INVISIBLE);
+        UI.calmScreen.setVisibility(View.INVISIBLE);
         playVideo();
     }
 
     private void playVideo(){
-        videoView.start();
+        UI.videoView.start();
         dataPacket.setVideoState(true);
     }
 
     private void pauseVideo(){
-        videoView.pause();
+        UI.videoView.pause();
         dataPacket.setVideoState(false);
     }
 
-    private void setupUI() {
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_video);
-        initTextViews();
-        initVideoView();
-
-        calmScreen = (RelativeLayout) findViewById(R.id.calmScreen);
-        rhythmsBar = (LinearLayout) findViewById(R.id.rhythmsBar);
-    }
-
     private void setAdminDeviceStatus(int stringResId) {
-        adminDeviceConnectionStatus.setText(stringResId);
-    }
-
-    private void initTextViews(){
-        alphaBar = (TextView) findViewById(R.id.alpha);
-        betaBar = (TextView) findViewById(R.id.beta);
-        batteryTextView = (TextView) findViewById(R.id.battery);
-        museState = (TextView) findViewById(R.id.museState);
-
-        isGoodIndicators = new TextView[4];
-        isGoodIndicators[Const.Electrodes.FIRST] = (TextView) findViewById(R.id.good1);
-        isGoodIndicators[Const.Electrodes.SECOND] = (TextView) findViewById(R.id.good2);
-        isGoodIndicators[Const.Electrodes.THIRD] = (TextView) findViewById(R.id.good3);
-        isGoodIndicators[Const.Electrodes.FOURTH] = (TextView) findViewById(R.id.good4);
-
-        foreheadTouch = (TextView) findViewById(R.id.forehead);
-
-        museIndicators = (LinearLayout) findViewById(R.id.museIndicators);
-
-        adminDeviceConnectionStatus = (TextView) findViewById(R.id.connectionStatus);
+        UI.adminDeviceConnectionStatusTextView.setText(stringResId);
     }
 
     //todo: add exact reason
     private void displayErrorDialog() {
         final Activity activity = this;
         new AlertDialog.Builder(this)
-                .setTitle("Error")
-                .setMessage("No suitable video files found. Application will quit")
-                .setPositiveButton("Okay", new DialogInterface.OnClickListener()
+                .setTitle(R.string.error)
+                .setMessage(R.string.error_no_videofiles)
+                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -443,101 +396,48 @@ public class VideoActivity extends MuseActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
-                        videoView.start();
+                        UI.videoView.start();
                     }
                 })
                 .setPositiveButton(resources.getString(R.string.reconnect), new DialogInterface.OnClickListener()
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        reconnectMuse();
-                        videoView.start();
+                        connectMuse();
+                        UI.videoView.start();
                     }
                 })
                 .show();
     }
 
-    private TextView museState;
-
-    private LinearLayout museIndicators;
-
-    private void setMuseIndicatorsVisible(boolean isVisible) {
-        int visibility = isVisible ? View.VISIBLE : View.INVISIBLE;
-        museIndicators.setVisibility(visibility);
-    }
-
     public void processConnecting() {
-        museState.setText(R.string.state_connecting);
+        UI.museState.setText(R.string.state_connecting);
     }
 
     public void processConnect() {
-        museState.setText(R.string.state_connected);
-        setMuseIndicatorsVisible(true);
+        UI.processMuseConnect();
         dataPacket.setMuseState(true);
         warningHandler.postDelayed(checkWarningRunnable, 60 * second);
     }
 
     public void processDisconnect() {
-        museState.setText(R.string.state_disconnected);
-        setMuseIndicatorsVisible(false);
+        UI.museState.setText(R.string.state_disconnected);
+        UI.setMuseIndicatorsVisible(false);
         dataPacket.setMuseState(false);
         warningHandler.removeCallbacks(checkWarningRunnable);
         calmHandler.removeCallbacks(checkCalmRunnable);
-        videoView.pause();
-        displayReconnectDialog();
+        UI.videoView.pause();
+
+        if (adminConnectionState != BluetoothService.STATE_CONNECTED)
+            displayReconnectDialog();
     }
 
-    private VideoView videoView;
-    private MediaController mediaController;
     private Uri currentVideoUri;
-
-    private void initVideoView() {
-        videoView = (VideoView) findViewById(R.id.videoView);
-        mediaController = new MediaController(this);
-        videoView.setMediaController(mediaController);
-        videoView.requestFocus();
-        videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                File nextVideo = contentProvider.getNext();
-                playVideoFile(nextVideo);
-            }
-        });
-        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mp.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-                    @Override
-                    public void onSeekComplete(MediaPlayer mp) {
-                    dataPacket.setCurrentPositionSec(mp.getCurrentPosition() / 1000);
-                    dataPacket.setDurationSec(mp.getDuration());
-                    }
-                });
-                videoView.start();
-            }
-        });
-        mediaController.setPrevNextListeners(
-                new View.OnClickListener() {
-                     @Override
-                     public void onClick(View v) {
-                         File prevVideo = contentProvider.getPrev();
-                         playVideoFile(prevVideo);
-                     }
-                 },
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        File nextVideo = contentProvider.getNext();
-                        playVideoFile(nextVideo);
-                    }
-                });
-
-    }
 
     private void playVideoFile(File file) {
         dataPacket.setVideoName(file.getName());
         currentVideoUri = Uri.fromFile(file);
-        videoView.setVideoURI(currentVideoUri);
+        UI.videoView.setVideoURI(currentVideoUri);
         playVideo();
     }
 
@@ -572,16 +472,16 @@ public class VideoActivity extends MuseActivity {
         super.onPause();
 
         pauseVideo();
-        currentPlayPosition = videoView.getCurrentPosition();
+        currentPlayPosition = UI.videoView.getCurrentPosition();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        videoView.setVideoURI(currentVideoUri);
+        UI.videoView.setVideoURI(currentVideoUri);
         if (currentPlayPosition != -1) {
-            videoView.seekTo(currentPlayPosition);
+            UI.videoView.seekTo(currentPlayPosition);
             pauseVideo();
         }
 
@@ -608,8 +508,11 @@ public class VideoActivity extends MuseActivity {
         unregisterReceiver(receiver);
     }
 
-    public void processAdminDeviceState(int stateConnected) {
-        switch (stateConnected) {
+    private int adminConnectionState = BluetoothService.STATE_NONE;
+
+    public void processAdminDeviceState(int connectionState) {
+        adminConnectionState = connectionState;
+        switch (connectionState) {
             case BluetoothService.STATE_CONNECTED:
                 setAdminDeviceStatus(R.string.state_connected);
                 break;
@@ -620,6 +523,131 @@ public class VideoActivity extends MuseActivity {
             case BluetoothService.STATE_NONE:
                 setAdminDeviceStatus(R.string.state_disconnected);
                 break;
+        }
+    }
+
+    private final class UI {
+        TextView foreheadTouch;
+
+        TextView[] isGoodIndicators;
+
+        TextView batteryTextView;
+
+        TextView adminDeviceConnectionStatusTextView;
+
+        VideoView videoView;
+
+        MediaController mediaController;
+
+        TextView museState;
+
+        LinearLayout museIndicators;
+
+        private void updateMuseSensors(boolean[] sensorsStateBuffer, boolean isForeheadTouch) {
+            for (int i = 0; i < sensorsStateBuffer.length; i++)
+                isGoodIndicators[i].setVisibility(sensorsStateBuffer[i] ? View.VISIBLE : View.INVISIBLE);
+
+            int visibility = isForeheadTouch ? View.VISIBLE : View.INVISIBLE;
+
+            foreheadTouch.setVisibility(visibility);
+            rhythmsBar.setVisibility(visibility);
+        }
+
+        void setMuseIndicatorsVisible(boolean isVisible) {
+            int visibility = isVisible ? View.VISIBLE : View.INVISIBLE;
+            UI.museIndicators.setVisibility(visibility);
+        }
+
+        RelativeLayout calmScreen;
+        LinearLayout rhythmsBar;
+        TextView alphaBar;
+        TextView betaBar;
+
+        private void initTextViews(){
+            UI.alphaBar = (TextView) findViewById(R.id.alpha);
+            UI.betaBar = (TextView) findViewById(R.id.beta);
+            UI.batteryTextView = (TextView) findViewById(R.id.battery);
+            UI.museState = (TextView) findViewById(R.id.museState);
+
+            UI.isGoodIndicators = new TextView[4];
+            UI.isGoodIndicators[Const.Electrodes.FIRST] = (TextView) findViewById(R.id.good1);
+            UI.isGoodIndicators[Const.Electrodes.SECOND] = (TextView) findViewById(R.id.good2);
+            UI.isGoodIndicators[Const.Electrodes.THIRD] = (TextView) findViewById(R.id.good3);
+            UI.isGoodIndicators[Const.Electrodes.FOURTH] = (TextView) findViewById(R.id.good4);
+
+            UI.foreheadTouch = (TextView) findViewById(R.id.forehead);
+
+            UI.museIndicators = (LinearLayout) findViewById(R.id.museIndicators);
+
+            UI.adminDeviceConnectionStatusTextView = (TextView) findViewById(R.id.connectionStatus);
+        }
+
+        private void initVideoView() {
+            UI.videoView = (VideoView) findViewById(R.id.videoView);
+            UI.mediaController = new MediaController(VideoActivity.this);
+            UI.videoView.setMediaController(UI.mediaController);
+            UI.videoView.requestFocus();
+            UI.videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    File nextVideo = contentProvider.getNext();
+                    playVideoFile(nextVideo);
+                }
+            });
+            UI.videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mp.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
+                        @Override
+                        public void onSeekComplete(MediaPlayer mp) {
+                            dataPacket.setCurrentPositionSec(mp.getCurrentPosition() / 1000);
+                            dataPacket.setDurationSec(mp.getDuration());
+                        }
+                    });
+                    UI.videoView.start();
+                }
+            });
+            UI.mediaController.setPrevNextListeners(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            File prevVideo = contentProvider.getPrev();
+                            playVideoFile(prevVideo);
+                        }
+                    },
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            File nextVideo = contentProvider.getNext();
+                            playVideoFile(nextVideo);
+                        }
+                    });
+
+        }
+
+        void setup() {
+            initTextViews();
+            initVideoView();
+
+            calmScreen = (RelativeLayout) findViewById(R.id.calmScreen);
+            rhythmsBar = (LinearLayout) findViewById(R.id.rhythmsBar);
+        }
+
+        void processMuseConnect() {
+            museState.setText(R.string.state_connected);
+            setMuseIndicatorsVisible(true);
+        }
+
+        void updateAlphaBar(float alphaPercent) {
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
+            params.weight = alphaPercent;
+            alphaBar.setLayoutParams(params);
+        }
+
+        void updateBetaBar(float betaPercent) {
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) betaBar.getLayoutParams();
+            params.weight = betaPercent;
+            betaBar.setLayoutParams(params);
         }
     }
 }

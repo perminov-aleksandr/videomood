@@ -70,4 +70,8 @@
     <string name="deleteSeanceDialogMessage">Delete seance data %s?</string>
     <string name="connectingProgressTitle">Connecting in progress</string>
     <string name="connectionProgressMessage">Video list refreshing</string>
+    <string name="reconnect_muse_header">Reconnect?</string>
+    <string name="reconnect_muse_message">Connection to Muse lost. Do you want to connect again?</string>
+    <string name="no">No</string>
+    <string name="reconnect">Reconnect</string>
 </resources>

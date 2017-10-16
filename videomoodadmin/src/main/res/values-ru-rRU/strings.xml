@@ -63,4 +63,10 @@
     <string name="videos">Видео</string>
     <string name="connectingProgressTitle">Выполняется подключение</string>
     <string name="connectionProgressMessage">Обновление списка видео файлов</string>
+    <string name="deleteSeanceDialogMessage">Удалить данные сеанса %s?</string>
+    <string name="deleteSeanceDialogTittle">Удалить сеанс</string>
+    <string name="no">Нет</string>
+    <string name="reconnect">Переподключиться</string>
+    <string name="reconnect_muse_header">Переподключиться?</string>
+    <string name="reconnect_muse_message">Соединение с Muse потеряно. Хотите переподключиться?</string>
 </resources>

@@ -121,7 +121,7 @@ public class MainActivity extends BaseActivity {
         int selectedMuseIndex = musesSpinner.getSelectedItemPosition();
         ArrayList<Muse> availableMuses = MuseManager.getMuses();
         if (availableMuses.size() == 0) {
-            Log.i(TAG, "There is nothing to connectToServer to");
+            Log.i(TAG, "There is nothing to connect to");
             return;
         }
         Muse muse = availableMuses.get(selectedMuseIndex);

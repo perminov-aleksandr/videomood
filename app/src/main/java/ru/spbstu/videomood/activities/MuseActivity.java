@@ -43,17 +43,7 @@ public abstract class MuseActivity extends BaseActivity {
      */
     private ConnectionListener connectionListener;
 
-    private void setupMuseManager() {
-        MuseManager.setContext(this);
-        MuseManager.registerMuseListeners(connectionListener, dataListener);
-
-        // Cache the Muse that the user has selected.
-        muse = MuseManager.getMuse();
-        //startServer receiving muse packets
-        muse.runAsynchronously();
-    }
-
-    protected void reconnectMuse() {
+    protected void connectMuse() {
         muse.runAsynchronously();
     }
 
@@ -68,6 +58,17 @@ public abstract class MuseActivity extends BaseActivity {
         dataListener = new DataListener(weakActivity);
 
         setupMuseManager();
+    }
+
+    private void setupMuseManager() {
+        MuseManager.setContext(this);
+        MuseManager.registerMuseListeners(connectionListener, dataListener);
+
+        // Cache the Muse that the user has selected.
+        muse = MuseManager.getMuse();
+
+        //startServer receiving muse packets
+        this.connectMuse();
     }
 
     @Override
