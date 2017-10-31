@@ -15,7 +15,9 @@ import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Layout;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.LinearLayout;
@@ -30,6 +32,8 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ru.spbstu.videomood.AdminDeviceMessageHandler;
 import ru.spbstu.videomood.Const;
@@ -40,7 +44,7 @@ import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
 
-public class VideoActivity extends MuseActivity {
+public class VideoActivity extends MuseActivity implements View.OnTouchListener {
 
     private final UI UI = new UI();
 
@@ -205,6 +209,10 @@ public class VideoActivity extends MuseActivity {
             if (isConnectionStatusStale) {
                 updateConnectionStatus();
             }
+            if (shouldHideSidebar) {
+                VideoActivity.this.UI.hideMuseInfo();
+                shouldHideSidebar = false;
+            }
             handler.postDelayed(tickUi, 1000 / 60);
         }
     };
@@ -258,9 +266,39 @@ public class VideoActivity extends MuseActivity {
 
         // Start our asynchronous updates of the UI.
         handler.post(tickUi);
+
+        sidebarVisibilityTimer.schedule(sidebarVisibilityTimerTask, 5*second);
     }
 
+    private boolean shouldHideSidebar = false;
 
+    private Timer sidebarVisibilityTimer = new Timer();
+
+    private TimerTask sidebarVisibilityTimerTask = new TimerTask() {
+        @Override
+        public void run() {
+            shouldHideSidebar = true;
+        }
+    };
+
+    @Override
+    public boolean onTouch(View v, MotionEvent ev) {
+        //show sidebar
+        this.UI.showMuseInfo();
+
+        //start timer to hide sidebar
+        sidebarVisibilityTimer.cancel();
+
+        sidebarVisibilityTimer = new Timer();
+        sidebarVisibilityTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                shouldHideSidebar = true;
+            }
+        }, 5 * second);
+
+        return false;
+    }
 
     @Override
     public void onStart() {
@@ -342,8 +380,6 @@ public class VideoActivity extends MuseActivity {
         mBtService.write(packetBytes);
         dataPacket.setVideoList(null);
     }
-
-
 
     private void displayCalmScreen() {
         UI.calmScreen.setVisibility(View.VISIBLE);
@@ -527,6 +563,8 @@ public class VideoActivity extends MuseActivity {
     }
 
     private final class UI {
+        LinearLayout museInfo;
+
         TextView foreheadTouch;
 
         TextView[] isGoodIndicators;
@@ -542,6 +580,14 @@ public class VideoActivity extends MuseActivity {
         TextView museState;
 
         LinearLayout museIndicators;
+
+        void hideMuseInfo() {
+            museInfo.setVisibility(View.INVISIBLE);
+        }
+
+        void showMuseInfo() {
+            museInfo.setVisibility(View.VISIBLE);
+        }
 
         private void updateMuseSensors(boolean[] sensorsStateBuffer, boolean isForeheadTouch) {
             for (int i = 0; i < sensorsStateBuffer.length; i++)
@@ -587,6 +633,7 @@ public class VideoActivity extends MuseActivity {
             UI.mediaController = new MediaController(VideoActivity.this);
             UI.videoView.setMediaController(UI.mediaController);
             UI.videoView.requestFocus();
+            UI.videoView.setOnTouchListener(VideoActivity.this);
             UI.videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
@@ -631,6 +678,7 @@ public class VideoActivity extends MuseActivity {
 
             calmScreen = (RelativeLayout) findViewById(R.id.calmScreen);
             rhythmsBar = (LinearLayout) findViewById(R.id.rhythmsBar);
+            museInfo = (LinearLayout) findViewById(R.id.museInfo);
         }
 
         void processMuseConnect() {

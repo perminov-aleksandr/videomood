@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioGroup;
@@ -29,6 +30,8 @@ import ru.spbstu.videomoodadmin.AdminConst;
 import ru.spbstu.videomoodadmin.R;
 import ru.spbstu.videomoodadmin.SeanceAdapter;
 import ru.spbstu.videomoodadmin.UserAdapter;
+
+import android.util.Log;
 
 public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
@@ -105,8 +108,12 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         String firstName = firstNameView.getText().toString();
         EditText lastNameView = (EditText) findViewById(R.id.lastname_textbox);
         String lastName = lastNameView.getText().toString();
-        EditText birthDateView = (EditText) findViewById(R.id.birthdate_editbox);
-        String birthdate = birthDateView.getText().toString();
+        DatePicker birthDateView = (DatePicker) findViewById(R.id.birthdate_editbox);
+        int year = birthDateView.getYear();
+        int month = birthDateView.getMonth()+1;
+        int day = birthDateView.getDayOfMonth();
+        String birthdate = String.format("%1$02d.%2$02d.%3$04d", day, month, year);
+        Log.i("DATE", birthdate);
 
         //construct a user instance
         User userToCreate = new User();

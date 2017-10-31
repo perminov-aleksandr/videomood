@@ -102,13 +102,12 @@
                 android:padding="5dp"
                 android:text="@string/birthdate" />
 
-            <EditText
+            <DatePicker
                 android:id="@+id/birthdate_editbox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="date"
-                android:text="@string/default_birthdate" />
+                android:datePickerMode="spinner"
+                android:calendarViewShown="false"/>
 
             <TextView
                 android:id="@+id/textView3"
