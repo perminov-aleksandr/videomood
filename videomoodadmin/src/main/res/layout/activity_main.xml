@@ -68,7 +68,7 @@
             <TextView
                 android:id="@+id/headsetBattery"
                 style="@style/sideBlockText"
-                android:text="@string/defaultPercentFormatString" />
+                android:text="..." />
         </LinearLayout>
 
         <LinearLayout
@@ -97,7 +97,7 @@
             <TextView
                 android:id="@+id/museBattery"
                 style="@style/sideBlockText"
-                android:text="@string/defaultPercentFormatString" />
+                android:text="..." />
         </LinearLayout>
 
 
@@ -106,20 +106,15 @@
             android:layout_width="150dp"
             android:layout_height="150dp"
             android:layout_gravity="center"
-            android:padding="4dp"/>
+            android:padding="4dp" />
 
         <TextView
             android:id="@+id/main_finishSeanceBtn"
+            style="@style/finishSeanceButton"
             android:layout_width="match_parent"
             android:layout_height="70dp"
-            android:layout_marginTop="10dp"
             android:width="0dip"
-            android:background="@drawable/rounded_corner"
-            android:padding="5dp"
-            android:text="@string/finish_session"
-            android:textColor="@android:color/white"
-            android:textSize="20sp"
-            style="@style/sideBlockHeader"/>
+            android:text="@string/finish_session" />
     </LinearLayout>
 
     <LinearLayout

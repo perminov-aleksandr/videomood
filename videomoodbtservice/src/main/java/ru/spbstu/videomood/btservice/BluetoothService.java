@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import java.io.IOException;
@@ -225,6 +226,8 @@ public class BluetoothService {
         msg.setData(bundle);
         mHandler.sendMessage(msg);*/
 
+        setState(STATE_NONE);
+
         // Start the service over to restart listening mode
         BluetoothService.this.startServer();
     }
@@ -239,6 +242,8 @@ public class BluetoothService {
         bundle.putString(Constants.TOAST, "Device connection was lost");
         msg.setData(bundle);
         mHandler.sendMessage(msg);*/
+
+        setState(STATE_NONE);
 
         // Start the service over to restart listening mode
         BluetoothService.this.startServer();
@@ -280,6 +285,7 @@ public class BluetoothService {
                     socket = mmServerSocket.accept();
                 } catch (IOException e) {
                     Log.e(TAG, "accept() failed", e);
+                    connectionFailed();
                     break;
                 }
 
@@ -342,6 +348,8 @@ public class BluetoothService {
                 Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
             }
             mmSocket = tmp;
+            if (tmp == null)
+                this.cancel();
         }
 
         public void run() {

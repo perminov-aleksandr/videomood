@@ -72,6 +72,8 @@
     <string name="connectionProgressMessage">Video list refreshing</string>
     <string name="reconnect_muse_header">Reconnect?</string>
     <string name="reconnect_muse_message">Connection to Muse lost. Do you want to connect again?</string>
+    <string name="reconnect_headset_header">Reconnect?</string>
+    <string name="reconnect_headset_message">Connection to Headset lost. Do you want to connect again?</string>
     <string name="no">No</string>
     <string name="reconnect">Reconnect</string>
 </resources>

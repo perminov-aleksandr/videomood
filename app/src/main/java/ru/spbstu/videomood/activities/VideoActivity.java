@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.Layout;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -44,7 +45,7 @@ import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
 
-public class VideoActivity extends MuseActivity implements View.OnTouchListener {
+public class VideoActivity extends MuseActivity implements View.OnClickListener {
 
     private final UI UI = new UI();
 
@@ -267,6 +268,9 @@ public class VideoActivity extends MuseActivity implements View.OnTouchListener 
         // Start our asynchronous updates of the UI.
         handler.post(tickUi);
 
+        View view = findViewById(R.id.videoActivity);
+        view.setOnClickListener(VideoActivity.this);
+
         sidebarVisibilityTimer.schedule(sidebarVisibilityTimerTask, 5*second);
     }
 
@@ -282,7 +286,7 @@ public class VideoActivity extends MuseActivity implements View.OnTouchListener 
     };
 
     @Override
-    public boolean onTouch(View v, MotionEvent ev) {
+    public void onClick(View v) {
         //show sidebar
         this.UI.showMuseInfo();
 
@@ -297,7 +301,9 @@ public class VideoActivity extends MuseActivity implements View.OnTouchListener 
             }
         }, 5 * second);
 
-        return false;
+        VideoActivity.this.UI.mediaController.show();
+
+        //return true;
     }
 
     @Override
@@ -629,11 +635,19 @@ public class VideoActivity extends MuseActivity implements View.OnTouchListener 
         }
 
         private void initVideoView() {
+            UI.mediaController = new MediaController(VideoActivity.this){
+                @Override
+                public boolean dispatchKeyEvent(KeyEvent event)
+                {
+                    if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN)
+                        VideoActivity.this.onBackPressed();
+
+                    return super.dispatchKeyEvent(event);
+                }
+            };
             UI.videoView = (VideoView) findViewById(R.id.videoView);
-            UI.mediaController = new MediaController(VideoActivity.this);
             UI.videoView.setMediaController(UI.mediaController);
             UI.videoView.requestFocus();
-            UI.videoView.setOnTouchListener(VideoActivity.this);
             UI.videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
@@ -654,6 +668,14 @@ public class VideoActivity extends MuseActivity implements View.OnTouchListener 
                     UI.videoView.start();
                 }
             });
+            UI.videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    File nextVideo = contentProvider.getNext();
+                    playVideoFile(nextVideo);
+                    return true;
+                }
+            });
             UI.mediaController.setPrevNextListeners(
                     new View.OnClickListener() {
                         @Override
@@ -669,7 +691,6 @@ public class VideoActivity extends MuseActivity implements View.OnTouchListener 
                             playVideoFile(nextVideo);
                         }
                     });
-
         }
 
         void setup() {

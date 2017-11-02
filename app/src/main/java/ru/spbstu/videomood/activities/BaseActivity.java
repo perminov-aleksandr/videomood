@@ -14,9 +14,10 @@ public abstract class BaseActivity extends Activity {
     public void onBackPressed() {
         if (doubleBackToExitPressedOnce) {
             super.onBackPressed();
-            return;
+            android.os.Process.killProcess(android.os.Process.myPid());
         } else {
             this.doubleBackToExitPressedOnce = true;
+
             Toast.makeText(this, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show();
 
             new Handler().postDelayed(new Runnable() {

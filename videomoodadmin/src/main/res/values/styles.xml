@@ -78,6 +78,17 @@
         <item name="android:textSize">40sp</item>
         <item name="android:layout_width">match_parent</item>
     </style>
+    <style name="finishSeanceButton" parent="text">
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:padding">5dp</item>
+        <item name="android:layout_marginTop">10dp</item>
+        <item name="android:background">@drawable/rounded_corner</item>
+    </style>
+    <style name="finishSeanceButtonDisabled" parent="finishSeanceButton">
+        <item name="android:background">@drawable/rounded_corner_disabled</item>
+    </style>
 
     <style name="cardLabel">
         <item name="android:textSize">20sp</item>

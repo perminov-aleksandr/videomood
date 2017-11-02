@@ -136,6 +136,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
+    private TextView finishSeanceTextView;
+
     public void setupUI() {
         initChart();
 
@@ -160,13 +162,28 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             }
         });
 
-        final TextView finishSeance = (TextView) findViewById(R.id.main_finishSeanceBtn);
-        finishSeance.setOnClickListener(new View.OnClickListener() {
+        finishSeanceTextView = (TextView) findViewById(R.id.main_finishSeanceBtn);
+        setEnabledFinishSeanceButton(false);
+        finishSeanceTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finishSeance();
             }
         });
+
+        TextView museStatus = (TextView) findViewById(R.id.museState);
+        museStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!MainActivity.this.isMuseConnected)
+                    showReconnectMuseDialog();
+            }
+        });
+    }
+
+    private void setEnabledFinishSeanceButton(boolean isEnabled) {
+        finishSeanceTextView.setEnabled(isEnabled);
+        finishSeanceTextView.setTextColor(getResources().getColor(isEnabled ? android.R.color.white : R.color.colorAccentMuted));
     }
 
     private void initChart() {
@@ -261,8 +278,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             } else if (mBtService == null) {
                 setupBtService();
                 connectDevice(getIntent());
-                seance = createSeance();
-                saveSeance();
             }
         } else {
             debugTimerPacketSender = new Timer();
@@ -348,10 +363,13 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         userViewModel.setSeanceDateStart(Calendar.getInstance().getTime());
         seance.setDateFrom(userViewModel.getSeanceDateStartStr());
+
+        saveSeance(seance);
+
         return seance;
     }
 
-    private void saveSeance() {
+    private void saveSeance(Seance seance) {
         try {
             if (seanceDao.create(seance) != 1)
                 throw new SQLException("No seance created");
@@ -378,6 +396,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
      */
     private BluetoothService mBtService = null;
 
+    private BluetoothDevice deviceToConnect;
+
     /**
      * Establish connection with other device
      *
@@ -390,9 +410,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
 
-        Log.i(TAG, String.format("Attempt to connectToServer to %s(%s)", device.getName(), deviceAddress));
+        deviceToConnect = device;
+
+        Log.i(TAG, String.format("Attempt to connectToServer to %s(%s)", deviceToConnect.getName(), deviceAddress));
         // Attempt to connectToServer to the device
-        mBtService.connectToServer(device);
+        mBtService.connectToServer(deviceToConnect);
     }
 
     /**
@@ -429,8 +451,36 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
-    private void setStatus(int stringResId) {
-       // connectionStatus.setText(stringResId);
+    private int headsetStatus;
+
+    private void setHeadsetStatus(int status) {
+        headsetStatus = status;
+
+        int stringResId;
+        int colorResId;
+        switch (status) {
+            case BluetoothService.STATE_CONNECTED:
+                stringResId = R.string.state_connected;
+                colorResId = R.color.connectedColor;
+                break;
+            case BluetoothService.STATE_CONNECTING:
+                stringResId = R.string.state_connecting;
+                colorResId = R.color.connectedColor;
+                break;
+            case BluetoothService.STATE_NONE:
+                stringResId = R.string.state_not_connected;
+                colorResId = R.color.disconnectedColor;
+                break;
+            default:
+                stringResId = R.string.state_unknown;
+                colorResId = R.color.disconnectedColor;
+                break;
+        }
+        headsetStateTextView.setTextColor(getResources().getColor(colorResId));
+        headsetStateTextView.setText(stringResId);
+
+        userIcon.setTextColor(getResources().getColor(R.color.colorPrimary));
+        userIcon.setText(R.string.fa_user);
     }
 
     private Handler sendMessageHandler = new Handler();
@@ -459,20 +509,22 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             switch (msg.what) {
                 case Constants.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
-                        case BluetoothService.STATE_CONNECTING:
-                            setStatus(R.string.state_connecting);
-                            break;
                         case BluetoothService.STATE_CONNECTED:
-                            setStatus(R.string.state_connected);
+                            seance = createSeance();
                             sendPacket(new ControlPacket(Command.LIST));
+                            setEnabledFinishSeanceButton(true);
                             showProgressDialog();
                             break;
-                        case BluetoothService.STATE_LISTEN:
                         case BluetoothService.STATE_NONE:
-                            setStatus(R.string.state_not_connected);
                             sendMessageHandler.removeCallbacks(sendMessageRunnable);
+                            if (pd != null && pd.isShowing())
+                                hideProgressDialog();
+                            if (headsetStatus == BluetoothService.STATE_CONNECTING
+                                    || headsetStatus == BluetoothService.STATE_CONNECTED)
+                                showReconnectHeadsetDialog();
                             break;
                     }
+                    setHeadsetStatus(msg.arg1);
                     break;
                 case Constants.MESSAGE_PACKET:
                     if (!IS_DEBUG) {
@@ -489,7 +541,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
-    private ProgressDialog pd;
+    private ProgressDialog pd = null;
 
     private void showProgressDialog() {
         pd = new ProgressDialog(MainActivity.this);
@@ -501,6 +553,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         pd.setIndeterminate(true);
         pd.setCancelable(false);
         pd.show();
+    }
+
+    private void hideProgressDialog() {
+        pd.setIndeterminate(false);
+        pd.dismiss();
     }
 
     private TextView museStatusTextView;
@@ -578,8 +635,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         prevIsPanic = isPanic;
 
-        Boolean _isMuseConnected = dataPacket.getMuseState();
-        if (_isMuseConnected) {
+        Boolean museConnected = dataPacket.getMuseState();
+        if (museConnected) {
             museStatusTextView.setText(R.string.state_connected);
             museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
 
@@ -603,10 +660,10 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             sensorsChart.setVisibility(View.INVISIBLE);
 
             if (isMuseConnected)
-                showReconnectDialog();
+                showReconnectMuseDialog();
         }
 
-        isMuseConnected = _isMuseConnected;
+        isMuseConnected = museConnected;
 
         Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
         if (headsetBatteryPercent != null)
@@ -659,14 +716,34 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         if (videoItems != null) {
             syncVideosWithDb(videoItems);
             dataPacket.setVideoList(null);
-            pd.setIndeterminate(false);
-            pd.dismiss();
+            hideProgressDialog();
             sendMessageHandler.removeCallbacks(sendMessageRunnable);
             sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
         }
     }
 
-    private void showReconnectDialog() {
+    private void showReconnectHeadsetDialog() {
+        Resources resources = getResources();
+        new AlertDialog.Builder(this)
+                .setTitle(resources.getString(R.string.reconnect_headset_header))
+                .setMessage(resources.getString(R.string.reconnect_headset_message))
+                .setNegativeButton(resources.getString(R.string.no), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                })
+                .setPositiveButton(resources.getString(R.string.reconnect), new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mBtService.connectToServer(deviceToConnect);
+                    }
+                })
+                .show();
+    }
+
+    private void showReconnectMuseDialog() {
         Resources resources = getResources();
         new AlertDialog.Builder(this)
                 .setTitle(resources.getString(R.string.reconnect_muse_header))
@@ -681,10 +758,14 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        sendPacket(new ControlPacket(Command.RECONNECT_MUSE));
+                        reconnectMuse();
                     }
                 })
                 .show();
+    }
+
+    private void reconnectMuse() {
+        sendPacket(new ControlPacket(Command.RECONNECT_MUSE));
     }
 
     private void playNotification() {

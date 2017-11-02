@@ -11,7 +11,7 @@
     <string name="state_connected">Подключено</string>
     <string name="state_connecting">Подключение</string>
     <string name="state_not_connected">Не подключено</string>
-    <string name="state_unknown">Незивестно</string>
+    <string name="state_unknown">Неизвестно</string>
     <string name="videoNotPlayed"><![CDATA[<Видео не проигрывается>]]></string>
     <string name="headset">Гарнитура</string>
     <string name="headset_on">Гарнитура подкл.</string>
@@ -69,4 +69,6 @@
     <string name="reconnect">Переподключиться</string>
     <string name="reconnect_muse_header">Переподключиться?</string>
     <string name="reconnect_muse_message">Соединение с Muse потеряно. Хотите переподключиться?</string>
+    <string name="reconnect_headset_header">Переподключиться?</string>
+    <string name="reconnect_headset_message">Соединение с гарнитурой потеряно. Хотите переподключиться?</string>
 </resources>

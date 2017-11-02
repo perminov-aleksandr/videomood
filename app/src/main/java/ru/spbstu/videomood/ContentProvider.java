@@ -12,11 +12,13 @@ public class ContentProvider {
 
     private File[] videos;
 
+    public final String VIDEO_FILES_DEFAULT_DIRECTORY = "Video";
+
     public ContentProvider() throws Exception {
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
             throw new Exception("External storage not available");
 
-        File videoDirectory = new File(Environment.getExternalStorageDirectory(), "Video");
+        File videoDirectory = new File(Environment.getExternalStorageDirectory(), VIDEO_FILES_DEFAULT_DIRECTORY);
 
         videos = videoDirectory.listFiles();
 
