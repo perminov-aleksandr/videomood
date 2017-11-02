@@ -11,6 +11,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -56,13 +57,28 @@ public class BluetoothService {
         mHandler = handler;
     }
 
+    private String stateStr(int state) {
+        switch (state) {
+            case STATE_NONE:
+                return "NONE";
+            case STATE_LISTEN:
+                return "LISTEN";
+            case STATE_CONNECTING:
+                return "CONNECTING";
+            case STATE_CONNECTED:
+                return "CONNECTED";
+            default:
+                return "";
+        }
+    }
+
     /**
      * Set the current state of the chat connection
      *
      * @param state An integer defining the current connection state
      */
     private synchronized void setState(int state) {
-        Log.d(TAG, "setState() " + mState + " -> " + state);
+        Log.d(TAG, "setState " + stateStr(mState) + " -> " + stateStr(state));
         mState = state;
 
         // Give the new state to the Handler so the UI Activity can update
@@ -246,7 +262,7 @@ public class BluetoothService {
         setState(STATE_NONE);
 
         // Start the service over to restart listening mode
-        BluetoothService.this.startServer();
+        //BluetoothService.this.startServer();
     }
 
     /**
@@ -263,8 +279,7 @@ public class BluetoothService {
 
             // Create a new listening server socket
             try {
-                tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME_SECURE,
-                        VIDEOMOOD_BTSERVICE_UUID);
+                tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME_SECURE, VIDEOMOOD_BTSERVICE_UUID);
             } catch (IOException e) {
                 Log.e(TAG, "listen() failed", e);
             }
@@ -335,7 +350,6 @@ public class BluetoothService {
         private final BluetoothSocket mmSocket;
         private final BluetoothDevice mmDevice;
         private String mSocketType;
-
         public ConnectThread(BluetoothDevice device) {
             mmDevice = device;
             BluetoothSocket tmp = null;
@@ -345,19 +359,18 @@ public class BluetoothService {
             try {
                 tmp = device.createRfcommSocketToServiceRecord(VIDEOMOOD_BTSERVICE_UUID);
             } catch (IOException e) {
-                Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
+                Log.e(TAG, "Socket Type: create() failed", e);
             }
             mmSocket = tmp;
-            if (tmp == null)
+            if (tmp == null) {
+                Log.e(TAG, "ConnectThread attempt to create socket failed: socket is NULL");
                 this.cancel();
+            }
         }
 
         public void run() {
-            Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType);
-            setName("ConnectThread" + mSocketType);
-
-            // Always cancel discovery because it will slow down a connection
-            mAdapter.cancelDiscovery();
+            Log.i(TAG, "BEGIN mConnectThread");
+            setName("ConnectThread");
 
             // Make a connection to the BluetoothSocket
             try {
@@ -369,12 +382,14 @@ public class BluetoothService {
                 try {
                     mmSocket.close();
                 } catch (IOException e2) {
-                    Log.e(TAG, "unable to close() " + mSocketType +
-                            " socket during connection failure", e2);
+                    Log.e(TAG, "unable to close() socket during connection failure", e2);
                 }
-                connectionFailed();
+                connectionLost();
                 return;
             }
+
+            // Always cancel discovery because it will slow down a connection
+            mAdapter.cancelDiscovery();
 
             // Reset the ConnectThread because we're done
             synchronized (BluetoothService.this) {
@@ -389,7 +404,7 @@ public class BluetoothService {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                Log.e(TAG, "close() of connectToServer " + mSocketType + " socket failed", e);
+                Log.e(TAG, "close() of connectToServer socket failed", e);
             }
         }
     }

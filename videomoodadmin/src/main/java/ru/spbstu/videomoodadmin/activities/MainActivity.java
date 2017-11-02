@@ -309,16 +309,16 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         super.onResume();
 
         if (!IS_DEBUG) {
-            // Performing this check in onResume() covers the case in which BT was
-            // not enabled during onStart(), so we were paused to enable it...
-            // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-            if (mBtService != null) {
-                // Only if the state is STATE_NONE, do we know that we haven't started already
-                if (mBtService.getState() == BluetoothService.STATE_NONE) {
-                    // Start the Bluetooth chat services
-                    mBtService.startServer();
-                }
-            }
+//            // Performing this check in onResume() covers the case in which BT was
+//            // not enabled during onStart(), so we were paused to enable it...
+//            // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
+//            if (mBtService != null) {
+//                // Only if the state is STATE_NONE, do we know that we haven't started already
+//                if (mBtService.getState() == BluetoothService.STATE_NONE) {
+//                    // Start the Bluetooth chat services
+//                    mBtService.startServer();
+//                }
+//            }
         }
     }
 
@@ -860,7 +860,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     @Override
     public void onBackPressed() {
         if (doubleBackToExitPressedOnce) {
-            finish();
+            super.onBackPressed();
+            android.os.Process.killProcess(android.os.Process.myPid());
         } else {
             this.doubleBackToExitPressedOnce = true;
             Toast.makeText(this, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show();

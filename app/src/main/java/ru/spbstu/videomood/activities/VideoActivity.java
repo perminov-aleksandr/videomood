@@ -47,6 +47,9 @@ import ru.spbstu.videomood.btservice.DataPacket;
 
 public class VideoActivity extends MuseActivity implements View.OnClickListener {
 
+    public static final int betaPercentToWarning = 20;
+    public static final int alphaPercentToWarning = 100-betaPercentToWarning;
+
     private final UI UI = new UI();
 
     private static final String TAG = "VideoMood:VideoActivity";
@@ -98,6 +101,12 @@ public class VideoActivity extends MuseActivity implements View.OnClickListener 
 
     private final long second = 1000;
 
+    private long checkCalmDelay = 10 * second;
+    private long checkWarningDelay = 90 * second;
+    private long checkWarningPeriod = second;
+    private long checkCalmPeriod = second;
+
+
     private Handler warningHandler = new Handler();
 
     private Handler calmHandler = new Handler();
@@ -111,8 +120,7 @@ public class VideoActivity extends MuseActivity implements View.OnClickListener 
                 switchToCalmCheck(findViewById(R.id.museInfo));
             } else {
                 //or we could continue watching and counting
-                long checkWarningDelay = second;
-                warningHandler.postDelayed(this, checkWarningDelay);
+                warningHandler.postDelayed(this, checkWarningPeriod);
             }
         }
     };
@@ -120,13 +128,14 @@ public class VideoActivity extends MuseActivity implements View.OnClickListener 
     private final Runnable checkCalmRunnable = new Runnable() {
         @Override
         public void run() {
-            calcPercentSum();
-            if (checkIsCalm()) {
-                switchToWarningCheck(findViewById(R.id.calmScreen));
-            } else {
-                long checkCalmDelay = second;
-                calmHandler.postDelayed(this, checkCalmDelay);
-            }
+            switchToWarningCheck(findViewById(R.id.calmScreen));
+
+//            calcPercentSum();
+//            if (checkIsCalm()) {
+//                switchToWarningCheck(findViewById(R.id.calmScreen));
+//            } else {
+//                calmHandler.postDelayed(this, checkCalmPeriod);
+//            }
         }
     };
 
@@ -135,7 +144,8 @@ public class VideoActivity extends MuseActivity implements View.OnClickListener 
         displayCalmScreen();
         percentTimeQueue.clear();
         warningHandler.removeCallbacks(checkWarningRunnable);
-        calmHandler.postDelayed(checkCalmRunnable, 10 * second);
+
+        calmHandler.postDelayed(checkCalmRunnable, checkCalmDelay);
     }
 
     public void switchToWarningCheck(View view) {
@@ -143,19 +153,19 @@ public class VideoActivity extends MuseActivity implements View.OnClickListener 
         hideCalmScreen();
         percentTimeQueue.clear();
         calmHandler.removeCallbacks(checkCalmRunnable);
-        warningHandler.postDelayed(checkWarningRunnable, 20 * second);
+        warningHandler.postDelayed(checkWarningRunnable, checkWarningDelay);
     }
 
     private boolean checkIsWarning() {
         Log.i(TAG, String.format("warning check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
 
-        return betaPercentSum >= 20;
+        return betaPercentSum >= betaPercentToWarning;
     }
 
     private boolean checkIsCalm() {
         Log.i(TAG, String.format("calm check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
 
-        return alphaPercentSum >= 90;
+        return alphaPercentSum >= alphaPercentToWarning;
     }
 
     private void calcPercentSum() {
