@@ -478,10 +478,12 @@ public class VideoActivity extends MuseActivity implements View.OnClickListener 
         dataPacket.setMuseState(false);
         warningHandler.removeCallbacks(checkWarningRunnable);
         calmHandler.removeCallbacks(checkCalmRunnable);
-        UI.videoView.pause();
 
         if (adminConnectionState != BluetoothService.STATE_CONNECTED)
+        {
+            UI.videoView.pause();
             displayReconnectDialog();
+        }
     }
 
     private Uri currentVideoUri;
@@ -649,8 +651,11 @@ public class VideoActivity extends MuseActivity implements View.OnClickListener 
                 @Override
                 public boolean dispatchKeyEvent(KeyEvent event)
                 {
-                    if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN)
-                        VideoActivity.this.onBackPressed();
+                    if (event.getKeyCode() == KeyEvent.KEYCODE_BACK)
+                        if (event.getAction() == KeyEvent.ACTION_UP)
+                            ((Activity) getContext()).finish();
+                    else if (event.getAction() == KeyEvent.ACTION_DOWN)
+                        return false;
 
                     return super.dispatchKeyEvent(event);
                 }

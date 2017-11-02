@@ -336,7 +336,10 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             debugTimerPacketSender.cancel();
     }
 
+    private boolean finishing = false;
+
     private void finishSeance() {
+        finishing = true;
         try {
             saveSeanceDataChunk();
             userViewModel.setDateFinish(Calendar.getInstance().getTime());
@@ -558,6 +561,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private void hideProgressDialog() {
         pd.setIndeterminate(false);
         pd.dismiss();
+        pd = null;
     }
 
     private TextView museStatusTextView;
@@ -723,6 +727,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     private void showReconnectHeadsetDialog() {
+        if (isFinishing() || (pd != null && pd.isShowing()))
+            return;
+
         Resources resources = getResources();
         new AlertDialog.Builder(this)
                 .setTitle(resources.getString(R.string.reconnect_headset_header))
@@ -861,7 +868,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     public void onBackPressed() {
         if (doubleBackToExitPressedOnce) {
             super.onBackPressed();
-            android.os.Process.killProcess(android.os.Process.myPid());
+            finish();
+            //android.os.Process.killProcess(android.os.Process.myPid());
+
         } else {
             this.doubleBackToExitPressedOnce = true;
             Toast.makeText(this, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show();
