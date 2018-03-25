@@ -44,6 +44,7 @@ import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
+import ru.spbstu.videomood.btservice.MuseState;
 
 public class VideoActivity extends MuseActivity implements View.OnClickListener {
 
@@ -464,18 +465,19 @@ public class VideoActivity extends MuseActivity implements View.OnClickListener 
 
     public void processConnecting() {
         UI.museState.setText(R.string.state_connecting);
+        dataPacket.setMuseState(MuseState.CONNECTING);
     }
 
     public void processConnect() {
         UI.processMuseConnect();
-        dataPacket.setMuseState(true);
+        dataPacket.setMuseState(MuseState.CONNECTED);
         warningHandler.postDelayed(checkWarningRunnable, 60 * second);
     }
 
     public void processDisconnect() {
         UI.museState.setText(R.string.state_disconnected);
         UI.setMuseIndicatorsVisible(false);
-        dataPacket.setMuseState(false);
+        dataPacket.setMuseState(MuseState.DISCONNECTED);
         warningHandler.removeCallbacks(checkWarningRunnable);
         calmHandler.removeCallbacks(checkCalmRunnable);
 

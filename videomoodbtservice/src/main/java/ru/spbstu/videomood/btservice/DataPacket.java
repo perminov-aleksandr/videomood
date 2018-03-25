@@ -29,7 +29,7 @@ public class DataPacket extends Packet {
 
     //private long timestamp;
 
-    private Boolean museState;
+    private MuseState museState;
 
     private Integer museBatteryPercent;
 
@@ -53,11 +53,11 @@ public class DataPacket extends Packet {
 
     private ArrayList<VideoItem> videoList;
 
-    public Boolean getMuseState() {
+    public MuseState getMuseState() {
         return museState;
     }
 
-    public void setMuseState(boolean museState) {
+    public void setMuseState(MuseState museState) {
         this.museState = museState;
     }
 

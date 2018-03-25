@@ -46,6 +46,7 @@ import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
+import ru.spbstu.videomood.btservice.MuseState;
 import ru.spbstu.videomood.btservice.VideoItem;
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.SeanceDataEntry;
@@ -84,7 +85,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private int time = 0;
 
     private final int chartSize = 60;
-    private Boolean isMuseConnected = false;
+    private MuseState museState = MuseState.DISCONNECTED;
 
     private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> vals = new ArrayList<>();
@@ -175,7 +176,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         museStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!MainActivity.this.isMuseConnected)
+                if (MainActivity.this.museState == MuseState.DISCONNECTED)
                     showReconnectMuseDialog();
             }
         });
@@ -236,7 +237,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         } else {
             testDataPacket = new DataPacket();
             testDataPacket.setVideoName("Video Name");
-            testDataPacket.setMuseState(true);
+            testDataPacket.setMuseState(MuseState.CONNECTED);
             testDataPacket.setMuseBatteryPercent(14);
             testDataPacket.setAlphaPct(20);
             testDataPacket.setBetaPct(80);
@@ -639,35 +640,43 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         prevIsPanic = isPanic;
 
-        Boolean museConnected = dataPacket.getMuseState();
-        if (museConnected) {
-            museStatusTextView.setText(R.string.state_connected);
-            museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
+        MuseState newMuseState = dataPacket.getMuseState();
+        switch (newMuseState) {
+            case CONNECTED:
+                museStatusTextView.setText(R.string.state_connected);
+                museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
 
-            Integer museBatteryPercent = dataPacket.getMuseBatteryPercent();
-            if (museBatteryPercent != null) {
-                museBatteryTextView.setTextColor(calcBatteryTextColor(museBatteryPercent));
-                museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, museBatteryPercent));
-                museBatteryTextView.setVisibility(View.VISIBLE);
-            }
+                Integer museBatteryPercent = dataPacket.getMuseBatteryPercent();
+                if (museBatteryPercent != null) {
+                    museBatteryTextView.setTextColor(calcBatteryTextColor(museBatteryPercent));
+                    museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, museBatteryPercent));
+                    museBatteryTextView.setVisibility(View.VISIBLE);
+                }
 
-            Boolean[] sensorsState = dataPacket.getMuseSensorsState();
-            if (sensorsState != null) {
-                sensorsChart.setCircles(sensorsState);
-                sensorsChart.setVisibility(View.VISIBLE);
-            }
+                Boolean[] sensorsState = dataPacket.getMuseSensorsState();
+                if (sensorsState != null) {
+                    sensorsChart.setCircles(sensorsState);
+                    sensorsChart.setVisibility(View.VISIBLE);
+                }
+
+                failedMuseReconnectCount = 0;
+                break;
+            case CONNECTING:
+                museStatusTextView.setText(R.string.state_connecting);
+                museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
+                break;
+            case DISCONNECTED:
+                museStatusTextView.setText(R.string.state_not_connected);
+                museStatusTextView.setTextColor(getResources().getColor(R.color.disconnectedColor));
+                museBatteryTextView.setVisibility(View.INVISIBLE);
+                sensorsChart.setVisibility(View.INVISIBLE);
+
+                if (museState == MuseState.CONNECTED || museState == MuseState.CONNECTING)
+                    onMuseDisconnect();
+                break;
         }
-        else {
-            museStatusTextView.setText(R.string.state_not_connected);
-            museStatusTextView.setTextColor(getResources().getColor(R.color.disconnectedColor));
-            museBatteryTextView.setVisibility(View.INVISIBLE);
-            sensorsChart.setVisibility(View.INVISIBLE);
 
-            if (isMuseConnected)
-                showReconnectMuseDialog();
-        }
-
-        isMuseConnected = museConnected;
+        this.museState = newMuseState;
 
         Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
         if (headsetBatteryPercent != null)
@@ -769,6 +778,20 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                     }
                 })
                 .show();
+    }
+
+    private int failedMuseReconnectCount = 0;
+    private final int maxFailedMuseReconnect = 10;
+
+    private void onMuseDisconnect() {
+        if (failedMuseReconnectCount < maxFailedMuseReconnect) {
+            failedMuseReconnectCount++;
+            reconnectMuse();
+        }
+        else {
+            failedMuseReconnectCount = 0;
+            showReconnectMuseDialog();
+        }
     }
 
     private void reconnectMuse() {

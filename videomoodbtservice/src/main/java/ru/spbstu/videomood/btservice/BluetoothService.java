@@ -1,15 +1,20 @@
 package ru.spbstu.videomood.btservice;
 
+import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
 import android.os.Message;
+import android.util.JsonReader;
 import android.util.Log;
+
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -154,7 +159,7 @@ public class BluetoothService {
      * @param socket The BluetoothSocket on which the connection was made
      * @param device The BluetoothDevice that has been connected
      */
-    private synchronized void connected(BluetoothSocket socket, BluetoothDevice device) {
+    private synchronized void connected(BluetoothSocket socket, BluetoothDevice device, ServiceRole role) {
         Log.d(TAG, "connected");
 
         // Cancel the thread that completed the connection
@@ -176,7 +181,7 @@ public class BluetoothService {
         }
 
         // Start the thread to manage the connection and perform transmissions
-        mConnectedThread = new ConnectedThread(socket);
+        mConnectedThread = new ConnectedThread(socket, role);
         mConnectedThread.start();
 
         // Send the name of the connected device back to the UI Activity
@@ -311,7 +316,7 @@ public class BluetoothService {
                             case STATE_LISTEN:
                             case STATE_CONNECTING:
                                 // Situation normal. Start the connected thread.
-                                connected(socket, socket.getRemoteDevice());
+                                connected(socket, socket.getRemoteDevice(), ServiceRole.SERVER);
                                 break;
                             case STATE_NONE:
                             case STATE_CONNECTED:
@@ -397,7 +402,7 @@ public class BluetoothService {
             }
 
             // Start the connected thread
-            connected(mmSocket, mmDevice);
+            connected(mmSocket, mmDevice, ServiceRole.CLIENT);
         }
 
         public void cancel() {
@@ -406,6 +411,7 @@ public class BluetoothService {
             } catch (IOException e) {
                 Log.e(TAG, "close() of connectToServer socket failed", e);
             }
+            connectionLost();
         }
     }
 
@@ -418,7 +424,9 @@ public class BluetoothService {
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
 
-        public ConnectedThread(BluetoothSocket socket) {
+        private final ServiceRole role;
+
+        public ConnectedThread(BluetoothSocket socket, ServiceRole role) {
             Log.d(TAG, "create ConnectedThread");
             mmSocket = socket;
             InputStream tmpIn = null;
@@ -430,11 +438,21 @@ public class BluetoothService {
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
                 Log.e(TAG, "temp sockets not created", e);
+                connectionLost();
             }
 
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
+
+            this.role = role;
         }
+
+        /*
+        JsonReader reader = new JsonReader(new InputStreamReader(mmInStream));
+        while(reader.hasNext()) {
+            DataPacket dataPacket = new DataPacket();
+        }
+        */
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
@@ -449,27 +467,18 @@ public class BluetoothService {
                     byte[] actualBytes = Arrays.copyOf(buffer, bytes);
                     String currentMessage = new String(actualBytes, Constants.DEFAULT_CHARSET);
                     prevMessage = prevMessage.concat(currentMessage);
-                    Log.i(TAG, String.format("RECIEVING: %s", prevMessage));
+                    Log.i(TAG, String.format("RECEIVING: %s", prevMessage));
+
                     if (prevMessage.endsWith("}")) {
                         mHandler.obtainMessage(Constants.MESSAGE_PACKET, -1, -1, prevMessage)
                                 .sendToTarget();
                         prevMessage = "";
                     }
-
-                    // Read file in stream mode
-                    /*while (mmInStream.hasNext()) {
-                        // Read data into object model
-                        Packet packet = gson.fromJson(mmInStream, Packet.class);
-                        Log.i(TAG, "RECEIVING:" + gson.toJson(packet, Packet.class));
-                        // Send the obtained bytes to the UI Activity
-                        mHandler.obtainMessage(Constants.MESSAGE_PACKET, -1, -1, packet)
-                                .sendToTarget();
-                        break;
-                    }*/
-                    //mmInStream.endObject();
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
+                    if (role == ServiceRole.SERVER)
+                        BluetoothService.this.startServer();
                     break;
                 } catch (Exception ex) {
                     ex.printStackTrace();
