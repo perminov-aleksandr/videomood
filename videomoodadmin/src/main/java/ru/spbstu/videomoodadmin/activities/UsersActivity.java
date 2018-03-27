@@ -1,24 +1,46 @@
 package ru.spbstu.videomoodadmin.activities;
 
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
+import android.animation.LayoutTransition;
+import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.transition.Slide;
+import android.transition.Transition;
+import android.transition.TransitionManager;
+import android.transition.TransitionValues;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioGroup;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Collection;
 
@@ -86,12 +108,33 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         });
 
         createUserForm = findViewById(R.id.userCreateLayout);
-        createUserForm.setVisibility(View.GONE);
+        hideCreateUserForm();
 
         userCard = findViewById(R.id.usercard);
-        userCard.setVisibility(View.GONE);
+        hideUserCard();
 
         sexRadioGroup = (RadioGroup) findViewById(R.id.sex_radiogroup);
+
+        setupAnimations();
+    }
+
+    private void setupAnimations() {
+        Point outSize = new Point();
+        getWindowManager().getDefaultDisplay().getSize(outSize);
+        float width = outSize.x/2;
+
+        ObjectAnimator animIn = ObjectAnimator.
+                ofFloat(null, "translationX", width, 0f);
+        ObjectAnimator animOut = ObjectAnimator.
+                ofFloat(null, "translationX", 0f, width);
+
+        LayoutTransition transition = new LayoutTransition();
+        transition.setAnimator(LayoutTransition.APPEARING, animIn);
+        transition.setAnimator(LayoutTransition.DISAPPEARING, animOut);
+        transition.setInterpolator(LayoutTransition.APPEARING, new DecelerateInterpolator());
+        transition.setInterpolator(LayoutTransition.DISAPPEARING, new AccelerateInterpolator());
+
+        ((ViewGroup)findViewById(R.id.userCardContainer)).setLayoutTransition(transition);
     }
 
     private int selectedUserId;
@@ -142,13 +185,32 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     private void createUser() {
+        showCreateUserForm();
+    }
+
+    private void hideCreateUserForm() {
+        createUserForm.setVisibility(View.GONE);
+    }
+
+    private void showCreateUserForm() {
+        if (userCard.getVisibility() == View.VISIBLE) {
+            hideUserCard();
+        }
         createUserForm.setVisibility(View.VISIBLE);
-        if (userCard.getVisibility() == View.VISIBLE)
-            userCard.setVisibility(View.GONE);
+    }
+
+    private void hideUserCard() {
+        userCard.setVisibility(View.GONE);
+    }
+
+    private void showUserCard() {
+        if (createUserForm.getVisibility() == View.VISIBLE)
+            hideCreateUserForm();
+        userCard.setVisibility(View.VISIBLE);
     }
 
     private void cancelCreateUser() {
-        createUserForm.setVisibility(View.GONE);
+        hideCreateUserForm();
     }
 
     private ListView usersListView;
@@ -178,8 +240,8 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                     e.printStackTrace();
                     return;
                 }
-                createUserForm.setVisibility(View.GONE);
-                userCard.setVisibility(View.VISIBLE);
+                hideCreateUserForm();
+                showUserCard();
                 usersListView.setEmptyView(findViewById(R.id.users_nodata));
             }
         });
@@ -200,7 +262,7 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
-                        userCard.setVisibility(View.GONE);
+                        hideUserCard();
                         userAdapter.remove(userToRemove);
                         userAdapter.notifyDataSetChanged();
                     }});
