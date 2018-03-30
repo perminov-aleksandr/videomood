@@ -16,7 +16,7 @@ import ru.spbstu.videomood.ConnectionListener;
 import ru.spbstu.videomood.DataListener;
 import ru.spbstu.videomood.MuseManager;
 
-public abstract class MuseActivity extends BaseActivity {
+public class MuseActivity extends Activity {
     /**
      * A Muse refers to a Muse headband.  Use this to connectToServer/disconnect from the
      * headband, register listeners to receive EEG data and get headband
@@ -35,7 +35,7 @@ public abstract class MuseActivity extends BaseActivity {
 
     /**
      * The ConnectionListener will be notified whenever there is a change in
-     * the connection state of a headband, for example when the headband connects
+     * the connection connectionState of a headband, for example when the headband connects
      * or disconnects.
      * <p>
      * Note that ConnectionListener is an inner class at the bottom of this file
@@ -52,7 +52,7 @@ public abstract class MuseActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
 
         WeakReference<MuseActivity> weakActivity = new WeakReference<>(this);
-        // Register a listener to handle connection state changes
+        // Register a listener to handle connection connectionState changes
         connectionListener = new ConnectionListener(weakActivity);
         // Register a listener to receive data from a Muse.
         dataListener = new DataListener(weakActivity);

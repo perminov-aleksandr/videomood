@@ -1,7 +1,4 @@
-package ru.spbstu.videomood.activities;
-
-import ru.spbstu.videomood.Const;
-import ru.spbstu.videomood.Utils;
+package ru.spbstu.videomood;
 
 public class BarValues {
     private long alphaPercent;

@@ -1,55 +1,101 @@
 package ru.spbstu.videomood;
 
-import java.util.HashMap;
-import java.util.Map;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.os.Handler;
+import android.support.annotation.Nullable;
+import android.util.Log;
 
-import android.annotation.TargetApi;
-import android.os.Build;
+import com.choosemuse.libmuse.ConnectionState;
 
 public class MuseMoodSolver {
 
-    private final Map<Range<Double>[], Mood> moodTable;
+    private LiveData<MuseData> museData;
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public MuseMoodSolver() {
-        moodTable = new HashMap<>();
-
-        moodTable.put(new Range[]{
-                new Range<Double>(0.0, 100.0), new Range<Double>(50.0, 60.0), new Range<Double>(15.0, 30.0), new Range<Double>(180.0, 200.0), new Range<Double>(50.0, 100.0)
-        }, Mood.AWFUL);
-        moodTable.put(new Range[]{
-                new Range<Double>(0.0,100.0), new Range<Double>(60.0, 70.0), new Range<Double>(15.0,30.0), new Range<Double>(120.0,160.0), new Range<Double>(50.0,100.0)
-        }, Mood.BAD);
-        moodTable.put(new Range[]{
-                new Range<Double>(100.0,200.0), new Range<Double>(70.0, 100.0), new Range<Double>(15.0,30.0), new Range<Double>(80.0, 120.0), new Range<Double>(50.0,100.0)
-        }, Mood.NORMAL);
-        moodTable.put(new Range[]{
-                new Range<Double>(0.0,100.0), new Range<Double>(100.0, 110.0), new Range<Double>(30.0,45.0), new Range<Double>(40.0, 80.0), new Range<Double>(50.0,100.0)
-        }, Mood.GOOD);
-        moodTable.put(new Range[]{
-                new Range<Double>(0.0,100.0), new Range<Double>(110.0, 120.0), new Range<Double>(30.0,45.0), new Range<Double>(20.0, 40.0), new Range<Double>(50.0,100.0)
-        }, Mood.GREAT);
+    public MuseMoodSolver(MuseDataRepository museDataRepository) {
+        museDataRepository.getMuseData().observeForever(new Observer<MuseData>() {
+            @Override
+            public void onChanged(@Nullable MuseData museData) {
+                calcPercentSum();
+            }
+        });
     }
 
-    public void solve(double[] sessionScores) {
-        Mood mood = null;
-        for (Range<Double>[] rangeArr : moodTable.keySet()) {
-            boolean isInAllRanges = true;
-            for (int i = 0; i < rangeArr.length; i++) {
-                double rhythmScore = sessionScores[i];
-                Range<Double> rhythmRange = rangeArr[i];
-                if (rhythmRange != null && !rhythmRange.contains(rhythmScore)) {
-                    isInAllRanges = false;
-                    break;
-                }
-            }
-            if (isInAllRanges) {
-                mood = moodTable.get(rangeArr);
-                break;
+    private static final String TAG = "VideoMood:Solver";
+    private final long second = 1000;
+
+    private long checkCalmDelay = 10 * second;
+    private long checkWarningDelay = 90 * second;
+    private long checkWarningPeriod = second;
+    private long checkCalmPeriod = second;
+
+    private Handler warningHandler = new Handler();
+
+    private Handler calmHandler = new Handler();
+
+    private final Runnable checkWarningRunnable = new Runnable() {
+        @Override
+        public void run() {
+            calcPercentSum();
+            //check if we should interrupt video and ask to calm down
+            if (checkIsWarning()) {
+                switchToCalmCheck();
+            } else {
+                //or we could continue watching and counting
+                warningHandler.postDelayed(this, checkWarningPeriod);
             }
         }
+    };
 
-        if (mood != null)
-            User.setCurrentMood(mood);
+    private final Runnable checkCalmRunnable = new Runnable() {
+        @Override
+        public void run() {
+            switchToWarningCheck();
+        }
+    };
+
+    public static final int betaPercentToWarning = 20;
+    public static final int alphaPercentToWarning = 100-betaPercentToWarning;
+
+    private long alphaPercentSum;
+    private long betaPercentSum;
+
+    private boolean checkIsWarning() {
+        Log.i(TAG, String.format("warning check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
+
+        return betaPercentSum >= betaPercentToWarning;
+    }
+
+    private boolean checkIsCalm() {
+        Log.i(TAG, String.format("calm check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
+
+        return alphaPercentSum >= alphaPercentToWarning;
+    }
+
+    public void switchToCalmCheck() {
+        percentTimeQueue.clear();
+        warningHandler.removeCallbacks(checkWarningRunnable);
+        calmHandler.postDelayed(checkCalmRunnable, checkCalmDelay);
+    }
+
+    public void switchToWarningCheck() {
+        percentTimeQueue.clear();
+        calmHandler.removeCallbacks(checkCalmRunnable);
+        warningHandler.postDelayed(checkWarningRunnable, checkWarningDelay);
+    }
+
+    private void calcPercentSum() {
+        long inAlphaCount = 0;
+        long inBetaCount = 0;
+        for (Long[] percentArr : percentTimeQueue) {
+            if (percentArr[Const.Rhythms.BETA] > percentArr[Const.Rhythms.ALPHA])
+                inBetaCount++;
+            else
+                inAlphaCount++;
+        }
+
+        int countSum = percentTimeQueue.size();
+        alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
+        betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
     }
 }

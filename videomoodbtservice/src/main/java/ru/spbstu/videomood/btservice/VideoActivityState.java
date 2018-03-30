@@ -1,7 +1,6 @@
 package ru.spbstu.videomood.btservice;
 
 import android.support.annotation.Nullable;
-import android.util.Base64;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -9,16 +8,16 @@ import com.google.gson.GsonBuilder;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
-public class DataPacket extends Packet {
+public class VideoActivityState extends Packet {
 
-    public DataPacket() {}
+    public VideoActivityState() {}
 
-    public static DataPacket createFrom(String json) {
-        return gson.fromJson(json, DataPacket.class);
+    public static VideoActivityState createFrom(String json) {
+        return gson.fromJson(json, VideoActivityState.class);
     }
 
     @Nullable
-    public static DataPacket createFrom(byte[] bytes) {
+    public static VideoActivityState createFrom(byte[] bytes) {
         try {
             return createFrom(new String(bytes, Constants.DEFAULT_CHARSET));
         } catch (UnsupportedEncodingException e) {
@@ -149,7 +148,7 @@ public class DataPacket extends Packet {
     private static final Gson gson = new GsonBuilder().setLenient().create();
 
     private String toJson() {
-        return gson.toJson(this, DataPacket.class);
+        return gson.toJson(this, VideoActivityState.class);
     }
 
     @Override

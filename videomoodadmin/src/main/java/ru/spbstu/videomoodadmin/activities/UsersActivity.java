@@ -1,5 +1,8 @@
 package ru.spbstu.videomoodadmin.activities;
 
+import android.animation.Animator;
+import android.animation.LayoutTransition;
+import android.animation.ObjectAnimator;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +14,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -178,6 +182,7 @@ public class UsersActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                     e.printStackTrace();
                     return;
                 }
+
                 createUserForm.setVisibility(View.GONE);
                 userCard.setVisibility(View.VISIBLE);
                 usersListView.setEmptyView(findViewById(R.id.users_nodata));

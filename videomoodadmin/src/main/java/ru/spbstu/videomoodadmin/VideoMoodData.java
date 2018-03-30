@@ -2,19 +2,19 @@ package ru.spbstu.videomoodadmin;
 
 import java.util.Queue;
 
-import ru.spbstu.videomood.btservice.DataPacket;
+import ru.spbstu.videomood.btservice.VideoActivityState;
 
 public class VideoMoodData {
     private Queue<Integer> alphas;
 
-    private DataPacket dataPacket;
+    private VideoActivityState videoActivityState;
 
     public void setAlphas(Queue<Integer> alphas) {
         this.alphas = alphas;
     }
 
-    public DataPacket getDataPacket() {
-        return dataPacket;
+    public VideoActivityState getVideoActivityState() {
+        return videoActivityState;
     }
 
     public Queue<Integer> getAlphas() {

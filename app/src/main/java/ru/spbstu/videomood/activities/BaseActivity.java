@@ -2,11 +2,12 @@ package ru.spbstu.videomood.activities;
 
 import android.app.Activity;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import ru.spbstu.videomood.R;
 
-public abstract class BaseActivity extends Activity {
+public abstract class BaseActivity extends AppCompatActivity {
 
     boolean doubleBackToExitPressedOnce = false;
 

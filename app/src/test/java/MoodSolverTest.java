@@ -3,13 +3,12 @@ import org.junit.Test;
 import ru.spbstu.videomood.Mood;
 import ru.spbstu.videomood.MuseMoodSolver;
 import ru.spbstu.videomood.User;
-import ru.spbstu.videomood.Range;
 
 import static org.junit.Assert.assertTrue;
 
 public class MoodSolverTest {
 
-    private MuseMoodSolver moodSolver = new MuseMoodSolver();
+    private MuseMoodSolver moodSolver = new MuseMoodSolver(this);
 
     @Test
     public void setGetUserMood() {

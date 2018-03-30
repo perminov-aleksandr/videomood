@@ -3,6 +3,8 @@ package ru.spbstu.videomood;
 import android.content.Context;
 
 import com.choosemuse.libmuse.Muse;
+import com.choosemuse.libmuse.MuseConnectionListener;
+import com.choosemuse.libmuse.MuseDataListener;
 import com.choosemuse.libmuse.MuseDataPacketType;
 import com.choosemuse.libmuse.MuseManagerAndroid;
 
@@ -50,7 +52,7 @@ public final class MuseManager {
     // receive the MuseDataPacketTypes we are interested in.  If you do
     // not register a listener for a particular data type, you will not
     // receive data packets of that type.
-    public static void registerMuseListeners(ConnectionListener connectionListener, DataListener dataListener) {
+    public static void registerMuseListeners(MuseConnectionListener connectionListener, MuseDataListener dataListener) {
         muse.unregisterAllListeners();
         muse.registerConnectionListener(connectionListener);
 
@@ -69,5 +71,26 @@ public final class MuseManager {
 
     public static ArrayList<Muse> getMuses() {
         return manager.getMuses();
+    }
+
+    public static void enableDataTransmission() {
+        if (muse != null)
+            muse.enableDataTransmission(true);
+    }
+
+    public static void disableDataTransmission() {
+        if (muse != null)
+            muse.enableDataTransmission(false);
+    }
+
+    public static void disconnect() {
+        if (muse != null) {
+            muse.unregisterAllListeners();
+            muse.disconnect(false);
+        }
+    }
+
+    public static void connect() {
+        muse.runAsynchronously();
     }
 }

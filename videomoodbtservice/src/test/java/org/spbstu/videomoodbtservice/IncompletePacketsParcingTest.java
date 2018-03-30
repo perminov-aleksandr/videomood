@@ -9,15 +9,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 
-import ru.spbstu.videomood.btservice.DataPacket;
+import ru.spbstu.videomood.btservice.VideoActivityState;
 
 public class IncompletePacketsParcingTest {
     private String completePacketJsonExample = "{\"alphaPct\":0,\"betaPct\":0,\"currentPosition\":0,\"duration\":0,\"headsetBatteryPercent\":57,\"isPanic\":false,\"museSensorsState\":[false,false,false,false],\"museState\":false,\"videoName\":\"Svinka.Peppa.(S.01.E.16.iz.52).Ikota.2005.XviD.SATRip_x264.mp4\",\"videoState\":false}";
@@ -49,7 +46,7 @@ public class IncompletePacketsParcingTest {
         while (reader.hasNext()) {
             // Read data into object model
             try {
-                DataPacket packet = gson.fromJson(reader, DataPacket.class);
+                VideoActivityState packet = gson.fromJson(reader, VideoActivityState.class);
                 //System.console().writer().print(packet);
             } catch (JsonSyntaxException ex) {
 

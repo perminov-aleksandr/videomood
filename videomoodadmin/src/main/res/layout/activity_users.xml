@@ -1,47 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:baselineAligned="false">
+    android:animateLayoutChanges="true"
+    android:baselineAligned="false"
+    android:orientation="horizontal">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/usersListViewLayout"
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:orientation="vertical"
         android:padding="10dp">
 
         <TextView
-            android:text="@string/users"
+            android:id="@+id/textView"
+            style="@style/header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/textView"
             android:padding="5dp"
-            style="@style/header" />
+            android:text="@string/users" />
 
         <ListView
             android:id="@+id/usersListView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
-        </ListView>
+            android:layout_weight="1"></ListView>
 
         <TextView
-            android:text="@string/no_users"
+            android:id="@+id/users_nodata"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/users_nodata"
+            android:gravity="center"
             android:padding="5dp"
-            android:visibility="gone"
-            android:gravity="center" />
+            android:text="@string/no_users"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/createUserBtn"
-            android:text="@string/create_user"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:text="@string/create_user" />
 
     </LinearLayout>
 
@@ -49,7 +49,8 @@
         android:id="@+id/userCreateLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -106,8 +107,8 @@
                 android:id="@+id/birthdate_editbox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:datePickerMode="spinner"
-                android:calendarViewShown="false"/>
+                android:calendarViewShown="false"
+                android:datePickerMode="spinner" />
 
             <TextView
                 android:id="@+id/textView3"
@@ -155,101 +156,101 @@
 
     <LinearLayout
         android:id="@+id/usercard"
-            android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:visibility="visible">
+
+        <TextView
+            style="@style/header"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:text="@string/user_card" />
+
+        <TextView
+            style="@style/cardLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/first_name" />
+
+        <TextView
+            android:id="@+id/usercard_firstname"
+            style="@style/cardValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/defaultUser_firstname" />
+
+        <TextView
+            style="@style/cardLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/last_name" />
+
+        <TextView
+            android:id="@+id/usercard_lastname"
+            style="@style/cardValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/defaultUser_lastname" />
+
+        <TextView
+            style="@style/cardLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/birthdate" />
+
+        <TextView
+            android:id="@+id/usercard_birthdate"
+            style="@style/cardValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/default_birthdate" />
+
+        <TextView
+            style="@style/cardLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sex" />
+
+        <TextView
+            android:id="@+id/usercard_sex"
+            style="@style/cardValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/male" />
+
+        <TextView
+            style="@style/cardLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/seances" />
+
+        <ListView
+            android:id="@+id/usercard_seances"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="10dp">
+            android:padding="5dp"></ListView>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/user_card"
-                style="@style/header"
-                android:padding="5dp" />
+        <TextView
+            android:id="@+id/usercard_seances_nodata"
+            style="@style/cardValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/no_seances"
+            android:visibility="gone" />
 
-            <TextView
-                android:text="@string/first_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/cardLabel" />
+        <Button
+            android:id="@+id/startSessionBtn"
+            style="@style/accentButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/start_session" />
 
-            <TextView
-                android:text="@string/defaultUser_firstname"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/usercard_firstname"
-                style="@style/cardValue" />
-
-            <TextView
-                android:text="@string/last_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/cardLabel" />
-
-            <TextView
-                android:text="@string/defaultUser_lastname"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/usercard_lastname"
-                style="@style/cardValue" />
-
-            <TextView
-                android:text="@string/birthdate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/cardLabel" />
-
-            <TextView
-                android:text="@string/default_birthdate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/usercard_birthdate"
-                style="@style/cardValue" />
-
-            <TextView
-                android:text="@string/sex"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/cardLabel" />
-
-            <TextView
-                android:text="@string/male"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/usercard_sex"
-                style="@style/cardValue" />
-
-            <TextView
-                android:text="@string/seances"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/cardLabel" />
-
-            <ListView
-                android:id="@+id/usercard_seances"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:padding="5dp">
-            </ListView>
-
-            <TextView
-                android:id="@+id/usercard_seances_nodata"
-                android:text="@string/no_seances"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                style="@style/cardValue"
-                android:gravity="center" />
-
-            <Button
-                android:id="@+id/startSessionBtn"
-                android:text="@string/start_session"
-                style="@style/accentButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

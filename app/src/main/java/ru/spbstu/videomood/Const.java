@@ -33,4 +33,8 @@ public final class Const {
         public static final int DELTA = 3;
         public static final int THETA = 4;
     }
+
+    public static final int SECOND = 1000;
+    public static final int CHANNEL_COUNT = 4;
+    public static final int RANGE_COUNT = 5;
 }

@@ -45,7 +45,7 @@ import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
-import ru.spbstu.videomood.btservice.DataPacket;
+import ru.spbstu.videomood.btservice.VideoActivityState;
 import ru.spbstu.videomood.btservice.MuseState;
 import ru.spbstu.videomood.btservice.VideoItem;
 import ru.spbstu.videomood.database.Seance;
@@ -72,7 +72,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private Dao<User, Integer> userDao;
     private Dao<Seance, Integer> seanceDao;
 
-    private DataPacket testDataPacket;
+    private VideoActivityState testVideoActivityState;
 
     // Intent request codes
     public static final int REQUEST_SELECT_VIDEO = 1;
@@ -235,19 +235,19 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         if (!IS_DEBUG) {
             mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         } else {
-            testDataPacket = new DataPacket();
-            testDataPacket.setVideoName("Video Name");
-            testDataPacket.setMuseState(MuseState.CONNECTED);
-            testDataPacket.setMuseBatteryPercent(14);
-            testDataPacket.setAlphaPct(20);
-            testDataPacket.setBetaPct(80);
-            testDataPacket.setHeadsetBatteryPercent(68);
-            testDataPacket.setVideoState(true);
-            testDataPacket.setIsPanic(false);
-            testDataPacket.setCurrentPositionSec(60);
-            testDataPacket.setDurationSec(100);
-            testDataPacket.setMuseSensorsState(new Boolean[]{ true, true, true, true, true });
-            dataPacket = testDataPacket;
+            testVideoActivityState = new VideoActivityState();
+            testVideoActivityState.setVideoName("Video Name");
+            testVideoActivityState.setMuseState(MuseState.CONNECTED);
+            testVideoActivityState.setMuseBatteryPercent(14);
+            testVideoActivityState.setAlphaPct(20);
+            testVideoActivityState.setBetaPct(80);
+            testVideoActivityState.setHeadsetBatteryPercent(68);
+            testVideoActivityState.setVideoState(true);
+            testVideoActivityState.setIsPanic(false);
+            testVideoActivityState.setCurrentPositionSec(60);
+            testVideoActivityState.setDurationSec(100);
+            testVideoActivityState.setMuseSensorsState(new Boolean[]{ true, true, true, true, true });
+            videoActivityState = testVideoActivityState;
         }
     }
 
@@ -288,9 +288,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
                 @Override
                 public void run() {
-                    testDataPacket.setBetaPct((int) (Math.sin(time++) * 50.0) + 50);
+                    testVideoActivityState.setBetaPct((int) (Math.sin(time++) * 50.0) + 50);
                     if (panicTicks-- == 0) {
-                        testDataPacket.setIsPanic(!testDataPacket.isPanic());
+                        testVideoActivityState.setIsPanic(!testVideoActivityState.isPanic());
                         panicTicks = Math.round(5 + Math.random() * 25);
                     }
                     Message msg = new Message();
@@ -505,7 +505,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
-    private DataPacket dataPacket;
+    private VideoActivityState videoActivityState;
 
     private class MessageHandler extends Handler {
         @Override
@@ -533,12 +533,12 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 case Constants.MESSAGE_PACKET:
                     if (!IS_DEBUG) {
                         try {
-                            dataPacket = DataPacket.createFrom((String)msg.obj);
+                            videoActivityState = VideoActivityState.createFrom((String)msg.obj);
                         } catch (Exception e) {
                             Log.e(TAG, "Error packet creation from " + msg.obj, e);
                         }
                     }
-                    if (dataPacket != null)
+                    if (videoActivityState != null)
                         processPacketData();
                     break;
             }
@@ -619,9 +619,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private boolean prevIsPanic = false;
 
     private void processPacketData() {
-        Integer alphaPct = dataPacket.getAlphaPct();
-        Integer betaPct = dataPacket.getBetaPct();
-        boolean isPanic = dataPacket.isPanic();
+        Integer alphaPct = videoActivityState.getAlphaPct();
+        Integer betaPct = videoActivityState.getBetaPct();
+        boolean isPanic = videoActivityState.isPanic();
         if (alphaPct != null && betaPct != null) {
             addEntry(alphaPct, betaPct, isPanic);
 
@@ -640,20 +640,20 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         prevIsPanic = isPanic;
 
-        MuseState newMuseState = dataPacket.getMuseState();
+        MuseState newMuseState = videoActivityState.getMuseState();
         switch (newMuseState) {
             case CONNECTED:
                 museStatusTextView.setText(R.string.state_connected);
                 museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
 
-                Integer museBatteryPercent = dataPacket.getMuseBatteryPercent();
+                Integer museBatteryPercent = videoActivityState.getMuseBatteryPercent();
                 if (museBatteryPercent != null) {
                     museBatteryTextView.setTextColor(calcBatteryTextColor(museBatteryPercent));
                     museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, museBatteryPercent));
                     museBatteryTextView.setVisibility(View.VISIBLE);
                 }
 
-                Boolean[] sensorsState = dataPacket.getMuseSensorsState();
+                Boolean[] sensorsState = videoActivityState.getMuseSensorsState();
                 if (sensorsState != null) {
                     sensorsChart.setCircles(sensorsState);
                     sensorsChart.setVisibility(View.VISIBLE);
@@ -678,7 +678,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         this.museState = newMuseState;
 
-        Integer headsetBatteryPercent = dataPacket.getHeadsetBatteryPercent();
+        Integer headsetBatteryPercent = videoActivityState.getHeadsetBatteryPercent();
         if (headsetBatteryPercent != null)
         {
             headsetStateTextView.setText(R.string.state_connected);
@@ -693,7 +693,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             headsetBatteryTextView.setVisibility(View.INVISIBLE);
         }
 
-        String videoname = dataPacket.getVideoName();
+        String videoname = videoActivityState.getVideoName();
         if (videoname != null && !videoname.equals("")) {
             String currentVideoName = userViewModel.getCurrentVideoName();
             if (!videoname.equals(currentVideoName)) {
@@ -702,11 +702,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             }
 
             videoNameTextView.setText(videoname);
-            Boolean videoState = dataPacket.getVideoState();
+            Boolean videoState = videoActivityState.getVideoState();
             pauseBtn.setText(videoState != null && videoState ? R.string.fa_pause : R.string.fa_play);
 
-            Integer videoPosition = dataPacket.getCurrentPositionSec();
-            Integer videoDuration = dataPacket.getDurationSec();
+            Integer videoPosition = videoActivityState.getCurrentPositionSec();
+            Integer videoDuration = videoActivityState.getDurationSec();
             if (videoPosition != null && videoDuration != null) {
                 seekBar.setProgress(videoPosition);
                 seekBar.setMax(videoDuration);
@@ -725,10 +725,10 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             videoControl.setVisibility(View.INVISIBLE);
         }
 
-        ArrayList<VideoItem> videoItems = dataPacket.getVideoList();
+        ArrayList<VideoItem> videoItems = videoActivityState.getVideoList();
         if (videoItems != null) {
             syncVideosWithDb(videoItems);
-            dataPacket.setVideoList(null);
+            videoActivityState.setVideoList(null);
             hideProgressDialog();
             sendMessageHandler.removeCallbacks(sendMessageRunnable);
             sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
