@@ -37,8 +37,7 @@ public class VideoMoodDbHelper extends OrmLiteSqliteOpenHelper {
     public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
         try {
             Log.i(VideoMoodDbHelper.class.getName(), "onCreate");
-            for (int i = 0; i < entityClasses.length; i++) {
-                Class entityClass = entityClasses[i];
+            for (Class entityClass : entityClasses) {
                 TableUtils.createTable(connectionSource, entityClass);
             }
         } catch (SQLException e) {

@@ -27,6 +27,7 @@ public class AdminDeviceManager implements LifecycleObserver  {
 
     public AdminDeviceManager(VideoActivity videoActivity) {
         activityRef = new WeakReference<>(videoActivity);
+        repository = new MuseDataRepository(videoActivity);
         videoActivity.getVideoActivityState().observe(videoActivity, new Observer<VideoActivityState>() {
             @Override
             public void onChanged(@Nullable VideoActivityState videoActivityState) {
@@ -102,15 +103,11 @@ public class AdminDeviceManager implements LifecycleObserver  {
         VideoActivity videoActivity = activityRef.get();
         switch (command) {
             case GET:
-                videoActivityState.setAlphaPct(alphaPct);
-                videoActivityState.setBetaPct(betaPct);
-                videoActivityState.setMuseSensorsState(sensorsStateBuffer);
-                videoActivityState.setVideoState(videoActivity.isPlaying());
-                videoActivityState.setDurationSec(videoActivity.getDurationSec());
-                videoActivityState.setCurrentPositionSec(videoActivity.getCurrentPositionSec());
+                //we want send videoActivityState
+                //so do nothing and videoActivityState will be packed and sent
                 break;
             case LIST:
-                videoActivityState.setVideoList(contentProvider.getContentList());
+                videoActivity.setVideoList();
                 break;
             case PLAY:
                 if (arguments.length > 0) {
@@ -138,13 +135,16 @@ public class AdminDeviceManager implements LifecycleObserver  {
                 }
                 break;
             case RECONNECT_MUSE:
-                connectMuse();
+
                 break;
         }
         reply();
         videoActivityState.setAlphaPct(null);
         videoActivityState.setBetaPct(null);
+        videoActivity.clearVideoList();
     }
+
+    private MuseDataRepository repository;
 
     private void reply() {
         byte[] packetBytes = videoActivityState.toBytes();
@@ -152,23 +152,9 @@ public class AdminDeviceManager implements LifecycleObserver  {
         videoActivityState.setVideoList(null);
     }
 
-    private int adminConnectionState = BluetoothService.STATE_NONE;
-
     public void processAdminDeviceState(int connectionState) {
         VideoActivity videoActivity = activityRef.get();
-        adminConnectionState = connectionState;
-        switch (connectionState) {
-            case BluetoothService.STATE_CONNECTED:
-                videoActivity.setAdminDeviceStatus(R.string.state_connected);
-                break;
-            case BluetoothService.STATE_CONNECTING:
-                videoActivity.setAdminDeviceStatus(R.string.state_connecting);
-                break;
-            case BluetoothService.STATE_LISTEN:
-            case BluetoothService.STATE_NONE:
-                videoActivity.setAdminDeviceStatus(R.string.state_disconnected);
-                break;
-        }
+        videoActivity.setAdminConnectionState(connectionState);
     }
 
     public void videoFileChanged(String name) {

@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import ru.spbstu.videomood.Const;
 import ru.spbstu.videomood.R;
-import ru.spbstu.videomood.User;
 
 public class UserActivity extends BaseActivity {
 
@@ -21,7 +20,6 @@ public class UserActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
 
-        ageRadioGroup = initRadioGroup(R.id.ageButtonsLayout, Const.ageRanges);
         moodRadioGroup = initRadioGroup(R.id.moodButtonsLayout, Const.moods);
     }
 
@@ -75,9 +73,6 @@ public class UserActivity extends BaseActivity {
 
         if (!isUserDataValid(ageIndex, moodIndex))
             return;
-
-        User.setCurrentMood(Const.moods[1]);
-        User.setRange(Const.ageRanges[ageIndex]);
 
         Intent intent = new Intent(this, VideoActivity.class);
         startActivity(intent);
