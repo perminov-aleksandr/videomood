@@ -8,20 +8,16 @@ import android.util.Log;
 
 import com.choosemuse.libmuse.ConnectionState;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
+
 public class MuseMoodSolver {
+    private static final String TAG = "VideoMood:Solver";
 
-    private LiveData<MuseData> museData;
+    public MuseMoodSolver() {
 
-    public MuseMoodSolver(MuseDataRepository museDataRepository) {
-        museDataRepository.getMuseData().observeForever(new Observer<MuseData>() {
-            @Override
-            public void onChanged(@Nullable MuseData museData) {
-                calcPercentSum();
-            }
-        });
     }
 
-    private static final String TAG = "VideoMood:Solver";
     private final long second = 1000;
 
     private long checkCalmDelay = 10 * second;
@@ -29,11 +25,11 @@ public class MuseMoodSolver {
     private long checkWarningPeriod = second;
     private long checkCalmPeriod = second;
 
-    private Handler warningHandler = new Handler();
+    //private Handler warningHandler = new Handler();
 
-    private Handler calmHandler = new Handler();
+    //private Handler calmHandler = new Handler();
 
-    private final Runnable checkWarningRunnable = new Runnable() {
+    /*private final Runnable checkWarningRunnable = new Runnable() {
         @Override
         public void run() {
             calcPercentSum();
@@ -52,7 +48,7 @@ public class MuseMoodSolver {
         public void run() {
             switchToWarningCheck();
         }
-    };
+    };*/
 
     public static final int betaPercentToWarning = 20;
     public static final int alphaPercentToWarning = 100-betaPercentToWarning;
@@ -72,16 +68,23 @@ public class MuseMoodSolver {
         return alphaPercentSum >= alphaPercentToWarning;
     }
 
-    public void switchToCalmCheck() {
+    private final int timeArrayLength = 60*10;
+    private final Queue<Long[]> percentTimeQueue = new ArrayDeque<>(timeArrayLength);
+
+    private boolean isPanic = false;
+
+    private void switchToCalmCheck() {
+        isPanic = true;
         percentTimeQueue.clear();
-        warningHandler.removeCallbacks(checkWarningRunnable);
-        calmHandler.postDelayed(checkCalmRunnable, checkCalmDelay);
+        //warningHandler.removeCallbacks(checkWarningRunnable);
+        //calmHandler.postDelayed(checkCalmRunnable, checkCalmDelay);
     }
 
-    public void switchToWarningCheck() {
+    private void switchToWarningCheck() {
+        isPanic = false;
         percentTimeQueue.clear();
-        calmHandler.removeCallbacks(checkCalmRunnable);
-        warningHandler.postDelayed(checkWarningRunnable, checkWarningDelay);
+        //calmHandler.removeCallbacks(checkCalmRunnable);
+        //warningHandler.postDelayed(checkWarningRunnable, checkWarningDelay);
     }
 
     private void calcPercentSum() {
@@ -97,5 +100,24 @@ public class MuseMoodSolver {
         int countSum = percentTimeQueue.size();
         alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
         betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
+    }
+
+    public boolean solve(long alphaPercent, long betaPercent){
+        percentTimeQueue.add(new Long[]{ alphaPercent, betaPercent });
+        calcPercentSum();
+        if (isPanic) {
+            if (checkIsCalm()) {
+                switchToWarningCheck();
+            } else {
+                switchToCalmCheck();
+            }
+        } else {
+            if (checkIsWarning()) {
+                switchToCalmCheck();
+            } else {
+                switchToWarningCheck();
+            }
+        }
+        return isPanic;
     }
 }
