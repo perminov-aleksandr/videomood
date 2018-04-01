@@ -160,7 +160,7 @@ public class MuseDataRepository {
     private MutableLiveData<MuseData> liveMuseData = new MutableLiveData<>();
 
     private void setLiveMuseData() {
-        liveMuseData.setValue(museData);
+        liveMuseData.postValue(museData);
     }
 
     public LiveData<MuseData> getMuseData() {

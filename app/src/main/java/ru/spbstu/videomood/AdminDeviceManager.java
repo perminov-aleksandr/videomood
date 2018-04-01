@@ -141,7 +141,6 @@ public class AdminDeviceManager implements LifecycleObserver  {
         reply();
         videoActivityState.setAlphaPct(null);
         videoActivityState.setBetaPct(null);
-        videoActivity.clearVideoList();
     }
 
     private MuseDataRepository repository;
@@ -149,15 +148,11 @@ public class AdminDeviceManager implements LifecycleObserver  {
     private void reply() {
         byte[] packetBytes = videoActivityState.toBytes();
         mBtService.write(packetBytes);
-        videoActivityState.setVideoList(null);
+        activityRef.get().clearVideoList();
     }
 
     public void processAdminDeviceState(int connectionState) {
         VideoActivity videoActivity = activityRef.get();
         videoActivity.setAdminConnectionState(connectionState);
-    }
-
-    public void videoFileChanged(String name) {
-        videoActivityState.setVideoName(name);
     }
 }

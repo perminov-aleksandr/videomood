@@ -40,6 +40,7 @@ import ru.spbstu.videomood.Const;
 import ru.spbstu.videomood.ContentProvider;
 import ru.spbstu.videomood.MuseData;
 import ru.spbstu.videomood.MuseDataRepository;
+import ru.spbstu.videomood.MuseDataViewModel;
 import ru.spbstu.videomood.R;
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.VideoActivityState;
@@ -109,6 +110,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                 updateBattery(museData.batteryPercent);
                 updateMode(museData.isPanic);
                 updateSensors(museData.sensorsStateBuffer, museData.isForeheadTouch);
+                museDataStale = false;
             }
             if (shouldHideSidebar) {
                 VideoActivity.this.UI.hideMuseInfo();
@@ -164,20 +166,6 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        repository = new MuseDataRepository(this);
-        repository.getMuseData().observe(this, new Observer<MuseData>() {
-            @Override
-            public void onChanged(@Nullable MuseData data) {
-                if (data != null) {
-                    museData = data;
-                    museDataStale = true;
-                    /*updateBattery(data.batteryPercent);
-                    updateBar(data.alphaPercent, data.betaPercent);
-                    updateMode(data.isPanic);*/
-                }
-            }
-        });
-
         AdminDeviceManager adminDeviceManager = new AdminDeviceManager(this);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -189,7 +177,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             contentProvider = new ContentProvider();
             File videoFile = contentProvider.getNext();
             currentVideoUri = Uri.fromFile(videoFile);
-            adminDeviceManager.videoFileChanged(videoFile.getName());
+            videoActivityState.setVideoName(videoFile.getName());
         } catch (Exception e) {
             Log.e(TAG, e.getMessage(), e);
             displayErrorDialog();
@@ -205,6 +193,29 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         view.setOnClickListener(VideoActivity.this);
 
         sidebarVisibilityTimer.schedule(sidebarVisibilityTimerTask, 5*Const.SECOND);
+    }
+
+    private MuseDataViewModel museDataVM;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        repository = new MuseDataRepository(this);
+        museDataVM = new MuseDataViewModel(repository);
+        museDataVM .getMuseData().observe(this, new Observer<MuseData>() {
+            @Override
+            public void onChanged(@Nullable MuseData data) {
+                Log.i(TAG, "observed new MuseData");
+                if (data != null) {
+                    museData = data;
+                    museDataStale = true;
+                    /*updateBattery(data.batteryPercent);
+                    updateBar(data.alphaPercent, data.betaPercent);
+                    updateMode(data.isPanic);*/
+                }
+            }
+        });
     }
 
     private void updateMode(boolean newIsPanic) {
@@ -298,7 +309,6 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         UI.adminDeviceConnectionStatusTextView.setText(stringResId);
     }
 
-    //todo: add exact reason
     private void displayErrorDialog() {
         final Activity activity = this;
         new AlertDialog.Builder(this)

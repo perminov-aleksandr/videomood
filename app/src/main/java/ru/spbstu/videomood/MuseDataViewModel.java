@@ -1,9 +1,9 @@
 package ru.spbstu.videomood;
 
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.ViewModel;
 
-public class MuseDataViewModel {
-    private LiveData<MuseData> museData;
+public class MuseDataViewModel extends ViewModel {
     private MuseDataRepository repository;
 
     public MuseDataViewModel(MuseDataRepository museDataRepository){
@@ -11,6 +11,6 @@ public class MuseDataViewModel {
     }
 
     public LiveData<MuseData> getMuseData() {
-        return museData;
+        return repository.getMuseData();
     }
 }
