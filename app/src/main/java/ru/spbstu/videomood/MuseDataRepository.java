@@ -28,10 +28,6 @@ public class MuseDataRepository {
     public MuseDataRepository(Context context) {
         this.context = context;
         museMoodSolver = new MuseMoodSolver();
-        init();
-    }
-
-    private void init() {
         registerListeners();
         connect();
     }

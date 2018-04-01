@@ -18,6 +18,7 @@ import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -63,11 +64,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     private MuseData museData;
     private boolean museDataStale = false;
 
-    private void updateBattery(int batteryValue) {
-        UI.batteryTextView.setText(String.format("%d%%", batteryValue));
+    private void updateBattery(Integer batteryValue) {
+        if (batteryValue != null)
+            UI.batteryTextView.setText(String.format("%d%%", batteryValue));
     }
 
-    private void updateBar(int alphaPercent, int betaPercent) {
+    private void updateBar(Integer alphaPercent, Integer betaPercent) {
         UI.updateAlphaBar(alphaPercent);
         UI.updateBetaBar(betaPercent);
     }
@@ -120,7 +122,10 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         }
     };
 
-    private void updateSensors(boolean[] sensorsStateBuffer, boolean isForeheadTouch) {
+    private void updateSensors(boolean[] sensorsStateBuffer, Boolean isForeheadTouch) {
+        if (isForeheadTouch == null || sensorsStateBuffer == null)
+            return;
+
         UI.updateMuseSensors(sensorsStateBuffer, isForeheadTouch);
         videoActivityState.setMuseSensorsState(sensorsStateBuffer);
         postLiveData();
@@ -186,13 +191,8 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
         registerReceiver(receiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 
-        // Start our asynchronous updates of the UI.
-        handler.post(tickUi);
-
         View view = findViewById(R.id.videoActivity);
         view.setOnClickListener(VideoActivity.this);
-
-        sidebarVisibilityTimer.schedule(sidebarVisibilityTimerTask, 5*Const.SECOND);
     }
 
     private MuseDataViewModel museDataVM;
@@ -202,23 +202,27 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         super.onStart();
 
         repository = new MuseDataRepository(this);
-        museDataVM = new MuseDataViewModel(repository);
-        museDataVM .getMuseData().observe(this, new Observer<MuseData>() {
+        //museDataVM = new MuseDataViewModel(repository);
+        repository.getMuseData().observe(this, new Observer<MuseData>() {
             @Override
             public void onChanged(@Nullable MuseData data) {
-                Log.i(TAG, "observed new MuseData");
                 if (data != null) {
                     museData = data;
                     museDataStale = true;
-                    /*updateBattery(data.batteryPercent);
-                    updateBar(data.alphaPercent, data.betaPercent);
-                    updateMode(data.isPanic);*/
                 }
             }
         });
+
+        // Start our asynchronous updates of the UI.
+        handler.post(tickUi);
+
+        sidebarVisibilityTimer.schedule(sidebarVisibilityTimerTask, 5*Const.SECOND);
     }
 
-    private void updateMode(boolean newIsPanic) {
+    private void updateMode(Boolean newIsPanic) {
+        if (newIsPanic == null)
+            return;
+
         if (!isPanic && newIsPanic) {
             switchToPanicMode();
         } else if (isPanic && !newIsPanic) {
@@ -289,23 +293,26 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
     private int adminConnectionState = BluetoothService.STATE_NONE;
 
-    public void setAdminConnectionState(int adminConnectionState) {
-        this.adminConnectionState = adminConnectionState;
+    private @StringRes int getStateStringResId(int adminConnectionState) {
         switch (adminConnectionState) {
             case BluetoothService.STATE_CONNECTED:
-                setAdminDeviceStatusTv(R.string.state_connected);
-                break;
+                return R.string.state_connected;
             case BluetoothService.STATE_CONNECTING:
-                setAdminDeviceStatusTv(R.string.state_connecting);
-                break;
+                return R.string.state_connecting;
             case BluetoothService.STATE_LISTEN:
             case BluetoothService.STATE_NONE:
-                setAdminDeviceStatusTv(R.string.state_disconnected);
-                break;
+            default:
+                return R.string.state_disconnected;
         }
     }
 
-    public void setAdminDeviceStatusTv(int stringResId) {
+    public void setAdminConnectionState(int adminConnectionState) {
+        this.adminConnectionState = adminConnectionState;
+        int statusStringResId = getStateStringResId(adminConnectionState);
+        setAdminDeviceStatusTv(statusStringResId);
+    }
+
+    public void setAdminDeviceStatusTv(@StringRes int stringResId) {
         UI.adminDeviceConnectionStatusTextView.setText(stringResId);
     }
 
@@ -501,7 +508,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             rhythmsBar.setVisibility(visibility);
         }
 
-        void setMuseIndicatorsVisible(boolean isVisible) {
+        void setMuseIndicatorsVisible(Boolean isVisible) {
             int visibility = isVisible ? View.VISIBLE : View.INVISIBLE;
             UI.museIndicators.setVisibility(visibility);
         }
@@ -618,13 +625,19 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             setMuseIndicatorsVisible(true);
         }
 
-        void updateAlphaBar(float alphaPercent) {
+        void updateAlphaBar(Integer alphaPercent) {
+            if (alphaPercent == null)
+                return;
+
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
             params.weight = alphaPercent;
             alphaBar.setLayoutParams(params);
         }
 
-        void updateBetaBar(float betaPercent) {
+        void updateBetaBar(Integer betaPercent) {
+            if (betaPercent == null)
+                return;
+
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) betaBar.getLayoutParams();
             params.weight = betaPercent;
             betaBar.setLayoutParams(params);

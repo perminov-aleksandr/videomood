@@ -6,11 +6,11 @@ public class MuseData {
     public ConnectionState connectionState;
 
     public boolean[] sensorsStateBuffer = new boolean[Const.CHANNEL_COUNT];
-    public boolean isForeheadTouch;
-    public int batteryPercent;
+    public Boolean isForeheadTouch;
+    public Integer batteryPercent;
 
-    public int alphaPercent;
-    public int betaPercent;
+    public Integer alphaPercent;
+    public Integer betaPercent;
 
-    public boolean isPanic;
+    public Boolean isPanic;
 }

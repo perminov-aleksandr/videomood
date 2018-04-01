@@ -23,7 +23,6 @@
         android:background="@color/black_overlay"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:onClick="switchToCalmCheck"
         android:id="@+id/museInfo"
         android:layout_width="100dp">
 
@@ -115,7 +114,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/black"
-        android:onClick="switchToWarningCheck"
         android:visibility="invisible"
         android:layout_alignParentEnd="true">
 

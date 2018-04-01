@@ -1,22 +1,11 @@
 package ru.spbstu.videomood;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.Observer;
-import android.os.Handler;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.choosemuse.libmuse.ConnectionState;
-
-import java.util.ArrayDeque;
-import java.util.Queue;
+import java.util.ArrayList;
 
 public class MuseMoodSolver {
     private static final String TAG = "VideoMood:Solver";
-
-    public MuseMoodSolver() {
-
-    }
 
     private final long second = 1000;
 
@@ -57,32 +46,32 @@ public class MuseMoodSolver {
     private long betaPercentSum;
 
     private boolean checkIsWarning() {
-        Log.i(TAG, String.format("warning check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
+        Log.i(TAG, String.format("warning check: (%d/%d)", alphaPercentSum, betaPercentSum));
 
         return betaPercentSum >= betaPercentToWarning;
     }
 
     private boolean checkIsCalm() {
-        Log.i(TAG, String.format("calm check: (%d/%d), queue size is %d", alphaPercentSum, betaPercentSum, percentTimeQueue.size()));
+        Log.i(TAG, String.format("calm check: (%d/%d)", alphaPercentSum, betaPercentSum));
 
         return alphaPercentSum >= alphaPercentToWarning;
     }
 
-    private final int timeArrayLength = 60*10;
-    private final Queue<Long[]> percentTimeQueue = new ArrayDeque<>(timeArrayLength);
+    public static final int TimelineLength = 60*10;
+    private final ArrayList<Long[]> percentTimeline = new ArrayList<>(TimelineLength);
 
     private boolean isPanic = false;
 
     private void switchToCalmCheck() {
         isPanic = true;
-        percentTimeQueue.clear();
+        percentTimeline.clear();
         //warningHandler.removeCallbacks(checkWarningRunnable);
         //calmHandler.postDelayed(checkCalmRunnable, checkCalmDelay);
     }
 
     private void switchToWarningCheck() {
         isPanic = false;
-        percentTimeQueue.clear();
+        percentTimeline.clear();
         //calmHandler.removeCallbacks(checkCalmRunnable);
         //warningHandler.postDelayed(checkWarningRunnable, checkWarningDelay);
     }
@@ -90,32 +79,51 @@ public class MuseMoodSolver {
     private void calcPercentSum() {
         long inAlphaCount = 0;
         long inBetaCount = 0;
-        for (Long[] percentArr : percentTimeQueue) {
+        for (Long[] percentArr : percentTimeline) {
             if (percentArr[Const.Rhythms.BETA] > percentArr[Const.Rhythms.ALPHA])
                 inBetaCount++;
             else
                 inAlphaCount++;
         }
 
-        int countSum = percentTimeQueue.size();
+        int countSum = percentTimeline.size();
         alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
         betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
     }
 
+
+    private void pushPercentTimelineValue(long alphaPercent, long betaPercent) {
+        Long[] alphaBetaPercent = new Long[2];
+        alphaBetaPercent[Const.Rhythms.ALPHA] = alphaPercent;
+        alphaBetaPercent[Const.Rhythms.BETA] = betaPercent;
+        percentTimeline.add(alphaBetaPercent);
+    }
+
+    private boolean checkPercentTimelineFilled() {
+        if (percentTimeline.size() < TimelineLength) {
+            Log.d(TAG, String.format("Queue size %d/%d is not enough to solve", percentTimeline.size(), TimelineLength));
+            return false;
+        } else if (percentTimeline.size() == TimelineLength) {
+            percentTimeline.remove(0);
+            return true;
+        }
+        return false;
+    }
+
     public boolean solve(long alphaPercent, long betaPercent){
-        percentTimeQueue.add(new Long[]{ alphaPercent, betaPercent });
+        pushPercentTimelineValue(alphaPercent, betaPercent);
+        if (!checkPercentTimelineFilled())
+            return isPanic;
+
         calcPercentSum();
+
         if (isPanic) {
             if (checkIsCalm()) {
                 switchToWarningCheck();
-            } else {
-                switchToCalmCheck();
             }
         } else {
             if (checkIsWarning()) {
                 switchToCalmCheck();
-            } else {
-                switchToWarningCheck();
             }
         }
         return isPanic;
