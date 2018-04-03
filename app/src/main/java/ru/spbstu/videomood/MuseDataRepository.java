@@ -130,12 +130,12 @@ public class MuseDataRepository {
 
     private void calculatePercent() {
         BarValues barValues = new BarValues().calculate(relativeBuffer);
-        long alphaPercent = barValues.getAlphaPercent();
-        long betaPercent = barValues.getBetaPercent();
+        int alphaPercent = barValues.getAlphaPercent();
+        int betaPercent = barValues.getBetaPercent();
 
-        museData.alphaPercent = Long.valueOf(alphaPercent).intValue();
-        museData.betaPercent = Long.valueOf(betaPercent).intValue();
         museData.isPanic = museMoodSolver.solve(alphaPercent, betaPercent);
+        museData.alphaPercent = alphaPercent;
+        museData.betaPercent = betaPercent;
         setLiveMuseData();
     }
 

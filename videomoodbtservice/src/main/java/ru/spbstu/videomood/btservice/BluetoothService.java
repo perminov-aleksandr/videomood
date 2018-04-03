@@ -389,6 +389,7 @@ public class BluetoothService {
                 } catch (IOException e2) {
                     Log.e(TAG, "unable to close() socket during connection failure", e2);
                 }
+                Log.e(TAG, "Unable to connect", e);
                 connectionLost();
                 return;
             }

@@ -1,14 +1,14 @@
 package ru.spbstu.videomood;
 
 public class BarValues {
-    private long alphaPercent;
-    private long betaPercent;
+    private int alphaPercent;
+    private int betaPercent;
 
-    long getAlphaPercent() {
+    int getAlphaPercent() {
         return alphaPercent;
     }
 
-    long getBetaPercent() {
+    int getBetaPercent() {
         return betaPercent;
     }
 
@@ -25,8 +25,8 @@ public class BarValues {
         double alphaWeighted = alphaMean * t;
         double betaWeighted = betaMean * t;
 
-        alphaPercent = Math.round(alphaWeighted);
-        betaPercent = Math.round(betaWeighted);
+        alphaPercent = (int) Math.round(alphaWeighted);
+        betaPercent = (int) Math.round(betaWeighted);
         return this;
     }
 }

@@ -167,58 +167,6 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         return liveData;
     };
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        AdminDeviceManager adminDeviceManager = new AdminDeviceManager(this);
-
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_video);
-
-        UI.setup();
-
-        try {
-            contentProvider = new ContentProvider();
-            File videoFile = contentProvider.getNext();
-            currentVideoUri = Uri.fromFile(videoFile);
-            videoActivityState.setVideoName(videoFile.getName());
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage(), e);
-            displayErrorDialog();
-            return;
-        }
-
-        registerReceiver(receiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-
-        View view = findViewById(R.id.videoActivity);
-        view.setOnClickListener(VideoActivity.this);
-    }
-
-    private MuseDataViewModel museDataVM;
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        repository = new MuseDataRepository(this);
-        //museDataVM = new MuseDataViewModel(repository);
-        repository.getMuseData().observe(this, new Observer<MuseData>() {
-            @Override
-            public void onChanged(@Nullable MuseData data) {
-                if (data != null) {
-                    museData = data;
-                    museDataStale = true;
-                }
-            }
-        });
-
-        // Start our asynchronous updates of the UI.
-        handler.post(tickUi);
-
-        sidebarVisibilityTimer.schedule(sidebarVisibilityTimerTask, 5*Const.SECOND);
-    }
-
     private void updateMode(Boolean newIsPanic) {
         if (newIsPanic == null)
             return;
@@ -417,22 +365,74 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        pauseVideo();
-        currentPlayPosition = UI.videoView.getCurrentPosition();
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.activity_video);
+
+        UI.setup();
+
+        try {
+            contentProvider = new ContentProvider();
+            File videoFile = contentProvider.getNext();
+            currentVideoUri = Uri.fromFile(videoFile);
+            videoActivityState.setVideoName(videoFile.getName());
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage(), e);
+            displayErrorDialog();
+            return;
+        }
+
+        View view = findViewById(R.id.videoActivity);
+        view.setOnClickListener(VideoActivity.this);
+
+        AdminDeviceManager adminDeviceManager = new AdminDeviceManager(this);
+        getLifecycle().addObserver(adminDeviceManager);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        repository = new MuseDataRepository(this);
+        repository.getMuseData().observe(this, new Observer<MuseData>() {
+            @Override
+            public void onChanged(@Nullable MuseData data) {
+                if (data != null) {
+                    museData = data;
+                    museDataStale = true;
+                }
+            }
+        });
+
+        // Start our asynchronous updates of the UI.
+        handler.post(tickUi);
+
+        sidebarVisibilityTimer.schedule(sidebarVisibilityTimerTask, 5*Const.SECOND);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
+        registerReceiver(receiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+
         UI.videoView.setVideoURI(currentVideoUri);
         if (currentPlayPosition != -1) {
             UI.videoView.seekTo(currentPlayPosition);
             pauseVideo();
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        unregisterReceiver(receiver);
+
+        pauseVideo();
+        currentPlayPosition = UI.videoView.getCurrentPosition();
     }
 
     public int getDurationSec() {
@@ -551,7 +551,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                     return super.dispatchKeyEvent(event);
                 }
             };
-            UI.videoView = (VideoView) findViewById(R.id.videoView);
+            UI.videoView = findViewById(R.id.videoView);
             UI.videoView.setMediaController(UI.mediaController);
             UI.videoView.requestFocus();
             UI.videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -564,11 +564,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             UI.videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
+                    videoActivityState.setDurationSec(mp.getDuration() / 1000);
+                    postLiveData();
                     mp.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
                         @Override
                         public void onSeekComplete(MediaPlayer mp) {
                             videoActivityState.setCurrentPositionSec(mp.getCurrentPosition() / 1000);
-                            videoActivityState.setDurationSec(mp.getDuration() / 1000);
                             postLiveData();
                         }
                     });

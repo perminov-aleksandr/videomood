@@ -42,8 +42,8 @@ public class MuseMoodSolver {
     public static final int betaPercentToWarning = 20;
     public static final int alphaPercentToWarning = 100-betaPercentToWarning;
 
-    private long alphaPercentSum;
-    private long betaPercentSum;
+    private int alphaPercentSum;
+    private int betaPercentSum;
 
     private boolean checkIsWarning() {
         Log.i(TAG, String.format("warning check: (%d/%d)", alphaPercentSum, betaPercentSum));
@@ -87,10 +87,9 @@ public class MuseMoodSolver {
         }
 
         int countSum = percentTimeline.size();
-        alphaPercentSum = (long)( 100.0 * (double)inAlphaCount / countSum ) ;
-        betaPercentSum = (long)( 100.0 * (double)inBetaCount / countSum ) ;
+        alphaPercentSum = (int)( 100.0 * (double)inAlphaCount / countSum ) ;
+        betaPercentSum = (int)( 100.0 * (double)inBetaCount / countSum ) ;
     }
-
 
     private void pushPercentTimelineValue(long alphaPercent, long betaPercent) {
         Long[] alphaBetaPercent = new Long[2];
@@ -127,5 +126,13 @@ public class MuseMoodSolver {
             }
         }
         return isPanic;
+    }
+
+    public int getAlphaPercentSum() {
+        return alphaPercentSum;
+    }
+
+    public int getBetaPercentSum() {
+        return betaPercentSum;
     }
 }

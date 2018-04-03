@@ -27,7 +27,16 @@ public class AdminDeviceManager implements LifecycleObserver  {
 
     public AdminDeviceManager(VideoActivity videoActivity) {
         activityRef = new WeakReference<>(videoActivity);
-        repository = new MuseDataRepository(videoActivity);
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    private void onStart() {
+        Log.d(TAG, "start event occurred");
+        if (mBtService == null) {
+            setupBtService();
+        }
+
+        VideoActivity videoActivity = activityRef.get();
         videoActivity.getVideoActivityState().observe(videoActivity, new Observer<VideoActivityState>() {
             @Override
             public void onChanged(@Nullable VideoActivityState videoActivityState) {
@@ -36,22 +45,9 @@ public class AdminDeviceManager implements LifecycleObserver  {
         });
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    private void onStart() {
-        if (mBtService == null) {
-            setupBtService();
-        }
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    private void onDestroy() {
-        if (mBtService != null) {
-            mBtService.stop();
-        }
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     private void onResume() {
+        Log.d(TAG, "resume event occurred");
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
         // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
@@ -61,6 +57,14 @@ public class AdminDeviceManager implements LifecycleObserver  {
                 // Start the Bluetooth service
                 mBtService.startServer();
             }
+        }
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    private void onDestroy() {
+        Log.d(TAG, "destroy event occurred");
+        if (mBtService != null) {
+            mBtService.stop();
         }
     }
 
@@ -95,7 +99,7 @@ public class AdminDeviceManager implements LifecycleObserver  {
         mBtService = new BluetoothService(mAdminDeviceMessageHandler, BluetoothAdapter.getDefaultAdapter());
     }
 
-    public void processAdminDevicePacket(ControlPacket controlPacket) {
+    private void processAdminDevicePacket(ControlPacket controlPacket) {
         Command command = controlPacket.getCommand();
         Object[] arguments = controlPacket.getArguments();
         Log.i(TAG, "received command " + command);
@@ -143,15 +147,13 @@ public class AdminDeviceManager implements LifecycleObserver  {
         videoActivityState.setBetaPct(null);
     }
 
-    private MuseDataRepository repository;
-
     private void reply() {
         byte[] packetBytes = videoActivityState.toBytes();
         mBtService.write(packetBytes);
         activityRef.get().clearVideoList();
     }
 
-    public void processAdminDeviceState(int connectionState) {
+    private void processAdminDeviceState(int connectionState) {
         VideoActivity videoActivity = activityRef.get();
         videoActivity.setAdminConnectionState(connectionState);
     }

@@ -540,6 +540,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                     }
                     if (videoActivityState != null)
                         processPacketData();
+                    else
+                        Log.d(TAG, "unable to process data packet cause its null");
                     break;
             }
         }

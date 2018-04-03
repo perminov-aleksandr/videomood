@@ -1,6 +1,5 @@
 package ru.spbstu.videomood;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -10,7 +9,7 @@ public class TestMuseMoodSolver {
     public void singleSolveTest() {
         MuseMoodSolver solver = new MuseMoodSolver();
         boolean isPanic = solver.solve(81, 19);
-        Assert.assertEquals(isPanic, false);
+        assertEquals(isPanic, false);
     }
 
     @Test
@@ -22,6 +21,6 @@ public class TestMuseMoodSolver {
         for (int i = 0; i < MuseMoodSolver.TimelineLength; i++) {
             resultIsPanic |= solver.solve(alphaPercent, betaPercent);
         }
-        Assert.assertEquals(true, resultIsPanic);
+        assertEquals(true, resultIsPanic);
     }
 }
