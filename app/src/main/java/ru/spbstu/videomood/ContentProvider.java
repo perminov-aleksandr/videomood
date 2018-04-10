@@ -1,11 +1,21 @@
 package ru.spbstu.videomood;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.webkit.PermissionRequest;
 
 import java.io.File;
+import java.security.Permission;
 import java.util.ArrayList;
 
+import ru.spbstu.videomood.activities.VideoActivity;
 import ru.spbstu.videomood.btservice.VideoItem;
 
 public class ContentProvider {
@@ -33,8 +43,7 @@ public class ContentProvider {
         if (index >= videos.length)
             index = 0;
 
-        File nextVideo = videos[index];
-        return nextVideo;
+        return videos[index];
     }
 
     public File getPrev() {
@@ -42,19 +51,20 @@ public class ContentProvider {
         if (index <= 0)
             index = videos.length-1;
 
-        File nextVideo = videos[index];
-        return nextVideo;
+        return videos[index];
     }
 
     public ArrayList<VideoItem> getContentList() {
+        //MediaStore store = new MediaStore();
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         ArrayList<VideoItem> result = new ArrayList<>(videos.length);
-        for (int i = 0; i < videos.length; i++) {
-            retriever.setDataSource(videos[i].getPath());
+        for (File video : videos) {
+            retriever.setDataSource(video.getPath());
             String timeStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            long time = Long.parseLong(timeStr) / 1000;
-            result.add(new VideoItem(videos[i].getName(), (int) time));
+            long time = Long.parseLong(timeStr) / Const.SECOND;
+            result.add(new VideoItem(video.getName(), (int) time));
         }
+        retriever.release();
         return result;
     }
 

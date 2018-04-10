@@ -45,4 +45,5 @@
     <string name="error">Ошибка</string>
     <string name="error_no_videofiles">Подходящих для воспроизведения файлов не найдено. Приложение будет закрыто</string>
     <string name="ok">Хорошо</string>
+    <string name="error_no_permission">У приложения нет разрешения на проигрывание видео</string>
 </resources>

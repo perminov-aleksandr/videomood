@@ -25,6 +25,8 @@ public class AdminDeviceManager implements LifecycleObserver  {
 
     private VideoActivityState videoActivityState;
 
+    private MuseDataRepository repository;
+
     public AdminDeviceManager(VideoActivity videoActivity) {
         activityRef = new WeakReference<>(videoActivity);
     }
@@ -43,6 +45,8 @@ public class AdminDeviceManager implements LifecycleObserver  {
                 AdminDeviceManager.this.videoActivityState = videoActivityState;
             }
         });
+
+        repository = MuseDataRepository.getInstance(videoActivity);
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
@@ -109,6 +113,7 @@ public class AdminDeviceManager implements LifecycleObserver  {
             case GET:
                 //we want send videoActivityState
                 //so do nothing and videoActivityState will be packed and sent
+                videoActivity.isPlaying();
                 break;
             case LIST:
                 videoActivity.setVideoList();
@@ -139,7 +144,7 @@ public class AdminDeviceManager implements LifecycleObserver  {
                 }
                 break;
             case RECONNECT_MUSE:
-
+                repository.connect();
                 break;
         }
         reply();
@@ -151,6 +156,7 @@ public class AdminDeviceManager implements LifecycleObserver  {
         byte[] packetBytes = videoActivityState.toBytes();
         mBtService.write(packetBytes);
         activityRef.get().clearVideoList();
+        activityRef.get().clearPercent();
     }
 
     private void processAdminDeviceState(int connectionState) {

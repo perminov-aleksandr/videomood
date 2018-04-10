@@ -48,5 +48,6 @@
     <string name="error">Error</string>
     <string name="error_no_videofiles">No suitable video files found. Application will quit</string>
     <string name="ok">Ok</string>
+    <string name="error_no_permission">Application does not have permissions to play video</string>
 
 </resources>

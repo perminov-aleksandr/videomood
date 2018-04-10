@@ -58,7 +58,7 @@ public class MuseMoodSolver {
     }
 
     public static final int TimelineLength = 60*10;
-    private final ArrayList<Long[]> percentTimeline = new ArrayList<>(TimelineLength);
+    private final ArrayList<long[]> percentTimeline = new ArrayList<>(TimelineLength);
 
     private boolean isPanic = false;
 
@@ -79,7 +79,7 @@ public class MuseMoodSolver {
     private void calcPercentSum() {
         long inAlphaCount = 0;
         long inBetaCount = 0;
-        for (Long[] percentArr : percentTimeline) {
+        for (long[] percentArr : percentTimeline) {
             if (percentArr[Const.Rhythms.BETA] > percentArr[Const.Rhythms.ALPHA])
                 inBetaCount++;
             else
@@ -92,7 +92,7 @@ public class MuseMoodSolver {
     }
 
     private void pushPercentTimelineValue(long alphaPercent, long betaPercent) {
-        Long[] alphaBetaPercent = new Long[2];
+        long[] alphaBetaPercent = new long[2];
         alphaBetaPercent[Const.Rhythms.ALPHA] = alphaPercent;
         alphaBetaPercent[Const.Rhythms.BETA] = betaPercent;
         percentTimeline.add(alphaBetaPercent);

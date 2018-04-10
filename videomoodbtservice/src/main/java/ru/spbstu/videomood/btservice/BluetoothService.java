@@ -51,6 +51,8 @@ public class BluetoothService {
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
+    private boolean isStoppedOutside = false;
+
     /**
      * Constructor. Prepares a new BluetoothChat session.
      *
@@ -214,6 +216,8 @@ public class BluetoothService {
             mSecureAcceptThread.cancel();
             mSecureAcceptThread = null;
         }
+
+        isStoppedOutside = true;
 
         setState(STATE_NONE);
     }
@@ -478,7 +482,7 @@ public class BluetoothService {
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
-                    if (role == ServiceRole.SERVER)
+                    if (role == ServiceRole.SERVER && !isStoppedOutside)
                         BluetoothService.this.startServer();
                     break;
                 } catch (Exception ex) {

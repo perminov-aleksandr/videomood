@@ -1,5 +1,6 @@
 package ru.spbstu.videomood.activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.arch.lifecycle.LiveData;
@@ -10,6 +11,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.media.MediaPlayer;
@@ -17,13 +19,16 @@ import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.Window;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
@@ -41,7 +46,6 @@ import ru.spbstu.videomood.Const;
 import ru.spbstu.videomood.ContentProvider;
 import ru.spbstu.videomood.MuseData;
 import ru.spbstu.videomood.MuseDataRepository;
-import ru.spbstu.videomood.MuseDataViewModel;
 import ru.spbstu.videomood.R;
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.VideoActivityState;
@@ -65,13 +69,19 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     private boolean museDataStale = false;
 
     private void updateBattery(Integer batteryValue) {
-        if (batteryValue != null)
+        if (batteryValue != null) {
             UI.batteryTextView.setText(String.format("%d%%", batteryValue));
+            videoActivityState.setMuseBatteryPercent(batteryValue);
+            postLiveData();
+        }
     }
 
     private void updateBar(Integer alphaPercent, Integer betaPercent) {
         UI.updateAlphaBar(alphaPercent);
         UI.updateBetaBar(betaPercent);
+        videoActivityState.setAlphaPct(alphaPercent);
+        videoActivityState.setBetaPct(betaPercent);
+        postLiveData();
     }
 
     public void switchToPanicMode() {
@@ -118,7 +128,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                 VideoActivity.this.UI.hideMuseInfo();
                 shouldHideSidebar = false;
             }
-            handler.postDelayed(tickUi, 1000 / 60);
+            handler.postDelayed(tickUi, Const.SECOND / 60);
         }
     };
 
@@ -229,13 +239,13 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
     public void playVideo(){
         UI.videoView.start();
-        videoActivityState.setVideoState(true);
+        videoActivityState.setIsVideoPlaying(true);
         postLiveData();
     }
 
     public void pauseVideo(){
         UI.videoView.pause();
-        videoActivityState.setVideoState(false);
+        videoActivityState.setIsVideoPlaying(false);
         postLiveData();
     }
 
@@ -264,11 +274,11 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         UI.adminDeviceConnectionStatusTextView.setText(stringResId);
     }
 
-    private void displayErrorDialog() {
+    private void displayErrorDialog(@StringRes int errorMessageId) {
         final Activity activity = this;
         new AlertDialog.Builder(this)
                 .setTitle(R.string.error)
-                .setMessage(R.string.error_no_videofiles)
+                .setMessage(errorMessageId)
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
                 {
                     @Override
@@ -338,6 +348,17 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         playVideo();
     }
 
+    private void initContentProvider() {
+        try {
+            contentProvider = new ContentProvider();
+            File videoFile = contentProvider.getNext();
+            playVideoFile(videoFile);
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage(), e);
+            displayErrorDialog(R.string.error_no_videofiles);
+        }
+    }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -368,21 +389,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_video);
 
         UI.setup();
 
-        try {
-            contentProvider = new ContentProvider();
-            File videoFile = contentProvider.getNext();
-            currentVideoUri = Uri.fromFile(videoFile);
-            videoActivityState.setVideoName(videoFile.getName());
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage(), e);
-            displayErrorDialog();
-            return;
-        }
+        ensurePermissions();
 
         View view = findViewById(R.id.videoActivity);
         view.setOnClickListener(VideoActivity.this);
@@ -395,7 +407,8 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     protected void onStart() {
         super.onStart();
 
-        repository = new MuseDataRepository(this);
+        repository = MuseDataRepository.getInstance(this);
+        getLifecycle().addObserver(repository);
         repository.getMuseData().observe(this, new Observer<MuseData>() {
             @Override
             public void onChanged(@Nullable MuseData data) {
@@ -436,15 +449,17 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public int getDurationSec() {
-        return UI.videoView.getDuration() / 1000;
+        return UI.videoView.getDuration() / Const.SECOND;
     }
 
     public boolean isPlaying() {
+        videoActivityState.setIsVideoPlaying(UI.videoView.isPlaying());
+        postLiveData();
         return UI.videoView.isPlaying();
     }
 
     public int getCurrentPositionSec() {
-        return UI.videoView.getCurrentPosition() / 1000;
+        return UI.videoView.getCurrentPosition() / Const.SECOND;
     }
 
     public void playNext() {
@@ -458,7 +473,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public void rewindTo(double positionSec) {
-        UI.videoView.seekTo((int) (positionSec * 1000));
+        UI.videoView.seekTo((int) (positionSec * Const.SECOND));
     }
 
     public void setVideoList() {
@@ -468,6 +483,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
     public void clearVideoList() {
         videoActivityState.setVideoList(null);
+        postLiveData();
+    }
+
+    public void clearPercent() {
+        videoActivityState.setAlphaPct(null);
+        videoActivityState.setBetaPct(null);
         postLiveData();
     }
 
@@ -564,12 +585,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             UI.videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    videoActivityState.setDurationSec(mp.getDuration() / 1000);
+                    videoActivityState.setDurationSec(mp.getDuration() / Const.SECOND);
                     postLiveData();
                     mp.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
                         @Override
                         public void onSeekComplete(MediaPlayer mp) {
-                            videoActivityState.setCurrentPositionSec(mp.getCurrentPosition() / 1000);
+                            videoActivityState.setCurrentPositionSec(mp.getCurrentPosition() / Const.SECOND);
                             postLiveData();
                         }
                     });
@@ -627,21 +648,45 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         }
 
         void updateAlphaBar(Integer alphaPercent) {
-            if (alphaPercent == null)
-                return;
-
-            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) alphaBar.getLayoutParams();
-            params.weight = alphaPercent;
-            alphaBar.setLayoutParams(params);
+            updateBar(alphaPercent, betaBar);
         }
 
         void updateBetaBar(Integer betaPercent) {
+            updateBar(betaPercent, betaBar);
+        }
+
+        void updateBar(Integer betaPercent, TextView bar) {
             if (betaPercent == null)
                 return;
 
-            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) betaBar.getLayoutParams();
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) bar.getLayoutParams();
             params.weight = betaPercent;
-            betaBar.setLayoutParams(params);
+            bar.setLayoutParams(params);
+        }
+    }
+
+    private void ensurePermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    Const.MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+        } else {
+            initContentProvider();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == Const.MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE) {
+
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                initContentProvider();
+            } else {
+                displayErrorDialog(R.string.error_no_permission);
+            }
         }
     }
 }

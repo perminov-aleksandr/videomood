@@ -44,7 +44,7 @@ public class VideoActivityState extends Packet {
 
     private String videoName;
 
-    private Boolean videoState;
+    private Boolean isVideoPlaying;
 
     private Integer currentPosition;
 
@@ -116,12 +116,12 @@ public class VideoActivityState extends Packet {
         this.videoName = videoName;
     }
 
-    public Boolean getVideoState() {
-        return videoState;
+    public Boolean getIsVideoPlaying() {
+        return isVideoPlaying;
     }
 
-    public void setVideoState(boolean videoState) {
-        this.videoState = videoState;
+    public void setIsVideoPlaying(boolean isPlaying) {
+        this.isVideoPlaying = isPlaying;
     }
 
     public ArrayList<VideoItem> getVideoList() {

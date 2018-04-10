@@ -15,7 +15,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -33,6 +32,9 @@ import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -55,14 +57,13 @@ import ru.spbstu.videomood.database.User;
 import ru.spbstu.videomood.database.Video;
 import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
+import ru.spbstu.videomoodadmin.Debug;
 import ru.spbstu.videomoodadmin.HorseshoeView;
 import ru.spbstu.videomoodadmin.R;
 import ru.spbstu.videomoodadmin.UserViewModel;
 
 @SuppressWarnings("ConstantConditions")
 public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
-
-    private final boolean IS_DEBUG = false;
 
     private Timer debugTimerPacketSender;
 
@@ -84,13 +85,13 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private int time = 0;
 
-    private final int chartSize = 60;
+    private static final int CHART_SIZE = 60;
     private MuseState museState = MuseState.DISCONNECTED;
 
     private BarDataSet createSet(String name, int color) {
-        ArrayList<BarEntry> vals = new ArrayList<>();
-        vals.add(new BarEntry(0,0));
-        BarDataSet set = new BarDataSet(vals, name);
+        ArrayList<BarEntry> values = new ArrayList<>();
+        values.add(new BarEntry(0,0));
+        BarDataSet set = new BarDataSet(values, name);
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
         set.setColor(color);
         set.setHighLightColor(Color.rgb(244, 117, 117));
@@ -100,41 +101,41 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         return set;
     }
 
-    private int alphaDataSetIndex = 0;
-    private int betaDataSetIndex = 1;
+    private static final int ALPHA_DATA_SET_INDEX = 0;
+    private static final int BETA_DATA_SET_INDEX = 1;
 
     private IBarDataSet alphaSet;
     private IBarDataSet betaSet;
 
     BarData barData;
 
-    private void addEntry(int alphaValue, int betaValue, boolean isPanic) {
+    private void addEntryToChart(int alphaValue, int betaValue, boolean isPanic) {
         BarData data = chart.getData();
+        if (data == null)
+            return;
 
-        if (data != null) {
-            time++;
+        time++;
 
-            int currentDataSetIndex = isPanic ? betaDataSetIndex : alphaDataSetIndex;
-            data.addEntry(new BarEntry(time, betaValue), currentDataSetIndex);
-            data.addEntry(new BarEntry(time, 0), isPanic ? alphaDataSetIndex : betaDataSetIndex);
-            if (alphaSet.getEntryCount() == chartSize) {
-                alphaSet.removeEntry(0);
-                betaSet.removeEntry(0);
-            }
-            data.notifyDataChanged();
-
-            // let the chart know it's data has changed
-            chart.notifyDataSetChanged();
-
-            chart.moveViewToX(data.getEntryCount());
-            chart.setVisibleXRangeMinimum(chartSize);
-            chart.setVisibleXRangeMaximum(chartSize);
-            chart.setVisibleYRange(100, 100, YAxis.AxisDependency.LEFT);
-
-            // this automatically refreshes the chart (calls invalidate())
-            // mChart.moveViewTo(data.getXValCount()-7, 55f,
-            // AxisDependency.LEFT);
+        int currentDataSetIndex = isPanic ? BETA_DATA_SET_INDEX : ALPHA_DATA_SET_INDEX;
+        data.addEntry(new BarEntry(time, betaValue), currentDataSetIndex);
+        data.addEntry(new BarEntry(time, 0), isPanic ? ALPHA_DATA_SET_INDEX : BETA_DATA_SET_INDEX);
+        if (alphaSet.getEntryCount() == CHART_SIZE) {
+            alphaSet.removeEntry(0);
+            betaSet.removeEntry(0);
         }
+        data.notifyDataChanged();
+
+        // let the chart know it's data has changed
+        chart.notifyDataSetChanged();
+
+        chart.moveViewToX(data.getEntryCount());
+        chart.setVisibleXRangeMinimum(CHART_SIZE);
+        chart.setVisibleXRangeMaximum(CHART_SIZE);
+        chart.setVisibleYRange(100, 100, YAxis.AxisDependency.LEFT);
+
+        // this automatically refreshes the chart (calls invalidate())
+        // mChart.moveViewTo(data.getXValCount()-7, 55f,
+        // AxisDependency.LEFT);
     }
 
     private TextView finishSeanceTextView;
@@ -144,9 +145,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         setupTextViews();
 
-        videoControl = (LinearLayout) findViewById(R.id.videoControl);
-        sensorsChart = (HorseshoeView) findViewById(R.id.deviceInfo);
-        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        videoControl = findViewById(R.id.videoControl);
+        sensorsChart = findViewById(R.id.deviceInfo);
+        seekBar = findViewById(R.id.seekBar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -163,7 +164,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             }
         });
 
-        finishSeanceTextView = (TextView) findViewById(R.id.main_finishSeanceBtn);
+        finishSeanceTextView = findViewById(R.id.main_finishSeanceBtn);
         setEnabledFinishSeanceButton(false);
         finishSeanceTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -172,7 +173,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             }
         });
 
-        TextView museStatus = (TextView) findViewById(R.id.museState);
+        TextView museStatus = findViewById(R.id.museState);
         museStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -188,7 +189,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     private void initChart() {
-        chart = (BarChart) findViewById(R.id.plotView);
+        chart = findViewById(R.id.plotView);
 
         barData = new BarData();
 
@@ -220,6 +221,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mHandler = new MessageHandler(this);
+
         try {
             dbHelper = getHelper();
             userDao = dbHelper.getUserDao();
@@ -232,7 +235,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         setupUser();
 
-        if (!IS_DEBUG) {
+        if (!Debug.ON) {
             mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         } else {
             testVideoActivityState = new VideoActivityState();
@@ -242,7 +245,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             testVideoActivityState.setAlphaPct(20);
             testVideoActivityState.setBetaPct(80);
             testVideoActivityState.setHeadsetBatteryPercent(68);
-            testVideoActivityState.setVideoState(true);
+            testVideoActivityState.setIsVideoPlaying(true);
             testVideoActivityState.setIsPanic(false);
             testVideoActivityState.setCurrentPositionSec(60);
             testVideoActivityState.setDurationSec(100);
@@ -261,9 +264,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             e.printStackTrace();
         }
         userViewModel = new UserViewModel(user);
-        TextView userFirstName = (TextView) findViewById(R.id.main_user_firstname);
+        TextView userFirstName = findViewById(R.id.main_user_firstname);
         userFirstName.setText(userViewModel.firstName);
-        TextView userLastName = (TextView) findViewById(R.id.main_user_lastname);
+        TextView userLastName = findViewById(R.id.main_user_lastname);
         userLastName.setText(userViewModel.lastName);
     }
 
@@ -271,7 +274,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     public void onStart() {
         super.onStart();
 
-        if (!IS_DEBUG) {
+        if (!Debug.ON) {
             // If BT is not on, request that it be enabled
             if (!mBluetoothAdapter.isEnabled()) {
                 Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -309,7 +312,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     public void onResume() {
         super.onResume();
 
-        if (!IS_DEBUG) {
+        if (!Debug.ON) {
 //            // Performing this check in onResume() covers the case in which BT was
 //            // not enabled during onStart(), so we were paused to enable it...
 //            // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
@@ -329,7 +332,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         sendMessageHandler.removeCallbacks(sendMessageRunnable);
 
-        if (!IS_DEBUG) {
+        if (!Debug.ON) {
             if (mBtService != null) {
                 mBtService.stop();
             }
@@ -354,15 +357,14 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
-    @Nullable
-    private Seance createSeance() {
+    private void createSeance() {
         Seance seance = new Seance();
         try {
             seance.user = userDao.queryForId(userViewModel.id);
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
             Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG).show();
-            return null;
+            return;
         }
 
         userViewModel.setSeanceDateStart(Calendar.getInstance().getTime());
@@ -370,7 +372,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
         saveSeance(seance);
 
-        return seance;
+        this.seance = seance;
     }
 
     private void saveSeance(Seance seance) {
@@ -412,9 +414,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         String deviceAddress = connectionIntent.getStringExtra(AdminConst.EXTRA_DEVICE_ADDRESS);
 
         // Get the BluetoothDevice object
-        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
 
-        deviceToConnect = device;
+        deviceToConnect = mBluetoothAdapter.getRemoteDevice(deviceAddress);
 
         Log.i(TAG, String.format("Attempt to connectToServer to %s(%s)", deviceToConnect.getName(), deviceAddress));
         // Attempt to connectToServer to the device
@@ -424,7 +425,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     /**
      * The Handler that gets information back from the BluetoothChatService
      */
-    private final Handler mHandler = new MessageHandler();
+    private Handler mHandler;
 
     private SeekBar seekBar;
 
@@ -505,46 +506,61 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
-    private VideoActivityState videoActivityState;
+    private VideoActivityState videoActivityState = new VideoActivityState();
 
-    private class MessageHandler extends Handler {
+    private static class MessageHandler extends Handler {
+        private WeakReference<MainActivity> activity;
+        MessageHandler(MainActivity activity) {
+            this.activity = new WeakReference<>(activity);
+        }
+
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case Constants.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
                         case BluetoothService.STATE_CONNECTED:
-                            seance = createSeance();
-                            sendPacket(new ControlPacket(Command.LIST));
-                            setEnabledFinishSeanceButton(true);
-                            showProgressDialog();
+                            activity.get().onHeadsetConnected();
                             break;
                         case BluetoothService.STATE_NONE:
-                            sendMessageHandler.removeCallbacks(sendMessageRunnable);
-                            if (pd != null && pd.isShowing())
-                                hideProgressDialog();
-                            if (headsetStatus == BluetoothService.STATE_CONNECTING
-                                    || headsetStatus == BluetoothService.STATE_CONNECTED)
-                                showReconnectHeadsetDialog();
+                            activity.get().onHeadsetDisconnected();
                             break;
                     }
-                    setHeadsetStatus(msg.arg1);
+                    activity.get().setHeadsetStatus(msg.arg1);
                     break;
                 case Constants.MESSAGE_PACKET:
-                    if (!IS_DEBUG) {
+                    if (!Debug.ON) {
+                        VideoActivityState state = null;
                         try {
-                            videoActivityState = VideoActivityState.createFrom((String)msg.obj);
+                            state = VideoActivityState.createFrom((String) msg.obj);
                         } catch (Exception e) {
                             Log.e(TAG, "Error packet creation from " + msg.obj, e);
                         }
+                        if (state != null)
+                            activity.get().processPacketData(state);
+                        else
+                            Log.d(TAG, "unable to process data packet cause its null");
                     }
-                    if (videoActivityState != null)
-                        processPacketData();
-                    else
-                        Log.d(TAG, "unable to process data packet cause its null");
                     break;
             }
         }
+    }
+
+    private void onHeadsetConnected() {
+        createSeance();
+        sendPacket(new ControlPacket(Command.LIST));
+        setEnabledFinishSeanceButton(true);
+        showProgressDialog();
+    }
+
+    private void onHeadsetDisconnected() {
+        onMuseDisconnected();
+        sendMessageHandler.removeCallbacks(sendMessageRunnable);
+        if (pd != null && pd.isShowing())
+            hideProgressDialog();
+        if (headsetStatus == BluetoothService.STATE_CONNECTING
+                || headsetStatus == BluetoothService.STATE_CONNECTED)
+            showReconnectHeadsetDialog();
     }
 
     private ProgressDialog pd = null;
@@ -553,9 +569,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         pd = new ProgressDialog(MainActivity.this);
         pd.setTitle(getString(R.string.connectingProgressTitle));
         pd.setMessage(getString(R.string.connectionProgressMessage));
-        // меняем стиль на индикатор
         pd.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        // включаем анимацию ожидания
         pd.setIndeterminate(true);
         pd.setCancelable(false);
         pd.show();
@@ -576,7 +590,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private TextView userIcon;
 
     private void setFont(Typeface font, int id) {
-        TextView item = (TextView) findViewById(id);
+        TextView item = findViewById(id);
         setFont(font, item);
     }
 
@@ -585,13 +599,13 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     private void setupTextViews() {
-        museStatusTextView = (TextView) findViewById(R.id.museState);
-        museBatteryTextView = (TextView) findViewById(R.id.museBattery);
-        headsetStateTextView = (TextView) findViewById(R.id.headsetState);
-        headsetBatteryTextView = (TextView) findViewById(R.id.headsetBattery);
-        videoNameTextView = (TextView) findViewById(R.id.videoName);
-        pauseBtn = (TextView) findViewById(R.id.playBtn);
-        userIcon = (TextView) findViewById(R.id.userIcon);
+        museStatusTextView = findViewById(R.id.museState);
+        museBatteryTextView = findViewById(R.id.museBattery);
+        headsetStateTextView = findViewById(R.id.headsetState);
+        headsetBatteryTextView = findViewById(R.id.headsetBattery);
+        videoNameTextView = findViewById(R.id.videoName);
+        pauseBtn = findViewById(R.id.playBtn);
+        userIcon = findViewById(R.id.userIcon);
 
         userIcon.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -618,107 +632,107 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         }
     }
 
+    private int getMuseStateString(MuseState museState) {
+        switch (museState) {
+            case CONNECTED:
+                return R.string.state_connected;
+            case CONNECTING:
+                return R.string.state_connecting;
+            case DISCONNECTED:
+                return R.string.state_not_connected;
+            default:
+                return R.string.state_unknown;
+        }
+    }
+
+    private int getColorOfMuseState(MuseState museState) {
+        switch (museState) {
+            case CONNECTED:
+                return R.color.connectedColor;
+            case CONNECTING:
+            case DISCONNECTED:
+            default:
+                return R.color.disconnectedColor;
+        }
+    }
+
+    private void updateMuseStatus(MuseState museState) {
+        int stateStringId = getMuseStateString(museState);
+        int stateStringColorId = getColorOfMuseState(museState);
+        museStatusTextView.setText(stateStringId);
+        museStatusTextView.setTextColor(getResources().getColor(stateStringColorId));
+    }
+
     private boolean prevIsPanic = false;
 
-    private void processPacketData() {
-        Integer alphaPct = videoActivityState.getAlphaPct();
-        Integer betaPct = videoActivityState.getBetaPct();
-        boolean isPanic = videoActivityState.isPanic();
+    private void switchToPanic() {
+        userIcon.setText(R.string.fa_frown_o);
+        userIcon.setTextColor(getResources().getColor(R.color.warningColor));
+    }
+
+    private void switchToCalm() {
+        userIcon.setText(R.string.fa_smile_o);
+        userIcon.setTextColor(getResources().getColor(R.color.calmColor));
+    }
+
+    private void processPacketData(VideoActivityState state) {
+        Integer alphaPct = state.getAlphaPct();
+        Integer betaPct = state.getBetaPct();
+        boolean isPanic = state.isPanic();
         if (alphaPct != null && betaPct != null) {
-            addEntry(alphaPct, betaPct, isPanic);
-
-            if (userViewModel != null) {
-                SeanceDataEntry seanceDataEntry = new SeanceDataEntry();
-                seanceDataEntry.betaValue = betaPct;
-                seanceDataEntry.isPanic = isPanic;
-                userViewModel.seanceData.add(seanceDataEntry);
-            }
+            addEntryToChart(alphaPct, betaPct, isPanic);
+            addEntryToSeanceData(betaPct, isPanic);
         }
-        userIcon.setText(isPanic ? R.string.fa_frown_o : R.string.fa_smile_o);
-        userIcon.setTextColor(getResources().getColor(isPanic ? R.color.warningColor : R.color.calmColor));
 
-        if (!prevIsPanic && isPanic)
+        if (!prevIsPanic && isPanic) {
+            switchToPanic();
             playNotification();
+        } else if (prevIsPanic && !isPanic) {
+            switchToCalm();
+        }
 
-        prevIsPanic = isPanic;
+        this.prevIsPanic = isPanic;
 
-        MuseState newMuseState = videoActivityState.getMuseState();
-        switch (newMuseState) {
-            case CONNECTED:
-                museStatusTextView.setText(R.string.state_connected);
-                museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
-
-                Integer museBatteryPercent = videoActivityState.getMuseBatteryPercent();
-                if (museBatteryPercent != null) {
-                    museBatteryTextView.setTextColor(calcBatteryTextColor(museBatteryPercent));
-                    museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, museBatteryPercent));
-                    museBatteryTextView.setVisibility(View.VISIBLE);
-                }
-
-                Boolean[] sensorsState = videoActivityState.getMuseSensorsState();
-                if (sensorsState != null) {
-                    sensorsChart.setCircles(sensorsState);
-                    sensorsChart.setVisibility(View.VISIBLE);
-                }
-
-                failedMuseReconnectCount = 0;
-                break;
-            case CONNECTING:
-                museStatusTextView.setText(R.string.state_connecting);
-                museStatusTextView.setTextColor(getResources().getColor(R.color.connectedColor));
-                break;
-            case DISCONNECTED:
-                museStatusTextView.setText(R.string.state_not_connected);
-                museStatusTextView.setTextColor(getResources().getColor(R.color.disconnectedColor));
-                museBatteryTextView.setVisibility(View.INVISIBLE);
-                sensorsChart.setVisibility(View.INVISIBLE);
-
-                if (museState == MuseState.CONNECTED || museState == MuseState.CONNECTING)
-                    onMuseDisconnect();
-                break;
+        MuseState newMuseState = state.getMuseState();
+        MuseState prevMuseState = videoActivityState.getMuseState();
+        if (newMuseState != prevMuseState) {
+            onMuseStateChanged(newMuseState);
         }
 
         this.museState = newMuseState;
 
-        Integer headsetBatteryPercent = videoActivityState.getHeadsetBatteryPercent();
-        if (headsetBatteryPercent != null)
-        {
-            headsetStateTextView.setText(R.string.state_connected);
-            headsetStateTextView.setTextColor(getResources().getColor(R.color.connectedColor));
-            museBatteryTextView.setTextColor(calcBatteryTextColor(headsetBatteryPercent));
-            headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, headsetBatteryPercent));
-            headsetBatteryTextView.setVisibility(View.VISIBLE);
+        Integer museBatteryPercent = state.getMuseBatteryPercent();
+        updateMuseBatteryPercent(museBatteryPercent);
+
+        Boolean[] sensorsState = state.getMuseSensorsState();
+        updateMuseSensorsState(sensorsState);
+
+        Integer headsetBatteryPercent = state.getHeadsetBatteryPercent();
+        updateHeadsetBatteryPercent(headsetBatteryPercent);
+
+        String videoname = state.getVideoName();
+        updateVideoControl(state, videoname);
+
+        ArrayList<VideoItem> videoItems = state.getVideoList();
+        if (videoItems != null) {
+            syncVideosWithDb(videoItems);
+            state.setVideoList(null);
+            hideProgressDialog();
+            sendMessageHandler.removeCallbacks(sendMessageRunnable);
+            sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
         }
-        else {
-            headsetStateTextView.setText(R.string.state_not_connected);
-            headsetStateTextView.setTextColor(getResources().getColor(R.color.disconnectedColor));
-            headsetBatteryTextView.setVisibility(View.INVISIBLE);
-        }
 
-        String videoname = videoActivityState.getVideoName();
-        if (videoname != null && !videoname.equals("")) {
-            String currentVideoName = userViewModel.getCurrentVideoName();
-            if (!videoname.equals(currentVideoName)) {
-                saveSeanceDataChunk();
-                userViewModel.setCurrentVideoName(videoname);
-            }
+        videoActivityState = state;
+    }
 
-            videoNameTextView.setText(videoname);
-            Boolean videoState = videoActivityState.getVideoState();
-            pauseBtn.setText(videoState != null && videoState ? R.string.fa_pause : R.string.fa_play);
+    private void updateVideoControl(VideoActivityState state, String videoName) {
+        if (videoName != null && !videoName.equals("")) {
+            updateVideoName(videoName);
 
-            Integer videoPosition = videoActivityState.getCurrentPositionSec();
-            Integer videoDuration = videoActivityState.getDurationSec();
-            if (videoPosition != null && videoDuration != null) {
-                seekBar.setProgress(videoPosition);
-                seekBar.setMax(videoDuration);
+            Boolean isVideoPlaying = state.getIsVideoPlaying();
+            pauseBtn.setText(isVideoPlaying != null && isVideoPlaying ? R.string.fa_pause : R.string.fa_play);
 
-                TextView currentPositionTv = (TextView)findViewById(R.id.main_seekBarCurrentPosition);
-                currentPositionTv.setText(String.format("%d:%02d", videoPosition / 60, videoPosition % 60));
-
-                TextView durationTv = (TextView)findViewById(R.id.main_seekBarDuration);
-                durationTv.setText(String.format("%d:%02d", videoDuration / 60, videoDuration % 60));
-            }
+            updateVideoTimeValues(state.getCurrentPositionSec(),  state.getDurationSec());
 
             videoControl.setVisibility(View.VISIBLE);
         }
@@ -726,15 +740,104 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             videoNameTextView.setText(R.string.videoNotPlayed);
             videoControl.setVisibility(View.INVISIBLE);
         }
+    }
 
-        ArrayList<VideoItem> videoItems = videoActivityState.getVideoList();
-        if (videoItems != null) {
-            syncVideosWithDb(videoItems);
-            videoActivityState.setVideoList(null);
-            hideProgressDialog();
-            sendMessageHandler.removeCallbacks(sendMessageRunnable);
-            sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
+    private void updateVideoTimeValues(Integer videoPosition, Integer videoDuration) {
+        if (videoPosition == null || videoDuration == null)
+            return;
+
+        seekBar.setProgress(videoPosition);
+        seekBar.setMax(videoDuration);
+
+        TextView currentPositionTv = findViewById(R.id.main_seekBarCurrentPosition);
+        currentPositionTv.setText(String.format("%d:%02d", videoPosition / 60, videoPosition % 60));
+
+        TextView durationTv = findViewById(R.id.main_seekBarDuration);
+        durationTv.setText(String.format("%d:%02d", videoDuration / 60, videoDuration % 60));
+    }
+
+    private void updateVideoName(String videoName) {
+        String currentVideoName = userViewModel.getCurrentVideoName();
+        if (!videoName.equals(currentVideoName)) {
+            saveSeanceDataChunk();
+            userViewModel.setCurrentVideoName(videoName);
         }
+
+        videoNameTextView.setText(videoName);
+    }
+
+    private void updateHeadsetBatteryPercent(Integer headsetBatteryPercent) {
+        if (headsetBatteryPercent != null)
+        {
+            headsetBatteryTextView.setText(getString(R.string.defaultPercentFormatString, headsetBatteryPercent));
+            headsetBatteryTextView.setVisibility(View.VISIBLE);
+        }
+        else {
+            headsetBatteryTextView.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private void onMuseStateChanged(@NotNull MuseState newMuseState) {
+        switch (newMuseState) {
+            case CONNECTING:
+                onMuseConnecting();
+                break;
+            case CONNECTED:
+                onMuseConnected();
+                break;
+            case DISCONNECTED:
+                onMuseDisconnected();
+                break;
+        }
+        updateMuseStatus(newMuseState);
+    }
+
+    private void addEntryToSeanceData(Integer betaPct, boolean isPanic) {
+        if (userViewModel != null) {
+            SeanceDataEntry seanceDataEntry = new SeanceDataEntry();
+            seanceDataEntry.betaValue = betaPct;
+            seanceDataEntry.isPanic = isPanic;
+            userViewModel.seanceData.add(seanceDataEntry);
+        }
+    }
+
+    private void onMuseConnecting() {
+    }
+
+    private void onMuseConnected() {
+        failedMuseReconnectCount = 0;
+    }
+
+    private void onMuseDisconnected() {
+        hideMuseTextViews();
+
+        if (failedMuseReconnectCount < MAX_FAILED_MUSE_RECONNECT) {
+            failedMuseReconnectCount++;
+            reconnectMuse();
+        }
+        else {
+            failedMuseReconnectCount = 0;
+            showReconnectMuseDialog();
+        }
+    }
+
+    private void updateMuseSensorsState(Boolean[] sensorsState) {
+        sensorsChart.setVisibility(sensorsState == null ? View.INVISIBLE : View.VISIBLE);
+        if (sensorsState != null)
+            sensorsChart.setCircles(sensorsState);
+    }
+
+    private void updateMuseBatteryPercent(Integer museBatteryPercent) {
+        museBatteryTextView.setVisibility(museBatteryPercent == null ? View.INVISIBLE : View.VISIBLE);
+        if (museBatteryPercent != null) {
+            museBatteryTextView.setTextColor(calcBatteryTextColor(museBatteryPercent));
+            museBatteryTextView.setText(getString(R.string.defaultPercentFormatString, museBatteryPercent));
+        }
+    }
+
+    private void hideMuseTextViews() {
+        museBatteryTextView.setVisibility(View.INVISIBLE);
+        sensorsChart.setVisibility(View.INVISIBLE);
     }
 
     private void showReconnectHeadsetDialog() {
@@ -783,18 +886,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     private int failedMuseReconnectCount = 0;
-    private final int maxFailedMuseReconnect = 10;
-
-    private void onMuseDisconnect() {
-        if (failedMuseReconnectCount < maxFailedMuseReconnect) {
-            failedMuseReconnectCount++;
-            reconnectMuse();
-        }
-        else {
-            failedMuseReconnectCount = 0;
-            showReconnectMuseDialog();
-        }
-    }
+    private static final int MAX_FAILED_MUSE_RECONNECT = 10;
 
     private void reconnectMuse() {
         sendPacket(new ControlPacket(Command.RECONNECT_MUSE));
@@ -894,7 +986,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         if (doubleBackToExitPressedOnce) {
             super.onBackPressed();
             finish();
-            //android.os.Process.killProcess(android.os.Process.myPid());
 
         } else {
             this.doubleBackToExitPressedOnce = true;

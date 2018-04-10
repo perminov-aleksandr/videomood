@@ -1,8 +1,13 @@
 package ru.spbstu.videomood;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
+import android.support.v4.content.res.TypedArrayUtils;
+import android.util.Log;
 
 import com.choosemuse.libmuse.Battery;
 import com.choosemuse.libmuse.ConnectionState;
@@ -20,12 +25,23 @@ import java.util.Queue;
 import static ru.spbstu.videomood.Const.CHANNEL_COUNT;
 import static ru.spbstu.videomood.Const.RANGE_COUNT;
 
-public class MuseDataRepository {
+public final class MuseDataRepository implements LifecycleObserver {
+
+    private static final String TAG = "MuseDataRepository";
     private Context context;
 
     private MuseMoodSolver museMoodSolver;
 
-    public MuseDataRepository(Context context) {
+    private static MuseDataRepository instance = null;
+
+    public static MuseDataRepository getInstance(Context context) {
+        if (instance == null)
+            instance = new MuseDataRepository(context);
+
+        return instance;
+    }
+
+    private MuseDataRepository(Context context) {
         this.context = context;
         museMoodSolver = new MuseMoodSolver();
         registerListeners();
@@ -53,6 +69,8 @@ public class MuseDataRepository {
         @Override
         public void receiveMuseDataPacket(final MuseDataPacket p, final Muse muse) {
             ArrayList<Double> packetValues = p.values();
+            /*String packetValuesString = packetValues == null ? "<None>" : (String.format("%s,%s,%s,%s", packetValues.get(0), packetValues.get(1), packetValues.get(2), packetValues.get(3)));
+            Log.d(TAG, String.format("Muse packet received %s with values %s", p.packetType().name(), packetValuesString));*/
             switch (p.packetType()) {
                 case ALPHA_RELATIVE:
                     processMuseDataRelative(packetValues, Const.Rhythms.ALPHA);
@@ -124,8 +142,10 @@ public class MuseDataRepository {
     }
 
     private void processMuseDataRelative(ArrayList<Double> packetValues, int relativeIndex) {
-        fillRelativeBufferWith(relativeIndex, packetValues);
-        calculatePercent();
+        if (museData.isForeheadTouch) {
+            fillRelativeBufferWith(relativeIndex, packetValues);
+            calculatePercent();
+        }
     }
 
     private void calculatePercent() {
@@ -139,10 +159,10 @@ public class MuseDataRepository {
         setLiveMuseData();
     }
 
-    private void fillRelativeBufferWith(final int rangeIndex, final ArrayList<Double> packetValues) {
+    private void fillRelativeBufferWith(final int relativeIndex, final ArrayList<Double> packetValues) {
         for (int i = 0; i < packetValues.size(); i++) {
             Double v = packetValues.get(i);
-            relativeBuffer[rangeIndex][i] = v;
+            relativeBuffer[relativeIndex][i] = v;
         }
     }
 
@@ -163,7 +183,21 @@ public class MuseDataRepository {
         return liveMuseData;
     }
 
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    private void onStart() {
+        connect();
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    private void onStop() {
+        disconnect();
+    }
+
     public void connect() {
         MuseManager.connect();
+    }
+
+    public void disconnect() {
+        MuseManager.disconnect();
     }
 }
