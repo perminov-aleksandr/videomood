@@ -71,4 +71,5 @@
     <string name="reconnect_muse_message">Соединение с Muse потеряно. Хотите переподключиться?</string>
     <string name="reconnect_headset_header">Переподключиться?</string>
     <string name="reconnect_headset_message">Соединение с гарнитурой потеряно. Хотите переподключиться?</string>
+    <string name="bluetooth_disabled_message">Невозможно подключиться к устройству, так как BlueTooth отключен</string>
 </resources>

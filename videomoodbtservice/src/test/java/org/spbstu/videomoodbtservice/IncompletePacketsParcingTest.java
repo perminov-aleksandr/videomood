@@ -14,7 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
-import ru.spbstu.videomood.btservice.VideoActivityState;
+import ru.spbstu.videomood.btservice.DataPacket;
 
 public class IncompletePacketsParcingTest {
     private String completePacketJsonExample = "{\"alphaPct\":0,\"betaPct\":0,\"currentPosition\":0,\"duration\":0,\"headsetBatteryPercent\":57,\"isPanic\":false,\"museSensorsState\":[false,false,false,false],\"museState\":false,\"videoName\":\"Svinka.Peppa.(S.01.E.16.iz.52).Ikota.2005.XviD.SATRip_x264.mp4\",\"videoState\":false}";
@@ -46,7 +46,7 @@ public class IncompletePacketsParcingTest {
         while (reader.hasNext()) {
             // Read data into object model
             try {
-                VideoActivityState packet = gson.fromJson(reader, VideoActivityState.class);
+                DataPacket packet = gson.fromJson(reader, DataPacket.class);
                 //System.console().writer().print(packet);
             } catch (JsonSyntaxException ex) {
 

@@ -2,8 +2,8 @@ package ru.spbstu.videomoodadmin.activities;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.arch.lifecycle.Observer;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -14,7 +14,9 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
+import android.support.annotation.IdRes;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -29,51 +31,40 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
-import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
-import com.j256.ormlite.dao.Dao;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.WeakReference;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
-import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
-import ru.spbstu.videomood.btservice.VideoActivityState;
+import ru.spbstu.videomood.btservice.DataPacket;
 import ru.spbstu.videomood.btservice.MuseState;
 import ru.spbstu.videomood.btservice.VideoItem;
+import ru.spbstu.videomood.btservice.VideosPacket;
 import ru.spbstu.videomood.database.Seance;
 import ru.spbstu.videomood.database.SeanceDataEntry;
-import ru.spbstu.videomood.database.SeanceVideo;
 import ru.spbstu.videomood.database.User;
-import ru.spbstu.videomood.database.Video;
 import ru.spbstu.videomood.database.VideoMoodDbHelper;
 import ru.spbstu.videomoodadmin.AdminConst;
-import ru.spbstu.videomoodadmin.Debug;
+import ru.spbstu.videomoodadmin.HeadsetManager;
 import ru.spbstu.videomoodadmin.HorseshoeView;
 import ru.spbstu.videomoodadmin.R;
 import ru.spbstu.videomoodadmin.UserViewModel;
+import ru.spbstu.videomoodadmin.UsersRepository;
 
 @SuppressWarnings("ConstantConditions")
-public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
+public class MainActivity extends AppCompatActivity {
 
     private Timer debugTimerPacketSender;
 
     private static final String TAG = "MainActivity";
 
-    private VideoMoodDbHelper dbHelper;
-    private Dao<User, Integer> userDao;
-    private Dao<Seance, Integer> seanceDao;
-
-    private VideoActivityState testVideoActivityState;
+    private DataPacket testDataPacket;
 
     // Intent request codes
     public static final int REQUEST_SELECT_VIDEO = 1;
@@ -87,6 +78,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private static final int CHART_SIZE = 60;
     private MuseState museState = MuseState.DISCONNECTED;
+    private UsersRepository usersRepository;
+    private HeadsetManager headsetManager;
 
     private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> values = new ArrayList<>();
@@ -143,8 +136,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     public void setupUI() {
         initChart();
 
-        setupTextViews();
-
         videoControl = findViewById(R.id.videoControl);
         sensorsChart = findViewById(R.id.deviceInfo);
         seekBar = findViewById(R.id.seekBar);
@@ -159,8 +150,9 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+
                 ControlPacket cp = new ControlPacket(Command.REWIND, seekBar.getProgress());
-                sendPacket(cp);
+                headsetManager.sendPacket(cp);
             }
         });
 
@@ -181,6 +173,8 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                     showReconnectMuseDialog();
             }
         });
+
+        setupTextViews();
     }
 
     private void setEnabledFinishSeanceButton(boolean isEnabled) {
@@ -221,48 +215,30 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mHandler = new MessageHandler(this);
-
-        try {
-            dbHelper = getHelper();
-            userDao = dbHelper.getUserDao();
-            seanceDao = dbHelper.getDao(Seance.class);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        usersRepository = new UsersRepository();
+        usersRepository.init(new VideoMoodDbHelper(this));
 
         setupUI();
 
         setupUser();
 
-        if (!Debug.ON) {
-            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        } else {
-            testVideoActivityState = new VideoActivityState();
-            testVideoActivityState.setVideoName("Video Name");
-            testVideoActivityState.setMuseState(MuseState.CONNECTED);
-            testVideoActivityState.setMuseBatteryPercent(14);
-            testVideoActivityState.setAlphaPct(20);
-            testVideoActivityState.setBetaPct(80);
-            testVideoActivityState.setHeadsetBatteryPercent(68);
-            testVideoActivityState.setIsVideoPlaying(true);
-            testVideoActivityState.setIsPanic(false);
-            testVideoActivityState.setCurrentPositionSec(60);
-            testVideoActivityState.setDurationSec(100);
-            testVideoActivityState.setMuseSensorsState(new Boolean[]{ true, true, true, true, true });
-            videoActivityState = testVideoActivityState;
-        }
+        ensureBluetoothEnabled();
     }
 
     private void setupUser() {
         Intent prevIntent = this.getIntent();
         int userId = prevIntent.getIntExtra(AdminConst.EXTRA_USER_ID, -1);
+
         User user = null;
         try {
-            user = userDao.queryForId(userId);
+            user = usersRepository.get(userId);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        if (user == null)
+            return;
+
         userViewModel = new UserViewModel(user);
         TextView userFirstName = findViewById(R.id.main_user_firstname);
         userFirstName.setText(userViewModel.firstName);
@@ -270,85 +246,15 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         userLastName.setText(userViewModel.lastName);
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        if (!Debug.ON) {
-            // If BT is not on, request that it be enabled
-            if (!mBluetoothAdapter.isEnabled()) {
-                Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-            } else if (mBtService == null) {
-                setupBtService();
-                connectDevice(getIntent());
-            }
-        } else {
-            debugTimerPacketSender = new Timer();
-            debugTimerPacketSender.schedule(new TimerTask() {
-                private double time;
-                private long panicTicks = 0;
-
-                @Override
-                public void run() {
-                    testVideoActivityState.setBetaPct((int) (Math.sin(time++) * 50.0) + 50);
-                    if (panicTicks-- == 0) {
-                        testVideoActivityState.setIsPanic(!testVideoActivityState.isPanic());
-                        panicTicks = Math.round(5 + Math.random() * 25);
-                    }
-                    Message msg = new Message();
-                    msg.what = Constants.MESSAGE_PACKET;
-                    mHandler.sendMessage(msg);
-                }
-            }, 0, 1000);
-        }
-    }
-
-    private void setupBtService() {
-        mBtService = new BluetoothService(mHandler, BluetoothAdapter.getDefaultAdapter());
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        if (!Debug.ON) {
-//            // Performing this check in onResume() covers the case in which BT was
-//            // not enabled during onStart(), so we were paused to enable it...
-//            // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-//            if (mBtService != null) {
-//                // Only if the state is STATE_NONE, do we know that we haven't started already
-//                if (mBtService.getState() == BluetoothService.STATE_NONE) {
-//                    // Start the Bluetooth chat services
-//                    mBtService.startServer();
-//                }
-//            }
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        sendMessageHandler.removeCallbacks(sendMessageRunnable);
-
-        if (!Debug.ON) {
-            if (mBtService != null) {
-                mBtService.stop();
-            }
-        } else
-            debugTimerPacketSender.cancel();
-    }
-
     private boolean finishing = false;
 
     private void finishSeance() {
         finishing = true;
         try {
-            saveSeanceDataChunk();
+            usersRepository.saveSeanceDataChunk(userViewModel, seance);
             userViewModel.setDateFinish(Calendar.getInstance().getTime());
             seance.setDateTo(userViewModel.getDateFinish());
-            seanceDao.update(seance);
+            usersRepository.updateSeance(seance);
             goToSeance(seance);
             finish();
         }
@@ -360,7 +266,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private void createSeance() {
         Seance seance = new Seance();
         try {
-            seance.user = userDao.queryForId(userViewModel.id);
+            seance.user = usersRepository.get(userViewModel.id);
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
             Toast.makeText(MainActivity.this, R.string.seanceCreateError, Toast.LENGTH_LONG).show();
@@ -377,7 +283,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
 
     private void saveSeance(Seance seance) {
         try {
-            if (seanceDao.create(seance) != 1)
+            if (usersRepository.saveSeance(seance) != 1)
                 throw new SQLException("No seance created");
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
@@ -392,41 +298,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         startActivity(intent);
     }
 
-    /**
-     * Local Bluetooth adapter
-     */
-    private BluetoothAdapter mBluetoothAdapter = null;
-
-    /**
-     * Member object for the chat services
-     */
-    private BluetoothService mBtService = null;
-
-    private BluetoothDevice deviceToConnect;
-
-    /**
-     * Establish connection with other device
-     *
-     * @param connectionIntent   An {@link Intent} with extra.
-     */
-    private void connectDevice(Intent connectionIntent) {
-        // Get the device MAC address
-        String deviceAddress = connectionIntent.getStringExtra(AdminConst.EXTRA_DEVICE_ADDRESS);
-
-        // Get the BluetoothDevice object
-
-        deviceToConnect = mBluetoothAdapter.getRemoteDevice(deviceAddress);
-
-        Log.i(TAG, String.format("Attempt to connectToServer to %s(%s)", deviceToConnect.getName(), deviceAddress));
-        // Attempt to connectToServer to the device
-        mBtService.connectToServer(deviceToConnect);
-    }
-
-    /**
-     * The Handler that gets information back from the BluetoothChatService
-     */
-    private Handler mHandler;
-
     private SeekBar seekBar;
 
     public static final String EXTRA_SELECTED_VIDEO = "selected_video";
@@ -436,14 +307,14 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         startActivityForResult(selectVideoIntent, REQUEST_SELECT_VIDEO);
     }
 
-    public void pause(View view) { sendPacket(new ControlPacket(Command.PAUSE)); }
+    public void pause(View view) { headsetManager.sendPacket(new ControlPacket(Command.PAUSE)); }
 
     public void next(View view) {
-        sendPacket(new ControlPacket(Command.NEXT));
+        headsetManager.sendPacket(new ControlPacket(Command.NEXT));
     }
 
     public void prev(View view) {
-        sendPacket(new ControlPacket(Command.PREV));
+        headsetManager.sendPacket(new ControlPacket(Command.PREV));
     }
 
     @Override
@@ -451,16 +322,64 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         if (requestCode == REQUEST_SELECT_VIDEO) {
             if (resultCode == RESULT_OK) {
                 String videoPath = data.getStringExtra(EXTRA_SELECTED_VIDEO);
-                sendPacket(new ControlPacket(Command.PLAY, videoPath));
+                headsetManager.sendPacket(new ControlPacket(Command.PLAY, videoPath));
+            }
+        } else if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == RESULT_OK) {
+                initHeadsetManager();
+            } else {
+                Toast.makeText(this, R.string.bluetooth_disabled_message, Toast.LENGTH_LONG).show();
             }
         }
     }
 
-    private int headsetStatus;
+    private void ensureBluetoothEnabled() {
+        if (BluetoothAdapter.getDefaultAdapter().isEnabled()) {
+            initHeadsetManager();
+        }
+        else {
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+        }
+    }
+
+    private void initHeadsetManager() {
+        String deviceAddress = getIntent().getStringExtra(AdminConst.EXTRA_DEVICE_ADDRESS);
+        headsetManager = new HeadsetManager(deviceAddress);
+        getLifecycle().addObserver(headsetManager);
+        headsetManager.getVideoState().observe(this, new Observer<DataPacket>() {
+            @Override
+            public void onChanged(@Nullable DataPacket dataPacket) {
+                processPacketData(dataPacket);
+            }
+        });
+        headsetManager.getHeadsetState().observe(this, new Observer<Integer>(){
+            @Override
+            public void onChanged(@Nullable Integer headsetState) {
+                onHeadsetStateChanged(headsetState);
+            }
+        });
+        headsetManager.getVideos().observe(this, new Observer<VideosPacket>() {
+            @Override
+            public void onChanged(@Nullable VideosPacket videosPacket) {
+                updateVideosList(videosPacket);
+            }
+        });
+    }
+
+    private void onHeadsetStateChanged(Integer headsetState) {
+        switch (headsetState) {
+            case BluetoothService.STATE_CONNECTED:
+                onHeadsetConnected();
+                break;
+            case BluetoothService.STATE_NONE:
+                onHeadsetDisconnected();
+                break;
+        }
+        setHeadsetStatus(headsetState);
+    }
 
     private void setHeadsetStatus(int status) {
-        headsetStatus = status;
-
         int stringResId;
         int colorResId;
         switch (status) {
@@ -488,79 +407,20 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         userIcon.setText(R.string.fa_user);
     }
 
-    private Handler sendMessageHandler = new Handler();
-
-    private Runnable sendMessageRunnable = new Runnable() {
-        @Override
-        public void run() {
-            ControlPacket controlPacket = new ControlPacket(Command.GET);
-            sendPacket(controlPacket);
-            sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
-        }
-    };
-
-    private void sendPacket(ControlPacket controlPacket) {
-        if (mBtService != null) {
-            byte[] msgBytes = controlPacket.toBytes();
-            mBtService.write(msgBytes);
-        }
-    }
-
-    private VideoActivityState videoActivityState = new VideoActivityState();
-
-    private static class MessageHandler extends Handler {
-        private WeakReference<MainActivity> activity;
-        MessageHandler(MainActivity activity) {
-            this.activity = new WeakReference<>(activity);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Constants.MESSAGE_STATE_CHANGE:
-                    switch (msg.arg1) {
-                        case BluetoothService.STATE_CONNECTED:
-                            activity.get().onHeadsetConnected();
-                            break;
-                        case BluetoothService.STATE_NONE:
-                            activity.get().onHeadsetDisconnected();
-                            break;
-                    }
-                    activity.get().setHeadsetStatus(msg.arg1);
-                    break;
-                case Constants.MESSAGE_PACKET:
-                    if (!Debug.ON) {
-                        VideoActivityState state = null;
-                        try {
-                            state = VideoActivityState.createFrom((String) msg.obj);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error packet creation from " + msg.obj, e);
-                        }
-                        if (state != null)
-                            activity.get().processPacketData(state);
-                        else
-                            Log.d(TAG, "unable to process data packet cause its null");
-                    }
-                    break;
-            }
-        }
-    }
+    private DataPacket dataPacket = new DataPacket();
 
     private void onHeadsetConnected() {
         createSeance();
-        sendPacket(new ControlPacket(Command.LIST));
         setEnabledFinishSeanceButton(true);
         showProgressDialog();
     }
 
     private void onHeadsetDisconnected() {
         onMuseDisconnected();
-        sendMessageHandler.removeCallbacks(sendMessageRunnable);
         if (pd != null && pd.isShowing())
             hideProgressDialog();
-        if (headsetStatus == BluetoothService.STATE_CONNECTING
-                || headsetStatus == BluetoothService.STATE_CONNECTED)
-            showReconnectHeadsetDialog();
+
+        showReconnectHeadsetDialog();
     }
 
     private ProgressDialog pd = null;
@@ -576,9 +436,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     }
 
     private void hideProgressDialog() {
-        pd.setIndeterminate(false);
-        pd.dismiss();
-        pd = null;
+        if (pd != null) {
+            pd.setIndeterminate(false);
+            pd.dismiss();
+            pd = null;
+        }
     }
 
     private TextView museStatusTextView;
@@ -589,12 +451,12 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private TextView pauseBtn;
     private TextView userIcon;
 
-    private void setFont(Typeface font, int id) {
+    private void setFont(Typeface font, @IdRes int id) {
         TextView item = findViewById(id);
         setFont(font, item);
     }
 
-    private void setFont(Typeface font, TextView textView) {
+    private void setFont(Typeface font, @NotNull TextView textView) {
         textView.setTypeface(font);
     }
 
@@ -615,12 +477,21 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         });
 
         Typeface font = Typeface.createFromAsset( getAssets(), "fonts/fontawesome.ttf" );
+        setFontForIcons(font);
 
-        setFont(font, R.id.prevBtn);
-        setFont(font, R.id.nextBtn);
-        setFont(font, R.id.userIcon);
-        setFont(font, R.id.videoSelect);
-        setFont(font, pauseBtn);
+        hideMuseTextViews();
+        hideHeadsetTextViews();
+    }
+
+    private void setFontForIcons(Typeface font) {
+        int[] iconViewIds = new int[] { R.id.prevBtn, R.id.nextBtn, R.id.userIcon, R.id.videoSelect, R.id.playBtn };
+        for (int viewId: iconViewIds)
+            setFont(font, viewId);
+    }
+
+    private void hideHeadsetTextViews() {
+        headsetStateTextView.setVisibility(View.INVISIBLE);
+        headsetBatteryTextView.setVisibility(View.INVISIBLE);
     }
 
     private int calcBatteryTextColor(int percents) {
@@ -675,7 +546,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         userIcon.setTextColor(getResources().getColor(R.color.calmColor));
     }
 
-    private void processPacketData(VideoActivityState state) {
+    private void processPacketData(DataPacket state) {
         Integer alphaPct = state.getAlphaPct();
         Integer betaPct = state.getBetaPct();
         boolean isPanic = state.isPanic();
@@ -694,7 +565,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         this.prevIsPanic = isPanic;
 
         MuseState newMuseState = state.getMuseState();
-        MuseState prevMuseState = videoActivityState.getMuseState();
+        MuseState prevMuseState = dataPacket.getMuseState();
         if (newMuseState != prevMuseState) {
             onMuseStateChanged(newMuseState);
         }
@@ -710,22 +581,26 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
         Integer headsetBatteryPercent = state.getHeadsetBatteryPercent();
         updateHeadsetBatteryPercent(headsetBatteryPercent);
 
-        String videoname = state.getVideoName();
-        updateVideoControl(state, videoname);
+        updateVideoControl(state);
 
-        ArrayList<VideoItem> videoItems = state.getVideoList();
-        if (videoItems != null) {
-            syncVideosWithDb(videoItems);
-            state.setVideoList(null);
-            hideProgressDialog();
-            sendMessageHandler.removeCallbacks(sendMessageRunnable);
-            sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
-        }
-
-        videoActivityState = state;
+        dataPacket = state;
     }
 
-    private void updateVideoControl(VideoActivityState state, String videoName) {
+    private void updateVideosList(VideosPacket state) {
+        ArrayList<VideoItem> videoItems = state.getVideoList();
+        if (videoItems != null) {
+            try {
+                usersRepository.syncVideosWithDb(videoItems);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            state.setVideoList(null);
+            hideProgressDialog();
+        }
+    }
+
+    private void updateVideoControl(DataPacket state) {
+        String videoName = state.getVideoName();
         if (videoName != null && !videoName.equals("")) {
             updateVideoName(videoName);
 
@@ -759,7 +634,11 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private void updateVideoName(String videoName) {
         String currentVideoName = userViewModel.getCurrentVideoName();
         if (!videoName.equals(currentVideoName)) {
-            saveSeanceDataChunk();
+            try {
+                usersRepository.saveSeanceDataChunk(userViewModel, seance);
+            } catch (SQLException ex) {
+                Log.e(TAG, ex.getMessage(), ex);
+            }
             userViewModel.setCurrentVideoName(videoName);
         }
 
@@ -858,7 +737,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        mBtService.connectToServer(deviceToConnect);
+                        headsetManager.reconnect();
                     }
                 })
                 .show();
@@ -889,7 +768,7 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
     private static final int MAX_FAILED_MUSE_RECONNECT = 10;
 
     private void reconnectMuse() {
-        sendPacket(new ControlPacket(Command.RECONNECT_MUSE));
+        headsetManager.sendPacket(new ControlPacket(Command.RECONNECT_MUSE));
     }
 
     private void playNotification() {
@@ -899,83 +778,6 @@ public class MainActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             r.play();
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private void saveSeanceDataChunk() {
-        try {
-            Dao<Video, Integer> videoDao = dbHelper.getDao(Video.class);
-            List<Video> videoEntities = videoDao.queryForEq("path", userViewModel.getCurrentVideoName());
-            if (videoEntities.isEmpty())
-                return;
-
-            Video currentVideo = videoEntities.get(0);
-
-            Dao<SeanceVideo, Integer> seanceVideoDao = dbHelper.getDao(SeanceVideo.class);
-            SeanceVideo seanceVideo = new SeanceVideo();
-            seanceVideo.video = currentVideo;
-            seanceVideo.seance = this.seance;
-
-            Calendar seanceStart = Calendar.getInstance();
-            seanceStart.setTime(userViewModel.getSeanceDateStart());
-
-            seanceVideo.setData(userViewModel.seanceData);
-            userViewModel.seanceData.clear();
-
-            seanceVideoDao.create(seanceVideo);
-        } catch (SQLException e) {
-            Log.e(TAG, e.getMessage(), e);
-        }
-    }
-
-    private void syncVideosWithDb(ArrayList<VideoItem> remoteVideoList) {
-        List<Video> dbVideoList;
-        Dao<Video, Integer> videoDao;
-
-        try {
-            videoDao = dbHelper.getDao(Video.class);
-            dbVideoList = videoDao.queryForAll();
-        } catch (SQLException e) {
-            Log.e(TAG, e.getMessage(), e);
-            return;
-        }
-
-        //fill the set of remote video names
-        HashSet<String> remoteVideosNames = new HashSet<>();
-        for (VideoItem remoteVideo : remoteVideoList)
-            remoteVideosNames.add(remoteVideo.getName());
-
-        HashSet<String> dbVideosNames = new HashSet<>();
-        for (Video dbVideo : dbVideoList) {
-            String dbVideoName = dbVideo.getName();
-            if (remoteVideosNames.contains(dbVideoName))
-                //fill the set of db video names
-                dbVideosNames.add(dbVideoName);
-            else
-                //remove absent videos from db
-                try {
-                    videoDao.delete(dbVideo);
-                } catch (SQLException e) {
-                    Log.e(TAG, e.getMessage(), e);
-                }
-        }
-
-        for (VideoItem remoteVideo : remoteVideoList) {
-            String remoteVideoName = remoteVideo.getName();
-            //skip existing db videos
-            if (dbVideosNames.contains(remoteVideoName))
-                continue;
-
-            //add absent remote videos to db
-            Video video = new Video();
-            video.setName(remoteVideo.getName());
-            video.setPath(remoteVideo.getName());
-            video.setDuration(remoteVideo.getDuration());
-            try {
-                videoDao.create(video);
-            } catch (SQLException e) {
-                Log.e(TAG, e.getMessage(), e);
-            }
         }
     }
 

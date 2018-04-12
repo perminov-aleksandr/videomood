@@ -455,7 +455,7 @@ public class BluetoothService {
         /*
         JsonReader reader = new JsonReader(new InputStreamReader(mmInStream));
         while(reader.hasNext()) {
-            VideoActivityState dataPacket = new VideoActivityState();
+            DataPacket dataPacket = new DataPacket();
         }
         */
 

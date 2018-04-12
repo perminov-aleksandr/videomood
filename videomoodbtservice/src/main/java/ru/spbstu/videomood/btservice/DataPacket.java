@@ -8,23 +8,9 @@ import com.google.gson.GsonBuilder;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
-public class VideoActivityState extends Packet {
+public class DataPacket extends Packet {
 
-    public VideoActivityState() {}
-
-    public static VideoActivityState createFrom(String json) {
-        return gson.fromJson(json, VideoActivityState.class);
-    }
-
-    @Nullable
-    public static VideoActivityState createFrom(byte[] bytes) {
-        try {
-            return createFrom(new String(bytes, Constants.DEFAULT_CHARSET));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+    public DataPacket() {}
 
     //private long timestamp;
 
@@ -49,8 +35,6 @@ public class VideoActivityState extends Packet {
     private Integer currentPosition;
 
     private Integer duration;
-
-    private ArrayList<VideoItem> videoList;
 
     public MuseState getMuseState() {
         return museState;
@@ -124,18 +108,7 @@ public class VideoActivityState extends Packet {
         this.isVideoPlaying = isPlaying;
     }
 
-    public ArrayList<VideoItem> getVideoList() {
-        return videoList;
-    }
-
-    public void setVideoList(ArrayList<VideoItem> videoList) {
-        this.videoList = videoList;
-    }
-
-    @Override
-    public PacketType type() {
-        return PacketType.DATA;
-    }
+    public PacketType type = PacketType.DATA;
 
     public boolean isPanic() {
         return isPanic;
@@ -143,23 +116,6 @@ public class VideoActivityState extends Packet {
 
     public void setIsPanic(boolean panic) {
         isPanic = panic;
-    }
-
-    private static final Gson gson = new GsonBuilder().setLenient().create();
-
-    private String toJson() {
-        return gson.toJson(this, VideoActivityState.class);
-    }
-
-    @Override
-    public byte[] toBytes() {
-        try {
-            String json = this.toJson();
-            return json.getBytes(Constants.DEFAULT_CHARSET);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     public Integer getCurrentPositionSec() {
@@ -176,5 +132,10 @@ public class VideoActivityState extends Packet {
 
     public void setDurationSec(int duration) {
         this.duration = duration;
+    }
+
+    @Override
+    public PacketType type() {
+        return PacketType.DATA;
     }
 }

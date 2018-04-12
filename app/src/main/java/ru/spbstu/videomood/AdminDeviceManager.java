@@ -18,12 +18,14 @@ import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
-import ru.spbstu.videomood.btservice.VideoActivityState;
+import ru.spbstu.videomood.btservice.DataPacket;
+import ru.spbstu.videomood.btservice.Packet;
+import ru.spbstu.videomood.btservice.VideosPacket;
 
 public class AdminDeviceManager implements LifecycleObserver  {
     private WeakReference<VideoActivity> activityRef;
 
-    private VideoActivityState videoActivityState;
+    private DataPacket dataPacket;
 
     private MuseDataRepository repository;
 
@@ -39,10 +41,10 @@ public class AdminDeviceManager implements LifecycleObserver  {
         }
 
         VideoActivity videoActivity = activityRef.get();
-        videoActivity.getVideoActivityState().observe(videoActivity, new Observer<VideoActivityState>() {
+        videoActivity.getDataPacket().observe(videoActivity, new Observer<DataPacket>() {
             @Override
-            public void onChanged(@Nullable VideoActivityState videoActivityState) {
-                AdminDeviceManager.this.videoActivityState = videoActivityState;
+            public void onChanged(@Nullable DataPacket dataPacket) {
+                AdminDeviceManager.this.dataPacket = dataPacket;
             }
         });
 
@@ -109,54 +111,50 @@ public class AdminDeviceManager implements LifecycleObserver  {
         Log.i(TAG, "received command " + command);
 
         VideoActivity videoActivity = activityRef.get();
-        switch (command) {
-            case GET:
-                //we want send videoActivityState
-                //so do nothing and videoActivityState will be packed and sent
-                videoActivity.isPlaying();
-                break;
-            case LIST:
-                videoActivity.setVideoList();
-                break;
-            case PLAY:
-                if (arguments.length > 0) {
-                    String videoPath = (String)arguments[0];
-                    File videoToPlay = videoActivity.getContentProvider().get(videoPath);
-                    if (videoToPlay != null)
-                        videoActivity.playVideoFile(videoToPlay);
-                }
-                break;
-            case PAUSE:
-                videoActivity.playOrPauseVideo();
-                break;
-            case NEXT:
-                videoActivity.playNext();
-                break;
-            case PREV:
-                videoActivity.playPrev();
-                break;
-            case REWIND:
-                arguments = controlPacket.getArguments();
-                if (arguments.length > 0)
-                {
-                    Double positionSec = (Double) arguments[0];
-                    videoActivity.rewindTo(positionSec);
-                }
-                break;
-            case RECONNECT_MUSE:
-                repository.connect();
-                break;
+        if (command == Command.LIST) {
+            VideosPacket videosPacket = new VideosPacket();
+            videosPacket.setVideoList(videoActivity.getVideoList());
+            reply(videosPacket);
+        } else {
+            switch (command) {
+                case GET:
+                    videoActivity.isPlaying();
+                    break;
+                case PLAY:
+                    if (arguments.length > 0) {
+                        String videoPath = (String) arguments[0];
+                        File videoToPlay = videoActivity.getContentProvider().get(videoPath);
+                        if (videoToPlay != null)
+                            videoActivity.playVideoFile(videoToPlay);
+                    }
+                    break;
+                case PAUSE:
+                    videoActivity.playOrPauseVideo();
+                    break;
+                case NEXT:
+                    videoActivity.playNext();
+                    break;
+                case PREV:
+                    videoActivity.playPrev();
+                    break;
+                case REWIND:
+                    arguments = controlPacket.getArguments();
+                    if (arguments.length > 0) {
+                        Double positionSec = (Double) arguments[0];
+                        videoActivity.rewindTo(positionSec);
+                    }
+                    break;
+                case RECONNECT_MUSE:
+                    repository.connect();
+                    break;
+            }
+            reply(dataPacket);
         }
-        reply();
-        videoActivityState.setAlphaPct(null);
-        videoActivityState.setBetaPct(null);
     }
 
-    private void reply() {
-        byte[] packetBytes = videoActivityState.toBytes();
+    private void reply(Packet packet) {
+        byte[] packetBytes = packet.toBytes();
         mBtService.write(packetBytes);
-        activityRef.get().clearVideoList();
-        activityRef.get().clearPercent();
     }
 
     private void processAdminDeviceState(int connectionState) {

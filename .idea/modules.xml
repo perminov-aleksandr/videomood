@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/videomood.iml" filepath="$PROJECT_DIR$/videomood.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/moodresolver/moodresolver.iml" filepath="$PROJECT_DIR$/moodresolver/moodresolver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/videomood.iml" filepath="$PROJECT_DIR$/videomood.iml" />
       <module fileurl="file://$PROJECT_DIR$/videomoodadmin/videomoodadmin.iml" filepath="$PROJECT_DIR$/videomoodadmin/videomoodadmin.iml" />
       <module fileurl="file://$PROJECT_DIR$/videomoodbtservice/videomoodbtservice.iml" filepath="$PROJECT_DIR$/videomoodbtservice/videomoodbtservice.iml" />
       <module fileurl="file://$PROJECT_DIR$/videomooddatabase/videomooddatabase.iml" filepath="$PROJECT_DIR$/videomooddatabase/videomooddatabase.iml" />

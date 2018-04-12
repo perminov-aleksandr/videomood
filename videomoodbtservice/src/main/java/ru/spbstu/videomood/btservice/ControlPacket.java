@@ -44,20 +44,4 @@ public class ControlPacket extends Packet {
     public PacketType type() {
         return PacketType.CONTROL;
     }
-
-    private static final Gson gson = new GsonBuilder().setLenient().create();
-
-    private String toJson() {
-        return gson.toJson(this, this.getClass());
-    }
-
-    @Override
-    public byte[] toBytes() {
-        try {
-            return this.toJson().getBytes(Constants.DEFAULT_CHARSET);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 }

@@ -38,6 +38,7 @@ import android.widget.VideoView;
 import com.choosemuse.libmuse.ConnectionState;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -48,8 +49,9 @@ import ru.spbstu.videomood.MuseData;
 import ru.spbstu.videomood.MuseDataRepository;
 import ru.spbstu.videomood.R;
 import ru.spbstu.videomood.btservice.BluetoothService;
-import ru.spbstu.videomood.btservice.VideoActivityState;
+import ru.spbstu.videomood.btservice.DataPacket;
 import ru.spbstu.videomood.btservice.MuseState;
+import ru.spbstu.videomood.btservice.VideoItem;
 
 public class VideoActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -61,7 +63,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         @Override
         public void onReceive(Context ctxt, Intent intent) {
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-            videoActivityState.setHeadsetBatteryPercent(level);
+            dataPacket.setHeadsetBatteryPercent(level);
             postLiveData();
         }
     };
@@ -71,7 +73,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     private void updateBattery(Integer batteryValue) {
         if (batteryValue != null) {
             UI.batteryTextView.setText(String.format("%d%%", batteryValue));
-            videoActivityState.setMuseBatteryPercent(batteryValue);
+            dataPacket.setMuseBatteryPercent(batteryValue);
             postLiveData();
         }
     }
@@ -79,19 +81,19 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     private void updateBar(Integer alphaPercent, Integer betaPercent) {
         UI.updateAlphaBar(alphaPercent);
         UI.updateBetaBar(betaPercent);
-        videoActivityState.setAlphaPct(alphaPercent);
-        videoActivityState.setBetaPct(betaPercent);
+        dataPacket.setAlphaPct(alphaPercent);
+        dataPacket.setBetaPct(betaPercent);
         postLiveData();
     }
 
     public void switchToPanicMode() {
-        videoActivityState.setIsPanic(true);
+        dataPacket.setIsPanic(true);
         postLiveData();
         displayCalmScreen();
     }
 
     public void switchToNormalMode() {
-        videoActivityState.setIsPanic(false);
+        dataPacket.setIsPanic(false);
         postLiveData();
         hideCalmScreen();
     }
@@ -137,7 +139,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             return;
 
         UI.updateMuseSensors(sensorsStateBuffer, isForeheadTouch);
-        videoActivityState.setMuseSensorsState(sensorsStateBuffer);
+        dataPacket.setMuseSensorsState(sensorsStateBuffer);
         postLiveData();
     }
 
@@ -165,15 +167,15 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
     private boolean isPanic = false;
 
-    private MutableLiveData<VideoActivityState> liveData = new MutableLiveData<>();
+    private MutableLiveData<DataPacket> liveData = new MutableLiveData<>();
 
-    private VideoActivityState videoActivityState = new VideoActivityState() ;
+    private DataPacket dataPacket = new DataPacket() ;
 
     private void postLiveData() {
-        liveData.setValue(videoActivityState);
+        liveData.setValue(dataPacket);
     }
 
-    public LiveData<VideoActivityState> getVideoActivityState(){
+    public LiveData<DataPacket> getDataPacket(){
         return liveData;
     };
 
@@ -239,13 +241,13 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
     public void playVideo(){
         UI.videoView.start();
-        videoActivityState.setIsVideoPlaying(true);
+        dataPacket.setIsVideoPlaying(true);
         postLiveData();
     }
 
     public void pauseVideo(){
         UI.videoView.pause();
-        videoActivityState.setIsVideoPlaying(false);
+        dataPacket.setIsVideoPlaying(false);
         postLiveData();
     }
 
@@ -315,20 +317,20 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
     public void onMuseConnecting() {
         UI.museState.setText(R.string.state_connecting);
-        videoActivityState.setMuseState(MuseState.CONNECTING);
+        dataPacket.setMuseState(MuseState.CONNECTING);
         postLiveData();
     }
 
     public void onMuseConnect() {
         UI.processMuseConnect();
-        videoActivityState.setMuseState(MuseState.CONNECTED);
+        dataPacket.setMuseState(MuseState.CONNECTED);
         postLiveData();
     }
 
     public void onMuseDisconnect() {
         UI.museState.setText(R.string.state_disconnected);
         UI.setMuseIndicatorsVisible(false);
-        videoActivityState.setMuseState(MuseState.DISCONNECTED);
+        dataPacket.setMuseState(MuseState.DISCONNECTED);
         postLiveData();
 
         if (adminConnectionState != BluetoothService.STATE_CONNECTED)
@@ -341,7 +343,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     private Uri currentVideoUri;
 
     public void playVideoFile(File file) {
-        videoActivityState.setVideoName(file.getName());
+        dataPacket.setVideoName(file.getName());
         postLiveData();
         currentVideoUri = Uri.fromFile(file);
         UI.videoView.setVideoURI(currentVideoUri);
@@ -453,7 +455,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
     }
 
     public boolean isPlaying() {
-        videoActivityState.setIsVideoPlaying(UI.videoView.isPlaying());
+        dataPacket.setIsVideoPlaying(UI.videoView.isPlaying());
         postLiveData();
         return UI.videoView.isPlaying();
     }
@@ -476,20 +478,14 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         UI.videoView.seekTo((int) (positionSec * Const.SECOND));
     }
 
-    public void setVideoList() {
-        videoActivityState.setVideoList(contentProvider.getContentList());
-        postLiveData();
-    }
-
-    public void clearVideoList() {
-        videoActivityState.setVideoList(null);
-        postLiveData();
-    }
-
     public void clearPercent() {
-        videoActivityState.setAlphaPct(null);
-        videoActivityState.setBetaPct(null);
+        dataPacket.setAlphaPct(null);
+        dataPacket.setBetaPct(null);
         postLiveData();
+    }
+
+    public ArrayList<VideoItem> getVideoList() {
+        return contentProvider.getContentList();
     }
 
     private final class UI {
@@ -585,12 +581,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             UI.videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    videoActivityState.setDurationSec(mp.getDuration() / Const.SECOND);
+                    dataPacket.setDurationSec(mp.getDuration() / Const.SECOND);
                     postLiveData();
                     mp.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
                         @Override
                         public void onSeekComplete(MediaPlayer mp) {
-                            videoActivityState.setCurrentPositionSec(mp.getCurrentPosition() / Const.SECOND);
+                            dataPacket.setCurrentPositionSec(mp.getCurrentPosition() / Const.SECOND);
                             postLiveData();
                         }
                     });
@@ -623,7 +619,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             Runnable videoPositionTracker = new Runnable() {
                 @Override
                 public void run() {
-                    videoActivityState.setCurrentPositionSec(getCurrentPositionSec());
+                    dataPacket.setCurrentPositionSec(getCurrentPositionSec());
                     postLiveData();
                     videoPositionTrackerHandler.postDelayed(this, Const.SECOND);
                 }
