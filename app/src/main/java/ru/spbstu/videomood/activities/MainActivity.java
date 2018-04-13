@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -56,20 +57,7 @@ public class MainActivity extends BaseActivity {
      * This spinner adapter contains the MAC addresses of all of the headbands we have discovered.
      */
     private ArrayAdapter<String> spinnerAdapter;
-
-    /**
-     * To save data to a file, you should use a MuseFileWriter.  The MuseFileWriter knows how to
-     * serialize the data packets received from the headband into a compact binary format.
-     * To read the file back, you would use a MuseFileReader.
-     */
-    private final AtomicReference<MuseFileWriter> fileWriter = new AtomicReference<>();
-
-    /**
-     * We don't want file operations to slow down the UI, so we will defer those file operations
-     * to a handler on a separate thread.
-     */
-    private final AtomicReference<Handler> fileHandler = new AtomicReference<>();
-
+    private int REQUEST_ACCESS_LOCATION = 255;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,18 +75,13 @@ public class MainActivity extends BaseActivity {
         // we can connectToServer to.
         MuseManager.getManager().setMuseListener(new MuseL(weakActivity));
 
+        initUI();
+
         // Muse 2016 (MU-02) headbands use Bluetooth Low Energy technology to
         // simplify the connection process.  This requires access to the COARSE_LOCATION
         // or FINE_LOCATION permissions.  Make sure we have these permissions before
         // proceeding.
         ensurePermissions();
-
-        // Load and initialize our UI.
-        initUI();
-
-        // Start up a thread for asynchronous file operations.
-        // This is only needed if you want to do File I/O.
-        fileThread.start();
     }
 
     @Override
@@ -153,32 +136,13 @@ public class MainActivity extends BaseActivity {
      * not be discovered and a SecurityException will be thrown.
      */
     private void ensurePermissions() {
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // We don't have the ACCESS_COARSE_LOCATION permission so create the dialogs asking
-            // the user to grant us the permission.
-
-            DialogInterface.OnClickListener buttonListener =
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                            ActivityCompat.requestPermissions(MainActivity.this,
-                                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
-                                    0);
-                        }
-                    };
-
-            // This is the context dialog which explains to the user the reason we are requesting
-            // this permission.  When the user presses the positive (I Understand) button, the
-            // standard Android permission dialog will be displayed (as defined in the button
-            // listener above).
-            AlertDialog introDialog = new AlertDialog.Builder(this)
-                    .setTitle(R.string.permission_dialog_title)
-                    .setMessage(R.string.permission_dialog_description)
-                    .setPositiveButton(R.string.permission_dialog_understand, buttonListener)
-                    .create();
-            introDialog.show();
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_ACCESS_LOCATION);
+        } else {
+            onPermissionGranted();
         }
     }
 
@@ -191,22 +155,28 @@ public class MainActivity extends BaseActivity {
      * In this example, we update the spinner with the MAC address of the headband.
      */
     private void museListChanged() {
-        final List<Muse> list = MuseManager.getMuses();
         spinnerAdapter.clear();
-        boolean isAnyDevices = list != null && list.size() > 0;
+
+        final List<Muse> list = MuseManager.getMuses();
+        boolean isAnyDevices = list.size() > 0;
         musesSpinner.setEnabled(isAnyDevices);
         if (isAnyDevices) {
             for (Muse m : list) {
                 spinnerAdapter.add(m.getName() + " - " + m.getMacAddress());
             }
-            if (list.size() == 1) {
-                musesSpinner.setSelection(0);
-                goToUserData(findViewById(R.id.next));
-            }
+            tryAutoselect();
         }
         else {
             spinnerAdapter.add(getResources().getString(R.string.noDevicesFound));
             Log.i(TAG, "no devices found");
+        }
+    }
+
+    private void tryAutoselect() {
+        int musesCount = musesSpinner.getAdapter().getCount();
+        if (musesCount == 1) {
+            musesSpinner.setSelection(0);
+            goToUserData(findViewById(R.id.next));
         }
     }
 
@@ -220,38 +190,9 @@ public class MainActivity extends BaseActivity {
      */
     private void initUI() {
         spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
-        musesSpinner = (Spinner) findViewById(R.id.muses_spinner);
+        musesSpinner = findViewById(R.id.muses_spinner);
         musesSpinner.setAdapter(spinnerAdapter);
-
-        museListChanged();
     }
-
-    //--------------------------------------
-    // File I/O
-
-    /**
-     * We don't want to block the UI thread while we write to a file, so the file
-     * writing is moved to a separate thread.
-     */
-    private final Thread fileThread = new Thread() {
-        @Override
-        public void run() {
-            Looper.prepare();
-            fileHandler.set(new Handler());
-            final File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            final File file = new File(dir, "new_muse_file.muse");
-            // MuseFileWriter will append to an existing file.
-            // In this case, we want to startServer fresh so the file
-            // if it exists.
-            if (file.exists()) {
-                file.delete();
-            }
-            Log.i(TAG, "Writing data to: " + file.getAbsolutePath());
-            fileWriter.set(MuseFileFactory.getMuseFileWriter(file));
-            Looper.loop();
-        }
-    };
-
 
     //--------------------------------------
     // Listener translators
@@ -269,5 +210,21 @@ public class MainActivity extends BaseActivity {
         public void museListChanged() {
             activityRef.get().museListChanged();
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_ACCESS_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                onPermissionGranted();
+            }
+        }
+    }
+
+    private void onPermissionGranted() {
+        MuseManager.startListening();
+        MuseManager.setPermissionGranted();
     }
 }

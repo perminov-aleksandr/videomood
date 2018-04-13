@@ -12,6 +12,8 @@ import java.util.ArrayList;
 
 public final class MuseManager {
 
+    private static boolean isPermissionGranted = false;
+
     private MuseManager() {
     }
 
@@ -26,7 +28,8 @@ public final class MuseManager {
     }
 
     public static void startListening() {
-        manager.startListening();
+        if (isPermissionGranted)
+            manager.startListening();
     }
 
     public static void stopListening() {
@@ -92,5 +95,9 @@ public final class MuseManager {
 
     public static void connect() {
         muse.runAsynchronously();
+    }
+
+    public static void setPermissionGranted() {
+        isPermissionGranted = true;
     }
 }

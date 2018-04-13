@@ -204,21 +204,25 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
 
     @Override
     public void onClick(View v) {
-        //show sidebar
-        UI.showMuseInfo();
+        if (UI.museInfo.getVisibility() == View.VISIBLE) {
+            UI.hideMuseInfo();
+            UI.mediaController.hide();
+        } else {
+            //show sidebar
+            UI.showMuseInfo();
+            UI.mediaController.show();
 
-        //start timer to hide sidebar
-        sidebarVisibilityTimer.cancel();
+            sidebarVisibilityTimer.cancel();
 
-        sidebarVisibilityTimer = new Timer();
-        sidebarVisibilityTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                shouldHideSidebar = true;
-            }
-        }, 5 * Const.SECOND);
-
-        UI.mediaController.show();
+            //start timer to hide sidebar
+            sidebarVisibilityTimer = new Timer();
+            sidebarVisibilityTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    shouldHideSidebar = true;
+                }
+            }, 5 * Const.SECOND);
+        }
     }
 
     private void displayCalmScreen() {
