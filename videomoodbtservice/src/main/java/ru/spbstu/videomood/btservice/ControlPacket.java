@@ -17,21 +17,6 @@ public class ControlPacket extends Packet {
         this.arguments = arguments;
     }
 
-    @Nullable
-    public static ControlPacket createFrom(byte[] bytes) {
-        try {
-            String json = new String(bytes, Constants.DEFAULT_CHARSET);
-            return createFrom(json);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static ControlPacket createFrom(String json) {
-        return gson.fromJson(json, ControlPacket.class);
-    }
-
     public Command getCommand() {
         return command;
     }

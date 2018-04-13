@@ -90,9 +90,9 @@ public class AdminDeviceManager implements LifecycleObserver  {
                     break;
                 case Constants.MESSAGE_PACKET:
                     try {
-                        ControlPacket cp = ControlPacket.createFrom((String) msg.obj);
-                        if (cp != null)
-                            processAdminDevicePacket(cp);
+                        ControlPacket p = (ControlPacket) Packet.createFrom((String) msg.obj);
+                        if (p != null)
+                            processPacket(p);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -105,7 +105,7 @@ public class AdminDeviceManager implements LifecycleObserver  {
         mBtService = new BluetoothService(mAdminDeviceMessageHandler, BluetoothAdapter.getDefaultAdapter());
     }
 
-    private void processAdminDevicePacket(ControlPacket controlPacket) {
+    private void processPacket(ControlPacket controlPacket) {
         Command command = controlPacket.getCommand();
         Object[] arguments = controlPacket.getArguments();
         Log.i(TAG, "received command " + command);
