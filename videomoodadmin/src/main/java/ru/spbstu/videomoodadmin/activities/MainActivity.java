@@ -3,7 +3,6 @@ package ru.spbstu.videomoodadmin.activities;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.arch.lifecycle.Observer;
-import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -38,9 +37,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Timer;
+import java.util.TimerTask;
 
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
+import ru.spbstu.videomood.btservice.Constants;
 import ru.spbstu.videomood.btservice.ControlPacket;
 import ru.spbstu.videomood.btservice.DataPacket;
 import ru.spbstu.videomood.btservice.MuseState;
@@ -68,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
 
     // Intent request codes
     public static final int REQUEST_SELECT_VIDEO = 1;
-    private static final int REQUEST_ENABLE_BT = 3;
 
     private BarChart chart;
     private HorseshoeView sensorsChart;
@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
     private MuseState museState = MuseState.DISCONNECTED;
     private UsersRepository usersRepository;
     private HeadsetManager headsetManager;
+    private View museInfo;
 
     private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> values = new ArrayList<>();
@@ -150,7 +151,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
                 ControlPacket cp = new ControlPacket(Command.REWIND, seekBar.getProgress());
                 headsetManager.sendPacket(cp);
             }
@@ -162,8 +162,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 finishSeance();
+                goToSeance(seance);
+                finish();
             }
         });
+
+        museInfo = findViewById(R.id.museInfo);
+        museInfo.setVisibility(View.INVISIBLE);
 
         TextView museStatus = findViewById(R.id.museState);
         museStatus.setOnClickListener(new View.OnClickListener() {
@@ -221,8 +226,13 @@ public class MainActivity extends AppCompatActivity {
         setupUI();
 
         setupUser();
+    }
 
-        ensureBluetoothEnabled();
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        initHeadsetManager();
     }
 
     private void setupUser() {
@@ -255,8 +265,6 @@ public class MainActivity extends AppCompatActivity {
             userViewModel.setDateFinish(Calendar.getInstance().getTime());
             seance.setDateTo(userViewModel.getDateFinish());
             usersRepository.updateSeance(seance);
-            goToSeance(seance);
-            finish();
         }
         catch (SQLException e) {
             Log.e(TAG, e.getMessage(), e);
@@ -324,24 +332,10 @@ public class MainActivity extends AppCompatActivity {
                 String videoPath = data.getStringExtra(EXTRA_SELECTED_VIDEO);
                 headsetManager.sendPacket(new ControlPacket(Command.PLAY, videoPath));
             }
-        } else if (requestCode == REQUEST_ENABLE_BT) {
-            if (resultCode == RESULT_OK) {
-                initHeadsetManager();
-            } else {
-                Toast.makeText(this, R.string.bluetooth_disabled_message, Toast.LENGTH_LONG).show();
-            }
         }
     }
 
-    private void ensureBluetoothEnabled() {
-        if (BluetoothAdapter.getDefaultAdapter().isEnabled()) {
-            initHeadsetManager();
-        }
-        else {
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-        }
-    }
+    private Integer headsetState = BluetoothService.STATE_NONE;
 
     private void initHeadsetManager() {
         String deviceAddress = getIntent().getStringExtra(AdminConst.EXTRA_DEVICE_ADDRESS);
@@ -368,6 +362,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onHeadsetStateChanged(Integer headsetState) {
+        this.headsetState = headsetState;
+        updateHeadsetStateTextView(headsetState);
         switch (headsetState) {
             case BluetoothService.STATE_CONNECTED:
                 onHeadsetConnected();
@@ -376,10 +372,9 @@ public class MainActivity extends AppCompatActivity {
                 onHeadsetDisconnected();
                 break;
         }
-        setHeadsetStatus(headsetState);
     }
 
-    private void setHeadsetStatus(int status) {
+    private void updateHeadsetStateTextView(int status) {
         int stringResId;
         int colorResId;
         switch (status) {
@@ -410,17 +405,43 @@ public class MainActivity extends AppCompatActivity {
     private DataPacket dataPacket = new DataPacket();
 
     private void onHeadsetConnected() {
+        reconnectHeadsetAttempts = 0;
         createSeance();
         setEnabledFinishSeanceButton(true);
+        museInfo.setVisibility(View.VISIBLE);
         showProgressDialog();
     }
 
+    private static final boolean IS_AUTO_RECONNECT_HEADSET = true;
+    private static final int MAX_AUTO_RECONNECT_HEADSET_ATTEMPTS = 5;
+    private int reconnectHeadsetAttempts = 0;
+    private static final int HEADSET_RECONNECT_DELAY = 3*1000;
+
     private void onHeadsetDisconnected() {
-        onMuseDisconnected();
+        museInfo.setVisibility(View.INVISIBLE);
+        setEnabledFinishSeanceButton(false);
+
+        try {
+            usersRepository.saveSeanceDataChunk(userViewModel, seance);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         if (pd != null && pd.isShowing())
             hideProgressDialog();
 
-        showReconnectHeadsetDialog();
+        if (IS_AUTO_RECONNECT_HEADSET && reconnectHeadsetAttempts < MAX_AUTO_RECONNECT_HEADSET_ATTEMPTS) {
+            reconnectHeadsetAttempts++;
+            Timer reconnectTimer = new Timer();
+            reconnectTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    headsetManager.reconnect();
+                }
+            }, HEADSET_RECONNECT_DELAY);
+        }
+        else
+            showReconnectHeadsetDialog();
     }
 
     private ProgressDialog pd = null;
@@ -490,7 +511,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void hideHeadsetTextViews() {
-        headsetStateTextView.setVisibility(View.INVISIBLE);
         headsetBatteryTextView.setVisibility(View.INVISIBLE);
     }
 
@@ -688,8 +708,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onMuseDisconnected() {
-        hideMuseTextViews();
-
+        if (headsetState == BluetoothService.STATE_NONE)
         if (failedMuseReconnectCount < MAX_FAILED_MUSE_RECONNECT) {
             failedMuseReconnectCount++;
             reconnectMuse();
@@ -765,7 +784,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private int failedMuseReconnectCount = 0;
-    private static final int MAX_FAILED_MUSE_RECONNECT = 10;
+    private static final int MAX_FAILED_MUSE_RECONNECT = 5;
 
     private void reconnectMuse() {
         headsetManager.sendPacket(new ControlPacket(Command.RECONNECT_MUSE));
@@ -788,7 +807,6 @@ public class MainActivity extends AppCompatActivity {
         if (doubleBackToExitPressedOnce) {
             super.onBackPressed();
             finish();
-
         } else {
             this.doubleBackToExitPressedOnce = true;
             Toast.makeText(this, R.string.press_back_again_to_exit, Toast.LENGTH_SHORT).show();

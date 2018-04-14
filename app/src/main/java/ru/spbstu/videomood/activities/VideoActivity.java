@@ -681,7 +681,6 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == Const.MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE) {
-
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 initContentProvider();
             } else {

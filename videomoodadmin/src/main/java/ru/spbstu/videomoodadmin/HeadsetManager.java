@@ -11,6 +11,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import java.lang.ref.WeakReference;
+
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
 import ru.spbstu.videomood.btservice.Constants;
@@ -29,7 +31,7 @@ public class HeadsetManager implements LifecycleObserver {
     private String deviceAddress;
 
     public HeadsetManager(String deviceAddress) {
-        this.mHandler = new MessageHandler();
+        this.mHandler = new MessageHandler(this);
         this.deviceAddress = deviceAddress;
     }
 
@@ -58,17 +60,9 @@ public class HeadsetManager implements LifecycleObserver {
         mBtService = new BluetoothService(mHandler, BluetoothAdapter.getDefaultAdapter());
     }
 
-    /**
-     * Establish connection with other device
-     *
-     * @param deviceAddress
-     */
     private void connectDevice(String deviceAddress) {
-        // Get the BluetoothDevice object
         deviceToConnect = mBluetoothAdapter.getRemoteDevice(deviceAddress);
-
         Log.i(TAG, String.format("Attempt to connectToServer to %s(%s)", deviceToConnect.getName(), deviceAddress));
-        // Attempt to connectToServer to the device
         mBtService.connectToServer(deviceToConnect);
     }
 
@@ -80,7 +74,8 @@ public class HeadsetManager implements LifecycleObserver {
     }
 
     public void reconnect() {
-        mBtService.connectToServer(deviceToConnect);
+        if (mBtService.getState() == BluetoothService.STATE_NONE)
+            mBtService.connectToServer(deviceToConnect);
     }
 
     private Handler sendMessageHandler = new Handler();
@@ -111,30 +106,42 @@ public class HeadsetManager implements LifecycleObserver {
         return videosLiveData;
     }
 
-    private class MessageHandler extends Handler {
+    private static class MessageHandler extends Handler {
+        private final WeakReference<HeadsetManager> weakManager;
+
+        MessageHandler(HeadsetManager manager) {
+            this.weakManager = new WeakReference<HeadsetManager>(manager);
+        }
+
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Constants.MESSAGE_STATE_CHANGE:
-                    if (msg.arg1 == BluetoothService.STATE_NONE)
-                        onHeadsetDisconnected();
-                    else if (msg.arg1 == BluetoothService.STATE_CONNECTED)
-                        onHeadsetConnected();
-                    headsetStateLiveData.postValue(msg.arg1);
-                    break;
-                case Constants.MESSAGE_PACKET:
-                    Packet packet = Packet.createFrom((String) msg.obj);
-                    PacketType type = packet.type();
-                    if (type == PacketType.DATA)
-                        videoStateLiveData.postValue((DataPacket) packet);
-                    else if (type == PacketType.VIDEOS) {
-                        videosLiveData.postValue((VideosPacket) packet);
-                        sendMessageHandler.removeCallbacks(sendMessageRunnable);
-                        sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
-                    }
-                    break;
-            }
+            HeadsetManager manager = weakManager.get();
+            if (manager != null)
+                switch (msg.what) {
+                    case Constants.MESSAGE_STATE_CHANGE:
+                        if (msg.arg1 == BluetoothService.STATE_NONE)
+                            manager.onHeadsetDisconnected();
+                        else if (msg.arg1 == BluetoothService.STATE_CONNECTED)
+                            manager.onHeadsetConnected();
+                        manager.headsetStateLiveData.postValue(msg.arg1);
+                        break;
+                    case Constants.MESSAGE_PACKET:
+                        Packet packet = (Packet) msg.obj;
+                        PacketType type = packet.type();
+                        if (type == PacketType.DATA)
+                            manager.videoStateLiveData.postValue((DataPacket) packet);
+                        else if (type == PacketType.VIDEOS) {
+                            manager.processVideoPacket((VideosPacket) packet);
+                        }
+                        break;
+                }
         }
+    }
+
+    private void processVideoPacket(VideosPacket packet) {
+        videosLiveData.postValue(packet);
+        sendMessageHandler.removeCallbacks(sendMessageRunnable);
+        sendMessageHandler.postDelayed(sendMessageRunnable, 1000);
     }
 
     private void onHeadsetConnected() {

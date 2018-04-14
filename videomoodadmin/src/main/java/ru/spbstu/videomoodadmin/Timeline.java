@@ -132,13 +132,13 @@ public class Timeline extends View
 
         private String displayName;
 
-        private int duration;
+        private long duration;
 
         String durationStr() {
             return String.format("%d:%02d", duration / 60, duration % 60);
         }
 
-        public TimeLineEvent(String displayName, int duration){
+        public TimeLineEvent(String displayName, long duration){
             this.displayName = displayName;
             this.duration = duration;
             this.weight = duration;

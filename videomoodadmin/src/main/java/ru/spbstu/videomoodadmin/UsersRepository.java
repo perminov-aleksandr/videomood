@@ -1,10 +1,13 @@
 package ru.spbstu.videomoodadmin;
 
 import android.util.Log;
+import android.util.TimeUtils;
 
 import com.j256.ormlite.dao.Dao;
 
 import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -61,10 +64,13 @@ public class UsersRepository {
         seanceVideo.seance = seance;
 
         Calendar seanceStart = Calendar.getInstance();
-        seanceStart.setTime(userViewModel.getSeanceDateStart());
 
+        seanceVideo.setTimestamp(seanceStart.getTime().getTime());
         seanceVideo.setData(userViewModel.seanceData);
+
         userViewModel.seanceData.clear();
+
+        seanceStart.setTime(userViewModel.getSeanceDateStart());
 
         seanceVideoDao.create(seanceVideo);
     }

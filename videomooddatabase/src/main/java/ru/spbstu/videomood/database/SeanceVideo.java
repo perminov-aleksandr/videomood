@@ -20,7 +20,7 @@ public class SeanceVideo {
     public Seance seance;
 
     @DatabaseField(canBeNull = false)
-    private int timestamp;
+    private long timestamp;
 
     @DatabaseField
     private String dataStr;
@@ -32,7 +32,7 @@ public class SeanceVideo {
     private List<SeanceDataEntry> data;
 
     public List<SeanceDataEntry> getData() {
-        if (data == null || data.isEmpty() && dataStr != "" && dataStr!= null)
+        if (data == null || data.isEmpty() && !dataStr.equals("") && dataStr!= null)
             setData(dataStr);
 
         return data;
@@ -60,14 +60,14 @@ public class SeanceVideo {
         this.id = id;
     }
 
-    public int getTimestamp() {
+    public long getTimestamp() {
         if (timestamp == 0)
             timestamp = getData().size();
 
         return timestamp;
     }
 
-    /*public void setTimestamp(int timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
-    }*/
+    }
 }

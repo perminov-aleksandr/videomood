@@ -1,6 +1,7 @@
 package ru.spbstu.videomoodadmin;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,7 @@ public class SeanceVideoAdapter extends ArrayAdapter<SeanceVideo> {
         super(context, resource);
     }
 
+    @NonNull
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
@@ -45,8 +47,9 @@ public class SeanceVideoAdapter extends ArrayAdapter<SeanceVideo> {
         SeanceVideo seanceVideo = getItem(position);
         if (seanceVideo != null) {
             viewHolder.nameTextView.setText(seanceVideo.video.getName());
-            int timestamp = seanceVideo.getTimestamp();
-            viewHolder.durationTextView.setText(String.format("%d:%02d", timestamp / 60, timestamp % 60));
+            long timestamp = seanceVideo.getTimestamp();
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+            viewHolder.durationTextView.setText(simpleDateFormat.format(new Date(timestamp)));
         }
 
         return convertView;

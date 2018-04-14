@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.File;
@@ -23,6 +24,8 @@ import ru.spbstu.videomood.btservice.Packet;
 import ru.spbstu.videomood.btservice.VideosPacket;
 
 public class AdminDeviceManager implements LifecycleObserver  {
+    private static final String TAG = "VideoMood:AdminManager";
+
     private WeakReference<VideoActivity> activityRef;
 
     private DataPacket dataPacket;
@@ -74,34 +77,37 @@ public class AdminDeviceManager implements LifecycleObserver  {
         }
     }
 
-    private static final String TAG = "VideoMood:AdminManager";
-
     private BluetoothService mBtService = null;
 
-    /**
-     * The Handler that gets information back from the BluetoothService
-     */
-    private Handler mAdminDeviceMessageHandler = new Handler() {
+    static class MyHandler extends Handler {
+        private WeakReference<AdminDeviceManager> weakManager;
+
+        MyHandler(AdminDeviceManager manager) {
+            weakManager = new WeakReference<>(manager);
+        }
+
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case Constants.MESSAGE_STATE_CHANGE:
-                    processAdminDeviceState(msg.arg1);
-                    break;
-                case Constants.MESSAGE_PACKET:
-                    try {
-                        ControlPacket p = (ControlPacket) Packet.createFrom((String) msg.obj);
-                        if (p != null)
-                            processPacket(p);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
-            }
+            AdminDeviceManager manager = weakManager.get();
+            if (manager != null)
+                switch (msg.what) {
+                    case Constants.MESSAGE_STATE_CHANGE:
+                        manager.processAdminDeviceState(msg.arg1);
+                        break;
+                    case Constants.MESSAGE_PACKET:
+                        try {
+                            if (msg.obj instanceof ControlPacket)
+                                manager.processPacket((ControlPacket) msg.obj);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                }
         }
-    };
+    }
 
     private void setupBtService() {
+        MyHandler mAdminDeviceMessageHandler = new MyHandler(this);
         mBtService = new BluetoothService(mAdminDeviceMessageHandler, BluetoothAdapter.getDefaultAdapter());
     }
 
@@ -111,6 +117,9 @@ public class AdminDeviceManager implements LifecycleObserver  {
         Log.i(TAG, "received command " + command);
 
         VideoActivity videoActivity = activityRef.get();
+        if (videoActivity == null)
+            return;
+
         if (command == Command.LIST) {
             VideosPacket videosPacket = new VideosPacket();
             videosPacket.setVideoList(videoActivity.getVideoList());

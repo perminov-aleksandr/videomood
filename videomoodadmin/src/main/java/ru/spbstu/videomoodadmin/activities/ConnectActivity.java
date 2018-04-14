@@ -10,6 +10,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Set;
 
@@ -27,6 +28,7 @@ public class ConnectActivity extends AppCompatActivity {
      * Member fields
      */
     private BluetoothAdapter mBtAdapter;
+    private ArrayAdapter<String> pairedDevicesArrayAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +36,7 @@ public class ConnectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_connect);
 
         // Initialize array adapter for already paired devices only
-        ArrayAdapter<String> pairedDevicesArrayAdapter =
-                new ArrayAdapter<>(this, R.layout.device_name);
+        pairedDevicesArrayAdapter = new ArrayAdapter<>(this, R.layout.device_name);
 
         // Find and set up the ListView for paired devices
         ListView pairedListView = (ListView) findViewById(R.id.paired_devices);
@@ -45,6 +46,34 @@ public class ConnectActivity extends AppCompatActivity {
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
 
+        ensureBluetoothEnabled();
+    }
+
+    private void ensureBluetoothEnabled() {
+        if (mBtAdapter.isEnabled()) {
+            fillBondedDeviceList();
+        } else {
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+        }
+    }
+
+    private static final int REQUEST_ENABLE_BT = 248;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == RESULT_OK) {
+                fillBondedDeviceList();
+            } else {
+                Toast.makeText(this, R.string.bluetooth_disabled_message, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void fillBondedDeviceList() {
         // Get a set of currently paired devices
         Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
 

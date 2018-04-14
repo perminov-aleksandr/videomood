@@ -11,11 +11,16 @@ import android.util.JsonReader;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonStreamParser;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.UUID;
@@ -35,7 +40,7 @@ public class BluetoothService {
 
     // Unique UUID for this application
     public static final UUID VIDEOMOOD_BTSERVICE_UUID =
-            UUID.nameUUIDFromBytes("video_mood".getBytes());
+            UUID.nameUUIDFromBytes("video_mood_bt_service".getBytes());
 
     // Member fields
     private final BluetoothAdapter mAdapter;
@@ -283,7 +288,7 @@ public class BluetoothService {
         // The local server socket
         private final BluetoothServerSocket mmServerSocket;
 
-        public AcceptThread() {
+        AcceptThread() {
             BluetoothServerSocket tmp = null;
 
             // Create a new listening server socket
@@ -358,8 +363,8 @@ public class BluetoothService {
     private class ConnectThread extends Thread {
         private final BluetoothSocket mmSocket;
         private final BluetoothDevice mmDevice;
-        private String mSocketType;
-        public ConnectThread(BluetoothDevice device) {
+
+        ConnectThread(BluetoothDevice device) {
             mmDevice = device;
             BluetoothSocket tmp = null;
 
@@ -431,7 +436,7 @@ public class BluetoothService {
 
         private final ServiceRole role;
 
-        public ConnectedThread(BluetoothSocket socket, ServiceRole role) {
+        ConnectedThread(BluetoothSocket socket, ServiceRole role) {
             Log.d(TAG, "create ConnectedThread");
             mmSocket = socket;
             InputStream tmpIn = null;
@@ -461,12 +466,30 @@ public class BluetoothService {
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
-            byte[] buffer = new byte[1024*1024];
-            String prevMessage = "";
+            //byte[] buffer = new byte[1024*1024];
+            //String prevMessage = "";
+
+            GsonBuilder gsonBuilder = new GsonBuilder();
+            gsonBuilder.registerTypeAdapter(Packet.class, new PacketAdapter());
+            Gson gson = gsonBuilder.create();
 
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
                 try {
+                    Reader r = new InputStreamReader(mmInStream, Constants.DEFAULT_CHARSET);
+                    JsonStreamParser p = new JsonStreamParser(r);
+
+                    while (p.hasNext()) {
+                        JsonElement e = p.next();
+                        if (e.isJsonObject()) {
+                            Packet packet = gson.fromJson(e, Packet.class);
+                            Log.i(TAG, String.format("RECEIVING: %s", e));
+                            mHandler.obtainMessage(Constants.MESSAGE_PACKET, -1, -1, packet)
+                                    .sendToTarget();
+                        }
+                    }
+
+                    /*
                     // Read from the InputStream
                     int bytes = mmInStream.read(buffer);
                     byte[] actualBytes = Arrays.copyOf(buffer, bytes);
@@ -478,8 +501,8 @@ public class BluetoothService {
                         mHandler.obtainMessage(Constants.MESSAGE_PACKET, -1, -1, prevMessage)
                                 .sendToTarget();
                         prevMessage = "";
-                    }
-                } catch (IOException e) {
+                    }*/
+                } catch (JsonIOException|IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
                     if (role == ServiceRole.SERVER && !isStoppedOutside)
@@ -496,7 +519,7 @@ public class BluetoothService {
          *
          * @param buffer The bytes to write
          */
-        public void write(byte[] buffer) {
+        void write(byte[] buffer) {
             try {
                 Log.i(TAG, String.format("SENDING: %s", new String(buffer, Constants.DEFAULT_CHARSET)));
                 mmOutStream.write(buffer);

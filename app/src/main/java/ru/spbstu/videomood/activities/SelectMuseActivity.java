@@ -1,50 +1,38 @@
-/**
- * Example of using libmuse library on android.
- * Interaxon, Inc. 2016
- */
-
 package ru.spbstu.videomood.activities;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.choosemuse.libmuse.LibmuseVersion;
 import com.choosemuse.libmuse.Muse;
-import com.choosemuse.libmuse.MuseFileFactory;
-import com.choosemuse.libmuse.MuseFileWriter;
 import com.choosemuse.libmuse.MuseListener;
 
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import ru.spbstu.videomood.MuseManager;
 import ru.spbstu.videomood.R;
 
-public class MainActivity extends BaseActivity {
-
+public class SelectMuseActivity extends AppCompatActivity {
     /**
      * Tag used for logging purposes.
      */
-    private final String TAG = "VideoMood:MainActivity";
+    private final String TAG = "VideoMood:SelectMuse";
 
     /**
      * The MuseManager is how you detect Muse headbands and receive notifications
@@ -57,7 +45,9 @@ public class MainActivity extends BaseActivity {
      * This spinner adapter contains the MAC addresses of all of the headbands we have discovered.
      */
     private ArrayAdapter<String> spinnerAdapter;
-    private int REQUEST_ACCESS_LOCATION = 255;
+
+    private static final int REQUEST_ACCESS_LOCATION = 255;
+    private static final int REQUEST_ENABLE_BT = 248;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,18 +60,47 @@ public class MainActivity extends BaseActivity {
 
         Log.i(TAG, "LibMuse version=" + LibmuseVersion.instance().getString());
 
-        WeakReference<MainActivity> weakActivity = new WeakReference<>(this);
+        WeakReference<SelectMuseActivity> weakActivity = new WeakReference<>(this);
         // Register a listener to receive notifications of what Muse headbands
         // we can connectToServer to.
         MuseManager.getManager().setMuseListener(new MuseL(weakActivity));
 
         initUI();
 
-        // Muse 2016 (MU-02) headbands use Bluetooth Low Energy technology to
-        // simplify the connection process.  This requires access to the COARSE_LOCATION
-        // or FINE_LOCATION permissions.  Make sure we have these permissions before
-        // proceeding.
-        ensurePermissions();
+        ensureBluetoothEnabled();
+    }
+
+    private boolean isBtEnableRequesting = false;
+    private boolean isPermissionRequesting = false;
+
+    @Override
+    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+
+        outPersistentState.putInt("isBtEnableRequesting", isBtEnableRequesting ? 1 : 0);
+        outPersistentState.putInt("isPermissionRequesting", isPermissionRequesting ? 1 : 0);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        isBtEnableRequesting  = savedInstanceState.getInt("isBtEnableRequesting", 0) != 0;
+        isPermissionRequesting = savedInstanceState.getInt("isPermissionRequesting", 0) != 0;
+    }
+
+    private void ensureBluetoothEnabled() {
+        if (isBtEnableRequesting)
+            return;
+
+        if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
+            isBtEnableRequesting = true;
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+        } else {
+            if (!isPermissionRequesting)
+                ensurePermissions();
+        }
     }
 
     @Override
@@ -136,9 +155,13 @@ public class MainActivity extends BaseActivity {
      * not be discovered and a SecurityException will be thrown.
      */
     private void ensurePermissions() {
+        if (isPermissionRequesting)
+            return;
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this,
+            isPermissionRequesting = true;
+            ActivityCompat.requestPermissions(SelectMuseActivity.this,
                     new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
                     REQUEST_ACCESS_LOCATION);
         } else {
@@ -164,7 +187,7 @@ public class MainActivity extends BaseActivity {
             for (Muse m : list) {
                 spinnerAdapter.add(m.getName() + " - " + m.getMacAddress());
             }
-            tryAutoselect();
+            tryAutoSelect();
         }
         else {
             spinnerAdapter.add(getResources().getString(R.string.noDevicesFound));
@@ -172,7 +195,7 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    private void tryAutoselect() {
+    private void tryAutoSelect() {
         int musesCount = musesSpinner.getAdapter().getCount();
         if (musesCount == 1) {
             musesSpinner.setSelection(0);
@@ -200,9 +223,9 @@ public class MainActivity extends BaseActivity {
     // Each of these classes extend from the appropriate listener and contain a weak reference
     // to the activity.  Each class simply forwards the messages it receives back to the Activity.
     class MuseL extends MuseListener {
-        final WeakReference<MainActivity> activityRef;
+        final WeakReference<SelectMuseActivity> activityRef;
 
-        MuseL(final WeakReference<MainActivity> activityRef) {
+        MuseL(final WeakReference<SelectMuseActivity> activityRef) {
             this.activityRef = activityRef;
         }
 
@@ -223,7 +246,21 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_ENABLE_BT) {
+            if (resultCode == RESULT_OK) {
+                ensurePermissions();
+            } else {
+                Toast.makeText(this, R.string.bluetooth_disabled_message, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
     private void onPermissionGranted() {
+        isPermissionRequesting = false;
         MuseManager.startListening();
         MuseManager.setPermissionGranted();
     }

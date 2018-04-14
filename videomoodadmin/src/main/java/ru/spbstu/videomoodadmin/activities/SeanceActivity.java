@@ -85,7 +85,7 @@ public class SeanceActivity extends OrmLiteBaseActivity<VideoMoodDbHelper> {
             dateTv.setText(new SimpleDateFormat("dd.MM.yyyy").format(dateFrom));
 
             TextView from = (TextView) findViewById(R.id.seance_card_from);
-            DateFormat timeFormat = new SimpleDateFormat("hh:mm");
+            DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
             from.setText(timeFormat.format(dateFrom));
 
             TextView to = (TextView) findViewById(R.id.seance_card_to);
