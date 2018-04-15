@@ -2,6 +2,7 @@ package ru.spbstu.videomoodadmin.activities;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.Observer;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
     private UsersRepository usersRepository;
     private HeadsetManager headsetManager;
     private View museInfo;
+    private VideoMoodDbHelper videoMoodDbHelper;
 
     private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> values = new ArrayList<>();
@@ -221,18 +223,26 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         usersRepository = new UsersRepository();
-        usersRepository.init(new VideoMoodDbHelper(this));
+        videoMoodDbHelper = new VideoMoodDbHelper(this);
+        usersRepository.init(videoMoodDbHelper);
 
         setupUI();
 
         setupUser();
+
+        initHeadsetManager();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+    }
 
-        initHeadsetManager();
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        videoMoodDbHelper.close();
     }
 
     private void setupUser() {
@@ -419,6 +429,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void onHeadsetDisconnected() {
         museInfo.setVisibility(View.INVISIBLE);
+        headsetBatteryTextView.setVisibility(View.INVISIBLE);
         setEnabledFinishSeanceButton(false);
 
         try {
@@ -430,6 +441,10 @@ public class MainActivity extends AppCompatActivity {
         if (pd != null && pd.isShowing())
             hideProgressDialog();
 
+        Lifecycle.State currentState = getLifecycle().getCurrentState();
+        if (currentState == Lifecycle.State.DESTROYED)
+            return;
+
         if (IS_AUTO_RECONNECT_HEADSET && reconnectHeadsetAttempts < MAX_AUTO_RECONNECT_HEADSET_ATTEMPTS) {
             reconnectHeadsetAttempts++;
             Timer reconnectTimer = new Timer();
@@ -439,8 +454,7 @@ public class MainActivity extends AppCompatActivity {
                     headsetManager.reconnect();
                 }
             }, HEADSET_RECONNECT_DELAY);
-        }
-        else
+        } else
             showReconnectHeadsetDialog();
     }
 
@@ -756,6 +770,7 @@ public class MainActivity extends AppCompatActivity {
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        reconnectHeadsetAttempts = 0;
                         headsetManager.reconnect();
                     }
                 })

@@ -28,7 +28,7 @@ public abstract class Packet {
 
     static {
         GsonBuilder gsonBuilder = new GsonBuilder().setLenient();
-        gsonBuilder.registerTypeAdapter(Packet.class, new PacketAdapter());
+        gsonBuilder.registerTypeAdapter(Packet.class, new PacketJsonAdapter());
         gson = gsonBuilder.create();
     }
 

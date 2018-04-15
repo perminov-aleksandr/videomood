@@ -31,21 +31,26 @@ public class HeadsetManager implements LifecycleObserver {
     private String deviceAddress;
 
     public HeadsetManager(String deviceAddress) {
-        this.mHandler = new MessageHandler(this);
         this.deviceAddress = deviceAddress;
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
     public void onCreate() {
+        this.mHandler = new MessageHandler(this);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBtService == null) {
+            mBtService = new BluetoothService(mHandler, mBluetoothAdapter);
+        }
+        connectDevice(deviceAddress);
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     public void onStart() {
-        if (mBtService == null) {
-            setupBtService();
-            connectDevice(deviceAddress);
-        }
+
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    public void onStop() {
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
@@ -54,10 +59,6 @@ public class HeadsetManager implements LifecycleObserver {
         if (mBtService != null) {
             mBtService.stop();
         }
-    }
-
-    private void setupBtService() {
-        mBtService = new BluetoothService(mHandler, BluetoothAdapter.getDefaultAdapter());
     }
 
     private void connectDevice(String deviceAddress) {

@@ -32,8 +32,9 @@ public class AdminDeviceManager implements LifecycleObserver  {
 
     private MuseDataRepository repository;
 
-    public AdminDeviceManager(VideoActivity videoActivity) {
+    public AdminDeviceManager(VideoActivity videoActivity, MuseDataRepository repository) {
         activityRef = new WeakReference<>(videoActivity);
+        this.repository = repository;
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
@@ -51,15 +52,6 @@ public class AdminDeviceManager implements LifecycleObserver  {
             }
         });
 
-        repository = MuseDataRepository.getInstance(videoActivity);
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    private void onResume() {
-        Log.d(TAG, "resume event occurred");
-        // Performing this check in onResume() covers the case in which BT was
-        // not enabled during onStart(), so we were paused to enable it...
-        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
         if (mBtService != null) {
             // Only if the connectionState is STATE_NONE, do we know that we haven't started already
             if (mBtService.getState() == BluetoothService.STATE_NONE) {
@@ -69,9 +61,9 @@ public class AdminDeviceManager implements LifecycleObserver  {
         }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    private void onDestroy() {
-        Log.d(TAG, "destroy event occurred");
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    private void onStop() {
+        Log.d(TAG, "stop event occurred");
         if (mBtService != null) {
             mBtService.stop();
         }

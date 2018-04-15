@@ -11,7 +11,7 @@ import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
 
-class PacketAdapter implements JsonSerializer<Packet>, JsonDeserializer<Packet> {
+class PacketJsonAdapter implements JsonSerializer<Packet>, JsonDeserializer<Packet> {
 
     @Override
     public Packet deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

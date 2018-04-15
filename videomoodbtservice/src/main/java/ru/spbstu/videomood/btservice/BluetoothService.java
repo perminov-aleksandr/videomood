@@ -1,13 +1,10 @@
 package ru.spbstu.videomood.btservice;
 
-import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
-import android.os.Message;
-import android.util.JsonReader;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -21,8 +18,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -207,6 +202,8 @@ public class BluetoothService {
     public synchronized void stop() {
         Log.d(TAG, "stop");
 
+        isStoppedOutside = true;
+
         if (mConnectThread != null) {
             mConnectThread.cancel();
             mConnectThread = null;
@@ -221,8 +218,6 @@ public class BluetoothService {
             mSecureAcceptThread.cancel();
             mSecureAcceptThread = null;
         }
-
-        isStoppedOutside = true;
 
         setState(STATE_NONE);
     }
@@ -470,7 +465,7 @@ public class BluetoothService {
             //String prevMessage = "";
 
             GsonBuilder gsonBuilder = new GsonBuilder();
-            gsonBuilder.registerTypeAdapter(Packet.class, new PacketAdapter());
+            gsonBuilder.registerTypeAdapter(Packet.class, new PacketJsonAdapter());
             Gson gson = gsonBuilder.create();
 
             // Keep listening to the InputStream while connected

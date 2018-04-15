@@ -37,6 +37,8 @@ import android.widget.VideoView;
 
 import com.choosemuse.libmuse.ConnectionState;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Timer;
@@ -143,7 +145,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         postLiveData();
     }
 
-    public void updateMuseConnectionStatus(ConnectionState connectionState) {
+    public void updateMuseConnectionStatus(@NotNull ConnectionState connectionState) {
         switch (connectionState) {
             case CONNECTING:
                 onMuseConnecting();
@@ -163,7 +165,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         return contentProvider;
     }
 
-    private MuseDataRepository repository;
+    private MuseDataRepository museRepository;
 
     private boolean isPanic = false;
 
@@ -312,7 +314,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                 {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        repository.connect();
+                        museRepository.connect();
                         UI.videoView.start();
                     }
                 })
@@ -365,11 +367,6 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-    }
-
     private int currentPlayPosition = -1;
 
     public static final String CURRENT_VIDEO_URI_KEY = "currentVideoUri";
@@ -399,31 +396,28 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
         setContentView(R.layout.activity_video);
 
         UI.setup();
-
-        ensurePermissions();
-
         View view = findViewById(R.id.videoActivity);
         view.setOnClickListener(VideoActivity.this);
 
-        AdminDeviceManager adminDeviceManager = new AdminDeviceManager(this);
-        getLifecycle().addObserver(adminDeviceManager);
+        ensurePermissions();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        repository = MuseDataRepository.getInstance(this);
-        getLifecycle().addObserver(repository);
-        repository.getMuseData().observe(this, new Observer<MuseData>() {
+        museRepository = MuseDataRepository.getInstance(this);
+        getLifecycle().addObserver(museRepository);
+        museRepository.getMuseData().observe(this, new Observer<MuseData>() {
             @Override
             public void onChanged(@Nullable MuseData data) {
-                if (data != null) {
-                    museData = data;
-                    museDataStale = true;
-                }
+                museData = data;
+                museDataStale = true;
             }
         });
+
+        AdminDeviceManager adminDeviceManager = new AdminDeviceManager(this, museRepository);
+        getLifecycle().addObserver(adminDeviceManager);
 
         // Start our asynchronous updates of the UI.
         handler.post(tickUi);
@@ -544,6 +538,12 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
             UI.betaBar = (TextView) findViewById(R.id.beta);
             UI.batteryTextView = (TextView) findViewById(R.id.battery);
             UI.museState = (TextView) findViewById(R.id.museState);
+            UI.museState.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    museRepository.connect();
+                }
+            });
 
             UI.isGoodIndicators = new TextView[4];
             UI.isGoodIndicators[Const.Electrodes.FIRST] = (TextView) findViewById(R.id.good1);

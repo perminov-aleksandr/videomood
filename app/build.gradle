@@ -45,4 +45,5 @@ dependencies {
     implementation 'com.google.firebase:firebase-appindexing:10.2.1'
     implementation project(':videomoodbtservice')
     testImplementation 'junit:junit:4.12'
+    implementation 'org.jetbrains:annotations-java5:15.0'
 }

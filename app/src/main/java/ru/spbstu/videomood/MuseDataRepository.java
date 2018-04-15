@@ -22,6 +22,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Queue;
 
+import ru.spbstu.videomood.btservice.MuseState;
+
 import static ru.spbstu.videomood.Const.CHANNEL_COUNT;
 import static ru.spbstu.videomood.Const.RANGE_COUNT;
 
@@ -117,6 +119,8 @@ public final class MuseDataRepository implements LifecycleObserver {
         @Override
         public void receiveMuseConnectionPacket(final MuseConnectionPacket p, final Muse muse) {
             final ConnectionState current = p.getCurrentConnectionState();
+            if (current == ConnectionState.DISCONNECTED)
+                museData = new MuseData();
             museData.connectionState = current;
             setLiveMuseData();
         }
