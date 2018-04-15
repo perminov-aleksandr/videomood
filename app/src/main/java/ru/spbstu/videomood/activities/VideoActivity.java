@@ -298,9 +298,11 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                 .show();
     }
 
+    private static final boolean IS_AUTO_CLOSE_RECONNECT_DIALOG = true;
+
     private void displayReconnectDialog() {
         Resources resources = getResources();
-        new AlertDialog.Builder(this)
+        final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(resources.getString(R.string.reconnect_header))
                 .setMessage(resources.getString(R.string.reconnect_message))
                 .setNegativeButton(resources.getString(R.string.no), new DialogInterface.OnClickListener() {
@@ -310,8 +312,7 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                         UI.videoView.start();
                     }
                 })
-                .setPositiveButton(resources.getString(R.string.reconnect), new DialogInterface.OnClickListener()
-                {
+                .setPositiveButton(resources.getString(R.string.reconnect), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         museRepository.connect();
@@ -319,6 +320,16 @@ public class VideoActivity extends AppCompatActivity implements View.OnClickList
                     }
                 })
                 .show();
+
+        if (IS_AUTO_CLOSE_RECONNECT_DIALOG) {
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    dialog.cancel();
+                    UI.videoView.start();
+                }
+            }, 5*Const.SECOND);
+        }
     }
 
     public void onMuseConnecting() {

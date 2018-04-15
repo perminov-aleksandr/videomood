@@ -1,5 +1,9 @@
 package ru.spbstu.videomoodadmin;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
+import android.content.Context;
 import android.util.Log;
 import android.util.TimeUtils;
 
@@ -22,14 +26,22 @@ import ru.spbstu.videomood.database.VideoMoodDbHelper;
 
 import static android.content.ContentValues.TAG;
 
-public class UsersRepository {
+public class UsersRepository implements LifecycleObserver {
 
     private Dao<User, Integer> userDao;
     private Dao<Seance, Integer> seanceDao;
     private Dao<Video, ?> videoDao;
     private Dao<SeanceVideo, ?> seanceVideoDao;
 
-    public void init(VideoMoodDbHelper videoMoodDbHelper) {
+    private VideoMoodDbHelper videoMoodDbHelper;
+
+    public UsersRepository(Context context) {
+        videoMoodDbHelper = new VideoMoodDbHelper(context);
+        onCreate();
+    }
+
+    //@OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
+    private void onCreate() {
         try {
             userDao = videoMoodDbHelper.getUserDao();
             seanceDao = videoMoodDbHelper.getDao(Seance.class);
@@ -38,6 +50,11 @@ public class UsersRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    private void onDestroy() {
+        videoMoodDbHelper.close();
     }
 
     public User get(int userId) throws SQLException {

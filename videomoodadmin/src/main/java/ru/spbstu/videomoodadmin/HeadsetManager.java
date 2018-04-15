@@ -12,6 +12,8 @@ import android.os.Message;
 import android.util.Log;
 
 import java.lang.ref.WeakReference;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import ru.spbstu.videomood.btservice.BluetoothService;
 import ru.spbstu.videomood.btservice.Command;
@@ -29,6 +31,7 @@ public class HeadsetManager implements LifecycleObserver {
     private BluetoothDevice deviceToConnect;
     private Handler mHandler;
     private String deviceAddress;
+    private Timer cancelListWaitingTimer;
 
     public HeadsetManager(String deviceAddress) {
         this.deviceAddress = deviceAddress;
@@ -147,6 +150,13 @@ public class HeadsetManager implements LifecycleObserver {
 
     private void onHeadsetConnected() {
         sendPacket(new ControlPacket(Command.LIST));
+        cancelListWaitingTimer = new Timer();
+        cancelListWaitingTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                headsetStateLiveData.postValue(BluetoothService.STATE_NONE);
+            }
+        }, 30*1000);
     }
 
     private void onHeadsetDisconnected() {

@@ -82,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
     private UsersRepository usersRepository;
     private HeadsetManager headsetManager;
     private View museInfo;
-    private VideoMoodDbHelper videoMoodDbHelper;
 
     private BarDataSet createSet(String name, int color) {
         ArrayList<BarEntry> values = new ArrayList<>();
@@ -222,27 +221,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        usersRepository = new UsersRepository();
-        videoMoodDbHelper = new VideoMoodDbHelper(this);
-        usersRepository.init(videoMoodDbHelper);
+        usersRepository = new UsersRepository(this);
+        getLifecycle().addObserver(usersRepository);;
 
         setupUI();
 
         setupUser();
 
         initHeadsetManager();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        videoMoodDbHelper.close();
     }
 
     private void setupUser() {
